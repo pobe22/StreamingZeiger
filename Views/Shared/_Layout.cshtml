@@ -23,11 +23,16 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link text-light " asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-light" asp-area="" asp-controller="Movies" asp-action="Index">Filme</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="" asp-controller="Series" asp-action="Index">Serien</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="Admin" asp-controller="Admin" asp-action="Index">Admin</a>
                         <li class="nav-item">
                             <a class="nav-link text-light position-relative" href="@Url.Action("Index", "Watchlist")">
                                 <i class="bi bi-bookmark-heart fs-5"></i>

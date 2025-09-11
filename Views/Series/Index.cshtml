@@ -1,0 +1,27 @@
+﻿@model IEnumerable<StreamingZeiger.Models.Series>
+
+@{
+    ViewData["Title"] = "Serien";
+    var total = ViewBag.Total as int? ?? 0;
+    var page = ViewBag.Page as int? ?? 1;
+    var pageSize = ViewBag.PageSize as int? ?? 12;
+    var totalPages = (int)Math.Ceiling(total / (double)pageSize);
+}
+
+<h2>Serien</h2>
+
+<div class="row">
+    @foreach (var s in Model)
+    {
+        <div class="col-md-3 mb-3">
+            <div class="card">
+                <img src="@s.PosterUrl" class="card-img-top" alt="@s.Title" />
+                <div class="card-body">
+                    <h5 class="card-title">@s.Title</h5>
+                    <p class="card-text">@s.Genre</p>
+                    <a href="@Url.Action("Details", "Series", new { id = s.Id })" class="btn btn-primary">Details</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
