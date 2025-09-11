@@ -1,23 +1,26 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using StreamingZeiger.Data;
 using StreamingZeiger.Models;
 
 namespace StreamingZeiger.Controllers
 {
     public class SeriesController : Controller
     {
-        private static List<Series> _series = new List<Series>
-        {
-            new Series { Id = 1, Title = "Breaking Bad", Description = "Chemielehrer wird Drogenboss", Genre = "Drama", Seasons = 5, Episodes = 62, PosterUrl = "/images/breakingbad.jpg" },
-            new Series { Id = 2, Title = "Stranger Things", Description = "Mystery in Hawkins", Genre = "Sci-Fi", Seasons = 4, Episodes = 34, PosterUrl = "/images/strangerthings.jpg" }
-        };
+        private readonly AppDbContext _context;
 
-        public IActionResult Index(int page = 1, int pageSize = 12)
+        public SeriesController(AppDbContext context)
         {
-            var total = _series.Count;
-            var items = _series
+            _context = context;
+        }
+
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 12)
+        {
+            var total = await _context.Series.CountAsync();
+            var items = await _context.Series
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
+                .ToListAsync();
 
             ViewBag.Total = total;
             ViewBag.Page = page;
@@ -26,9 +29,9 @@ namespace StreamingZeiger.Controllers
             return View(items);
         }
 
-        public IActionResult Details(int id)
+        public async Task<IActionResult> Details(int id)
         {
-            var series = _series.FirstOrDefault(s => s.Id == id);
+            var series = await _context.Series.FirstOrDefaultAsync(s => s.Id == id);
             if (series == null) return NotFound();
             return View(series);
         }

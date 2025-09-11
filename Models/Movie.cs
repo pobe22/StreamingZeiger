@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace StreamingZeiger.Models
 {
@@ -15,6 +16,7 @@ namespace StreamingZeiger.Models
         public string Director { get; set; }
         public string PosterFile { get; set; } // path under wwwroot/images/posters
         public string TrailerUrl { get; set; }
+        [NotMapped]
         public Dictionary<string, bool> AvailabilityByService { get; set; } = new();
         public double Rating { get; set; } // average
     }

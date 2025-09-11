@@ -1,20 +1,23 @@
+using Microsoft.EntityFrameworkCore;
+using StreamingZeiger.Data;
 using StreamingZeiger.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<IStaticMovieRepository, StaticMovieRepository>();
 
 builder.Services.AddSession();
-var app = builder.Build();
 
-app.UseSession();
+var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -23,10 +26,19 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseSession(); // Session kommt hier rein
+
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.EnsureCreated();
+    DbInitializer.Initialize(db);
+}
 
 app.Run();
