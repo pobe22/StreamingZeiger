@@ -1,5 +1,5 @@
 body {
-    background-color: #0f0f0f;
+    background-color: #0f0f0f; 
     color: #e0e0e0;
     font-family: "Segoe UI", Roboto, sans-serif;
 }
@@ -15,8 +15,12 @@ html, body {
     min-height: 100vh;
 }
 
-h1, h2, h3, h4 {
-    color: #ffcc00;
+h1, h2, h3, h4, h5, h6, label, p, a, li, span {
+    color: #e0e0e0; 
+}
+
+table, th, td {
+    color: #e0e0e0;
 }
 
 .navbar, .footer {
