@@ -11,7 +11,7 @@ namespace StreamingZeiger.Controllers
 
         public IActionResult Index([FromQuery] MovieFilterViewModel filter)
         {
-            var movies = _repo.GetAll() as IEnumerable<Movie>;
+            var movies = _repo.GetAll();
             if (movies == null)
                 return BadRequest("Repository did not return a valid movie list.");
 
