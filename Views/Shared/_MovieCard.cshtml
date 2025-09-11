@@ -1,0 +1,21 @@
+﻿@model Movie
+<div class="card h-100">
+    <img src="@Url.Content(Model.PosterFile)" class="card-img-top" alt="@Model.Title" />
+    <div class="card-body d-flex flex-column">
+        <h5 class="card-title">@Model.Title (@Model.Year)</h5>
+        <p class="card-text text-truncate">@Model.Description</p>
+        <div class="mt-auto">
+            <small class="text-muted">Rating: @Model.Rating/10</small>
+            <div>
+                @foreach (var s in Model.AvailabilityByService.Where(x => x.Value))
+                {
+                    <span class="badge bg-primary">@s.Key</span>
+                }
+            </div>
+            <a class="btn btn-sm btn-outline-primary mt-2" href="@Url.Action("Details", "Movies", new { id = Model.Id })">Details</a>
+            <button class="btn btn-sm btn-outline-secondary mt-2" title="Zur Watchlist hinzufügen">
+                <i class="bi bi-bookmark-plus"></i>
+            </button>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,149 @@
+﻿@model StreamingZeiger.Models.Movie
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <!-- Poster -->
+        <div class="col-md-4">
+            <img src="@Url.Content(Model.PosterFile)" alt="@Model.Title Poster" class="img-fluid rounded shadow" />
+        </div>
+
+        <!-- Informationen -->
+        <div class="col-md-8">
+            <h1>@Model.Title (@Model.Year)</h1>
+            <h5 class="text-muted">Originaltitel: @Model.OriginalTitle</h5>
+            <p class="mt-3">@Model.Description</p>
+
+            <ul class="list-unstyled">
+                <li>
+                    <strong>Genre:</strong>
+                    @foreach (var g in Model.Genres)
+                    {
+                        <span class="badge bg-secondary me-1">@g</span>
+                    }
+                </li>
+                <li><strong>Dauer:</strong> @Model.DurationMinutes Min.</li>
+                <li><strong>Regie:</strong> @Model.Director</li>
+                <li><strong>Cast:</strong> @string.Join(", ", Model.Cast)</li>
+            </ul>
+
+            <!-- Verfügbarkeit -->
+            <p>
+                <strong>Verfügbar bei:</strong>
+                @foreach (var s in Model.AvailabilityByService.Where(x => x.Value))
+                {
+                    <span class="badge bg-primary me-1">@s.Key</span>
+                }
+            </p>
+
+            <!-- Bewertung -->
+            <div class="my-3">
+                <strong>Bewertung:</strong>
+                <span class="text-warning">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        if (i <= Math.Round(Model.Rating / 2)) // 10er Skala -> 5 Sterne
+                        {
+                            <i class="bi bi-star-fill"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-star"></i>
+                        }
+                    }
+                </span>
+                <span class="ms-2">(@Model.Rating.ToString("0.0")/10)</span>
+            </div>
+
+            <!-- Dummy Bewertung abgeben -->
+            <form class="mt-3">
+                <label class="form-label">Eigene Bewertung abgeben:</label>
+                <select class="form-select mb-2" style="max-width:200px;">
+                    <option>1 Stern</option>
+                    <option>2 Sterne</option>
+                    <option>3 Sterne</option>
+                    <option>4 Sterne</option>
+                    <option>5 Sterne</option>
+                </select>
+                <button type="button" class="btn btn-outline-success">Absenden</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Trailer -->
+    @if (!string.IsNullOrWhiteSpace(Model.TrailerUrl))
+    {
+        <div class="row mt-5">
+            <div class="col-12">
+                <h3>Trailer</h3>
+                <div class="ratio ratio-16x9">
+                    <iframe src="@Model.TrailerUrl" title="Trailer" allowfullscreen></iframe>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Empfehlungen -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3>Ähnliche Filme</h3>
+            <div id="recommendCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+
+                    <!-- Carousel Slide 1 -->
+                    <div class="carousel-item active">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card h-100">
+                                    <img src="/images/posters/inception.jpg" class="card-img-top" alt="Inception" />
+                                    <div class="card-body">
+                                        <h6 class="card-title">Inception</h6>
+                                        <a href="@Url.Action("Details", "Movies", new { id = 1 })" class="btn btn-sm btn-outline-primary">Details</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card h-100">
+                                    <img src="/images/posters/matrix.jpg" class="card-img-top" alt="Matrix" />
+                                    <div class="card-body">
+                                        <h6 class="card-title">The Matrix</h6>
+                                        <a href="@Url.Action("Details", "Movies", new { id = 2 })" class="btn btn-sm btn-outline-primary">Details</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card h-100">
+                                    <img src="/images/posters/interstellar.jpg" class="card-img-top" alt="Interstellar" />
+                                    <div class="card-body">
+                                        <h6 class="card-title">Interstellar</h6>
+                                        <a href="@Url.Action("Details", "Movies", new { id = 3 })" class="btn btn-sm btn-outline-primary">Details</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card h-100">
+                                    <img src="/images/posters/inception.jpg" class="card-img-top" alt="Dummy" />
+                                    <div class="card-body">
+                                        <h6 class="card-title">Beispiel</h6>
+                                        <a href="#" class="btn btn-sm btn-outline-primary">Details</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Weitere Slides können ergänzt werden -->
+                </div>
+
+                <button class="carousel-control-prev" type="button" data-bs-target="#recommendCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#recommendCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

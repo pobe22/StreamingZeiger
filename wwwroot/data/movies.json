@@ -1,0 +1,59 @@
+﻿[
+  {
+    "Id": 1,
+    "Title": "Inception",
+    "OriginalTitle": "Inception",
+    "Genres": [ "Sci-Fi", "Thriller" ],
+    "Year": 2010,
+    "DurationMinutes": 148,
+    "Description": "Ein Dieb dringt in die Träume anderer Menschen ein, um ihre Geheimnisse zu stehlen.",
+    "Cast": [ "Leonardo DiCaprio", "Joseph Gordon-Levitt", "Elliot Page" ],
+    "Director": "Christopher Nolan",
+    "PosterFile": "/images/posters/inception.jpg",
+    "TrailerUrl": "https://www.youtube.com/embed/YoHD9XEInc0",
+    "AvailabilityByService": {
+      "Netflix": true,
+      "Prime Video": false,
+      "Disney+": true
+    },
+    "Rating": 8.8
+  },
+  {
+    "Id": 2,
+    "Title": "The Matrix",
+    "OriginalTitle": "The Matrix",
+    "Genres": [ "Sci-Fi", "Action" ],
+    "Year": 1999,
+    "DurationMinutes": 136,
+    "Description": "Ein Hacker entdeckt, dass die Welt eine Simulation ist.",
+    "Cast": [ "Keanu Reeves", "Laurence Fishburne", "Carrie-Anne Moss" ],
+    "Director": "Lana Wachowski, Lilly Wachowski",
+    "PosterFile": "/images/posters/matrix.jpg",
+    "TrailerUrl": "https://www.youtube.com/embed/vKQi3bBA1y8",
+    "AvailabilityByService": {
+      "Netflix": false,
+      "Prime Video": true,
+      "Disney+": false
+    },
+    "Rating": 8.7
+  },
+  {
+    "Id": 3,
+    "Title": "Interstellar",
+    "OriginalTitle": "Interstellar",
+    "Genres": [ "Sci-Fi", "Drama" ],
+    "Year": 2014,
+    "DurationMinutes": 169,
+    "Description": "Eine Gruppe von Astronauten reist durch ein Wurmloch auf der Suche nach einer neuen Heimat für die Menschheit.",
+    "Cast": [ "Matthew McConaughey", "Anne Hathaway", "Jessica Chastain" ],
+    "Director": "Christopher Nolan",
+    "PosterFile": "/images/posters/interstellar.jpg",
+    "TrailerUrl": "https://www.youtube.com/embed/zSWdZVtXT7E",
+    "AvailabilityByService": {
+      "Netflix": true,
+      "Prime Video": true,
+      "Disney+": false
+    },
+    "Rating": 8.6
+  }
+]
