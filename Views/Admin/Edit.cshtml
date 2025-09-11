@@ -1,11 +1,14 @@
 ﻿@model StreamingZeiger.Models.Movie
 @{
-    ViewData["Title"] = "Film hinzufügen";
+    ViewData["Title"] = "Film bearbeiten";
+    var castCsv = ViewBag.CastCsv as string ?? "";
+    var allServices = new string[] { "Netflix", "Prime Video", "Disney+" };
 }
 
 <div class="container mt-4">
-    <h2>Film hinzufügen</h2>
-    <form asp-action="Create" method="post" enctype="multipart/form-data" class="row g-3">
+    <h2>Film bearbeiten</h2>
+    <form asp-action="Edit" method="post" enctype="multipart/form-data" class="row g-3">
+        <input type="hidden" asp-for="Id" />
         <div class="col-md-6">
             <label asp-for="Title" class="form-label"></label>
             <input asp-for="Title" class="form-control" />
@@ -32,11 +35,15 @@
         </div>
         <div class="col-12">
             <label for="Cast" class="form-label">Besetzung (Komma-getrennt)</label>
-            <input type="text" name="CastCsv" class="form-control" />
+            <input type="text" name="CastCsv" class="form-control" value="@castCsv" />
         </div>
         <div class="col-md-6">
             <label asp-for="PosterFile" class="form-label">Poster</label>
             <input type="file" name="PosterUpload" class="form-control" />
+            @if (!string.IsNullOrEmpty(Model.PosterFile))
+            {
+                <img src="@Model.PosterFile" alt="Poster" class="img-thumbnail mt-2" style="max-height:150px;" />
+            }
         </div>
         <div class="col-md-6">
             <label asp-for="TrailerUrl" class="form-label"></label>
@@ -44,16 +51,17 @@
         </div>
         <div class="col-12">
             <label class="form-label">Verfügbarkeit</label><br />
-            @foreach (var service in new string[] { "Netflix", "Prime Video", "Disney+" })
+            @foreach (var service in allServices)
             {
                 <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" name="Services" value="@service" />
+                    <input class="form-check-input" type="checkbox" name="Services" value="@service"
+                           @(Model.AvailabilityByService != null && Model.AvailabilityByService.ContainsKey(service) && Model.AvailabilityByService[service] ? "checked" : "") />
                     <label class="form-check-label">@service</label>
                 </div>
             }
         </div>
         <div class="col-12">
-            <button type="submit" class="btn btn-success">Speichern</button>
+            <button type="submit" class="btn btn-primary">Speichern</button>
         </div>
     </form>
 </div>
