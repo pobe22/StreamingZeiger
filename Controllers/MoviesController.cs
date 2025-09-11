@@ -1,41 +1,52 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using StreamingZeiger.Models;
 using StreamingZeiger.Services;
+using StreamingZeiger.Data;
 
 namespace StreamingZeiger.Controllers
 {
     public class MoviesController : Controller
     {
         private readonly IStaticMovieRepository _repo;
-        public MoviesController(IStaticMovieRepository repo) { _repo = repo; }
+        private readonly AppDbContext _context;
+        public MoviesController(IStaticMovieRepository repo, AppDbContext context)
+        {
+            _repo = repo;
+            _context = context;
+        }
 
         public IActionResult Index([FromQuery] MovieFilterViewModel filter)
         {
-            var movies = _repo.GetAll();
-            if (movies == null)
-                return BadRequest("Repository did not return a valid movie list.");
+            var movies = _context.Movies.AsQueryable();
 
-            var q = movies.AsQueryable();
-            if (!string.IsNullOrWhiteSpace(filter.Query))
-                q = q.Where(m => m.Title.Contains(filter.Query, StringComparison.OrdinalIgnoreCase)
-                              || m.OriginalTitle.Contains(filter.Query ?? "", StringComparison.OrdinalIgnoreCase)
-                              || m.Cast.Any(c => c.Contains(filter.Query, StringComparison.OrdinalIgnoreCase)));
             if (!string.IsNullOrWhiteSpace(filter.Genre))
-                q = q.Where(m => m.Genres.Contains(filter.Genre));
-            if (filter.YearFrom.HasValue) q = q.Where(m => m.Year >= filter.YearFrom.Value);
-            if (filter.YearTo.HasValue) q = q.Where(m => m.Year <= filter.YearTo.Value);
-            if (filter.MinRating.HasValue) q = q.Where(m => m.Rating >= filter.MinRating.Value);
+                movies = movies.Where(m => m.Genres.Contains(filter.Genre));
+            if (filter.YearFrom.HasValue) movies = movies.Where(m => m.Year >= filter.YearFrom.Value);
+            if (filter.YearTo.HasValue) movies = movies.Where(m => m.Year <= filter.YearTo.Value);
+            if (filter.MinRating.HasValue) movies = movies.Where(m => m.Rating >= filter.MinRating.Value);
             if (!string.IsNullOrWhiteSpace(filter.Service))
-                q = q.Where(m => m.AvailabilityByService.ContainsKey(filter.Service) && m.AvailabilityByService[filter.Service]);
+                movies = movies.Where(m => m.AvailabilityByService.ContainsKey(filter.Service) && m.AvailabilityByService[filter.Service]);
 
-            var total = q.Count();
-            var items = q.Skip((filter.Page - 1) * filter.PageSize).Take(filter.PageSize).ToList();
+            // **AsEnumerable() hier, damit LINQ-to-Objects angewendet wird**
+            var result = movies.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(filter.Query))
+            {
+                result = result.Where(m =>
+                    (!string.IsNullOrWhiteSpace(m.Title) && m.Title.Contains(filter.Query, StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrWhiteSpace(m.OriginalTitle) && m.OriginalTitle.Contains(filter.Query, StringComparison.OrdinalIgnoreCase)) ||
+                    (m.Cast != null && m.Cast.Any(c => c.Contains(filter.Query, StringComparison.OrdinalIgnoreCase)))
+                );
+            }
+
+            var total = result.Count();
+            var items = result.Skip((filter.Page - 1) * filter.PageSize).Take(filter.PageSize).ToList();
 
             ViewBag.Total = total;
             ViewBag.Page = filter.Page;
             ViewBag.PageSize = filter.PageSize;
 
             return View(items);
+
         }
 
         public IActionResult Details(int id)

@@ -5,6 +5,8 @@
     var page = ViewBag.Page as int? ?? 1;
     var pageSize = ViewBag.PageSize as int? ?? 12;
     var totalPages = (int)Math.Ceiling(total / (double)pageSize);
+    var serviceQuery = Context.Request.Query["Service"];
+    var ratingQuery = Context.Request.Query["MinRating"];
 }
 
 <div class="container mt-4">
@@ -30,6 +32,25 @@
                 <option>Thriller</option>
             </select>
         </div>
+        <div class="col-md-2">
+            <select name="Service" class="form-select">
+                <option value="">Alle Dienste</option>
+                <option value="Netflix" selected="@(serviceQuery == "Netflix" ? "selected" : null)">Netflix</option>
+                <option value="Disney+" selected="@(serviceQuery == "Disney+" ? "selected" : null)">Disney+</option>
+                <option value="Prime" selected="@(serviceQuery == "Prime" ? "selected" : null)">Prime Video</option>
+
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <select name="MinRating" class="form-select">
+                <option value="">Alle Bewertungen</option>
+                <option value="5" selected="@(ratingQuery == "5" ? "selected" : null)">5+</option>
+                <option value="7" selected="@(ratingQuery == "7" ? "selected" : null)">7+</option>
+                <option value="9" selected="@(ratingQuery == "9" ? "selected" : null)">9+</option>
+            </select>
+        </div>
+
         <div class="col-md-2">
             <button type="submit" class="btn btn-primary w-100">Filtern</button>
         </div>
