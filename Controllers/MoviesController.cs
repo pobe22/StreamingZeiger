@@ -23,11 +23,15 @@ namespace StreamingZeiger.Controllers
             if (filter.YearFrom.HasValue) movies = movies.Where(m => m.Year >= filter.YearFrom.Value);
             if (filter.YearTo.HasValue) movies = movies.Where(m => m.Year <= filter.YearTo.Value);
             if (filter.MinRating.HasValue) movies = movies.Where(m => m.Rating >= filter.MinRating.Value);
-            if (!string.IsNullOrWhiteSpace(filter.Service))
-                movies = movies.Where(m => m.AvailabilityByService.ContainsKey(filter.Service) && m.AvailabilityByService[filter.Service]);
 
-            // **AsEnumerable() hier, damit LINQ-to-Objects angewendet wird**
             var result = movies.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(filter.Service))
+            {
+                result = result.Where(m => m.AvailabilityByService != null
+                                         && m.AvailabilityByService.ContainsKey(filter.Service)
+                                         && m.AvailabilityByService[filter.Service]);
+            }
 
             if (!string.IsNullOrWhiteSpace(filter.Query))
             {
