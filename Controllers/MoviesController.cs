@@ -83,6 +83,23 @@ namespace StreamingZeiger.Controllers
 
             return View(movie);
         }
+
+        [HttpGet]
+        public JsonResult Autocomplete(string term)
+        {
+            if (string.IsNullOrWhiteSpace(term))
+                return Json(new string[0]);
+
+            var titles = _context.Movies
+                .Where(m => m.Title.Contains(term))
+                .OrderBy(m => m.Title)
+                .Select(m => m.Title)
+                .Take(10) // max 10 Vorschläge
+                .ToList();
+
+            return Json(titles);
+        }
+
         public IActionResult TrackShare(int id, string platform)
         {
             var movie = _context.Movies.Find(id);
