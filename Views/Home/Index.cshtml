@@ -1,8 +1,164 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
-}
+﻿@model List<StreamingZeiger.Models.Movie>
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<style>
+    /* Carousel Poster kleiner */
+    #movieCarousel .carousel-item img {
+        max-height: 300px;
+        object-fit: contain;
+        margin: 0 auto;
+        transition: transform 1s ease, opacity 1s ease;
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    /* Caption kleiner und kompakt */
+    #movieCarousel .carousel-caption {
+        bottom: 10%;
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 0.5rem 1rem;
+        border-radius: 0.3rem;
+    }
+
+        #movieCarousel .carousel-caption h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.3rem;
+        }
+
+        #movieCarousel .carousel-caption a {
+            font-size: 0.9rem;
+            padding: 0.3rem 0.8rem;
+        }
+
+    /* Poster Gallery */
+    .card:hover {
+        transform: scale(1.05);
+        transition: transform 0.3s ease-in-out;
+        z-index: 2;
+    }
+
+    .card img {
+        height: 200px;
+        object-fit: cover;
+    }
+
+    /* Fade-In Animation für Poster Gallery */
+    .fade-in {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+</style>
+
+<!-- Intro Text -->
+<section class="container mb-5 text-center">
+    <h1 class="mb-3">Willkommen bei StreamingZeiger</h1>
+    <p class="lead">
+        Entdecke die besten Filme, finde Bewertungen, filtere nach Genres oder Streamingdiensten und behalte
+        deine Lieblingsfilme im Blick. Unser Adminbereich ermöglicht das einfache Verwalten der Filmdaten.
+    </p>
+</section>
+
+<!-- Carousel -->
+<div id="movieCarousel" class="carousel slide mb-5" data-bs-ride="carousel">
+    <div class="carousel-inner">
+        @for (int i = 0; i < Model.Count; i++)
+        {
+            var movie = Model[i];
+            <div class="carousel-item @(i == 0 ? "active" : "")" data-bs-interval="2000">
+                <img src="@Url.Content(movie.PosterFile)"
+                     class="d-block rounded shadow"
+                     alt="@movie.Title">
+                <div class="carousel-caption d-none d-md-block">
+                    <h3>@movie.Title</h3>
+                    <a href="@Url.Action("Details", "Movies", new { id = movie.Id })"
+                       class="btn btn-primary">Details ansehen</a>
+                </div>
+            </div>
+        }
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#movieCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#movieCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    </button>
 </div>
+
+<!-- Features Section -->
+<section class="container mb-5">
+    <div class="row text-center">
+        <div class="col-md-4 mb-4">
+            <i class="bi bi-film" style="font-size: 2rem;"></i>
+            <h4 class="mt-2">Filme entdecken</h4>
+            <p>Durchstöbere unsere Datenbank nach Genre, Bewertung oder Streamingdienst.</p>
+        </div>
+        <div class="col-md-4 mb-4">
+            <i class="bi bi-star" style="font-size: 2rem;"></i>
+            <h4 class="mt-2">Bewertungen</h4>
+            <p>Finde die besten Filme dank Nutzerbewertungen und Empfehlungen.</p>
+        </div>
+        <div class="col-md-4 mb-4">
+            <i class="bi bi-gear" style="font-size: 2rem;"></i>
+            <h4 class="mt-2">Adminbereich</h4>
+            <p>Erstelle, bearbeite und lösche Filme bequem über das Admin-Panel.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Poster Gallery Section -->
+<section class="container mb-5">
+    <h2 class="mb-4 text-center">Unsere Filme</h2>
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
+        @foreach (var movie in Model)
+        {
+            <div class="col fade-in">
+                <div class="card h-100 shadow-sm">
+                    <img src="@Url.Content(movie.PosterFile)"
+                         class="card-img-top img-fluid"
+                         alt="@movie.Title">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">@movie.Title</h5>
+                        <a href="@Url.Action("Details", "Movies", new { id = movie.Id })"
+                           class="btn btn-primary btn-sm">Details</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+<script>
+    const fadeElements = document.querySelectorAll('.fade-in');
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1 });
+    fadeElements.forEach(el => observer.observe(el));
+
+    const carousel = document.getElementById('movieCarousel');
+    const carouselItems = carousel.querySelectorAll('.carousel-item img');
+
+    function animateCarousel() {
+        carouselItems.forEach((img, idx) => {
+            if (img.closest('.carousel-item').classList.contains('active')) {
+                img.style.opacity = 1;
+                img.style.transform = 'scale(1)';
+            } else {
+                img.style.opacity = 0;
+                img.style.transform = 'scale(0.95)';
+            }
+        });
+    }
+
+    animateCarousel();
+
+    carousel.addEventListener('slid.bs.carousel', animateCarousel);
+</script>
