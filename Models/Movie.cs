@@ -18,6 +18,9 @@ namespace StreamingZeiger.Models
         public double Rating { get; set; }
 
         public ICollection<MovieGenre> MovieGenres { get; set; } = new List<MovieGenre>();
+        public ICollection<Rating> Ratings { get; set; }
+        public ICollection<WatchlistItem> WatchlistItems { get; set; }
+
     }
 
     public class Genre

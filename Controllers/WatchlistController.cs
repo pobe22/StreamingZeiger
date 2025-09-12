@@ -1,54 +1,60 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using StreamingZeiger.Data;
 using StreamingZeiger.Models;
+using System.Threading.Tasks;
 
 namespace StreamingZeiger.Controllers
 {
+    [Authorize]
     public class WatchlistController : Controller
     {
-        private readonly List<Movie> _movies;
+        private readonly AppDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public WatchlistController()
+        public WatchlistController(AppDbContext context, UserManager<ApplicationUser> userManager)
         {
-            // Dummy Daten (später aus DB)
-            _movies = new List<Movie>
-            {
-                new Movie { Id = 1, Title = "Inception", Year = 2010, PosterFile="/images/posters/inception.jpg" },
-                new Movie { Id = 2, Title = "Matrix", Year = 1999, PosterFile="/images/posters/matrix.jpg" },
-                new Movie { Id = 3, Title = "Interstellar", Year = 2014, PosterFile="/images/posters/interstellar.jpg" }
-            };
+            _context = context;
+            _userManager = userManager;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var list = HttpContext.Session.GetObjectFromJson<List<Movie>>("Watchlist") ?? new List<Movie>();
-            return View(list);
+            var user = await _userManager.GetUserAsync(User);
+            var items = await _context.WatchlistItems
+                .Include(w => w.Movie)
+                .Where(w => w.UserId == user.Id)
+                .ToListAsync();
+
+            return View(items);
         }
 
-        public IActionResult Add(int id)
+        public async Task<IActionResult> Add(int movieId)
         {
-            var list = HttpContext.Session.GetObjectFromJson<List<Movie>>("Watchlist") ?? new List<Movie>();
-            var movie = _movies.FirstOrDefault(m => m.Id == id);
-
-            if (movie != null && !list.Any(m => m.Id == id))
+            var user = await _userManager.GetUserAsync(User);
+            if (!await _context.WatchlistItems.AnyAsync(w => w.UserId == user.Id && w.MovieId == movieId))
             {
-                list.Add(movie);
-                HttpContext.Session.SetObjectAsJson("Watchlist", list);
+                _context.WatchlistItems.Add(new WatchlistItem
+                {
+                    UserId = user.Id,
+                    MovieId = movieId
+                });
+                await _context.SaveChangesAsync();
             }
-
-            return RedirectToAction("Index");
+            return RedirectToAction("Index", "Movies");
         }
 
-        public IActionResult Remove(int id)
+        public async Task<IActionResult> Remove(int movieId)
         {
-            var list = HttpContext.Session.GetObjectFromJson<List<Movie>>("Watchlist") ?? new List<Movie>();
-            var movie = list.FirstOrDefault(m => m.Id == id);
-
-            if (movie != null)
+            var user = await _userManager.GetUserAsync(User);
+            var item = await _context.WatchlistItems.FirstOrDefaultAsync(w => w.UserId == user.Id && w.MovieId == movieId);
+            if (item != null)
             {
-                list.Remove(movie);
-                HttpContext.Session.SetObjectAsJson("Watchlist", list);
+                _context.WatchlistItems.Remove(item);
+                await _context.SaveChangesAsync();
             }
-
             return RedirectToAction("Index");
         }
     }

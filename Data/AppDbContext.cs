@@ -2,10 +2,11 @@
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StreamingZeiger.Models;
 using System.Text.Json;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace StreamingZeiger.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<ApplicationUser>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -13,6 +14,8 @@ namespace StreamingZeiger.Data
         public DbSet<Series> Series { get; set; }
         public DbSet<Genre> Genres { get; set; }
         public DbSet<MovieGenre> MovieGenres { get; set; }
+        public DbSet<Rating> Ratings { get; set; }
+        public DbSet<WatchlistItem> WatchlistItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

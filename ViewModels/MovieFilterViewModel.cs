@@ -1,4 +1,5 @@
-﻿public class MovieFilterViewModel
+﻿namespace StreamingZeiger.ViewModels;
+public class MovieFilterViewModel
 {
     public string? Query { get; set; }
     public string? Genre { get; set; }

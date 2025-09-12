@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StreamingZeiger.Data;
 
@@ -10,9 +11,11 @@ using StreamingZeiger.Data;
 namespace StreamingZeiger.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250912075245_AddIdentityWithSQLite")]
+    partial class AddIdentityWithSQLite
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
@@ -444,7 +447,7 @@ namespace StreamingZeiger.Migrations
             modelBuilder.Entity("StreamingZeiger.Models.Rating", b =>
                 {
                     b.HasOne("StreamingZeiger.Models.Movie", "Movie")
-                        .WithMany("Ratings")
+                        .WithMany()
                         .HasForeignKey("MovieId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -463,7 +466,7 @@ namespace StreamingZeiger.Migrations
             modelBuilder.Entity("StreamingZeiger.Models.WatchlistItem", b =>
                 {
                     b.HasOne("StreamingZeiger.Models.Movie", "Movie")
-                        .WithMany("WatchlistItems")
+                        .WithMany()
                         .HasForeignKey("MovieId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -494,10 +497,6 @@ namespace StreamingZeiger.Migrations
             modelBuilder.Entity("StreamingZeiger.Models.Movie", b =>
                 {
                     b.Navigation("MovieGenres");
-
-                    b.Navigation("Ratings");
-
-                    b.Navigation("WatchlistItems");
                 });
 #pragma warning restore 612, 618
         }
