@@ -59,11 +59,30 @@ namespace StreamingZeiger.Controllers
 
         }
 
-        public IActionResult Details(int id)
+        public async Task<IActionResult> Details(int id)
         {
-            var movie = _context.Movies.FirstOrDefault(m => m.Id == id);
+            var movie = await _context.Movies
+                .Include(m => m.MovieGenres)
+                    .ThenInclude(mg => mg.Genre)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
             if (movie == null) return NotFound();
+
+            // Empfehlungen: gleiche Genres, außer aktuellen Film
+            var genreIds = movie.MovieGenres.Select(mg => mg.GenreId).ToList();
+
+            var recommended = await _context.Movies
+                .Include(m => m.MovieGenres)
+                .Where(m => m.Id != id && m.MovieGenres.Any(mg => genreIds.Contains(mg.GenreId)))
+                .OrderByDescending(m => m.Rating)
+                .Take(8)
+                .ToListAsync();
+
+            ViewBag.RecommendedMovies = recommended;
+
             return View(movie);
         }
+
+
     }
 }
