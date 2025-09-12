@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Microsoft.EntityFrameworkCore;
 
 namespace StreamingZeiger.Models
 {
@@ -18,7 +19,9 @@ namespace StreamingZeiger.Models
         public double Rating { get; set; }
 
         public ICollection<MovieGenre> MovieGenres { get; set; } = new List<MovieGenre>();
+        [ValidateNever]
         public ICollection<Rating> Ratings { get; set; }
+        [ValidateNever]
         public ICollection<WatchlistItem> WatchlistItems { get; set; }
 
     }

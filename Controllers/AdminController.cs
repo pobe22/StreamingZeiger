@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using StreamingZeiger.Data;
 using StreamingZeiger.Models;
+using StreamingZeiger.Services;
 
 namespace StreamingZeiger.Controllers
 {
@@ -217,5 +218,15 @@ namespace StreamingZeiger.Controllers
             }
             return RedirectToAction(nameof(Index));
         }
+
+        [HttpGet]
+        public async Task<IActionResult> ImportFromTmdb(int tmdbId)
+        {
+            var tmdbService = new TmdbService();
+            var movie = await tmdbService.GetMovieByIdAsync(tmdbId);
+
+            return Json(movie); // Liefert die Daten als JSON an das Frontend
+        }
+
     }
 }
