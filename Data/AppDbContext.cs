@@ -11,6 +11,8 @@ namespace StreamingZeiger.Data
 
         public DbSet<Movie> Movies { get; set; }
         public DbSet<Series> Series { get; set; }
+        public DbSet<Genre> Genres { get; set; }
+        public DbSet<MovieGenre> MovieGenres { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -23,9 +25,18 @@ namespace StreamingZeiger.Data
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                 v => JsonSerializer.Deserialize<Dictionary<string, bool>>(v, (JsonSerializerOptions?)null) ?? new Dictionary<string, bool>());
 
-            modelBuilder.Entity<Movie>()
-                .Property(m => m.Genres)
-                .HasConversion(stringListConverter);
+            modelBuilder.Entity<MovieGenre>()
+                .HasKey(mg => new { mg.MovieId, mg.GenreId });
+            
+            modelBuilder.Entity<MovieGenre>()
+            .HasOne(mg => mg.Movie)
+            .WithMany(m => m.MovieGenres)
+            .HasForeignKey(mg => mg.MovieId);
+
+            modelBuilder.Entity<MovieGenre>()
+                .HasOne(mg => mg.Genre)
+                .WithMany(g => g.MovieGenres)
+                .HasForeignKey(mg => mg.GenreId);
 
             modelBuilder.Entity<Movie>()
                 .Property(m => m.Cast)
@@ -34,6 +45,8 @@ namespace StreamingZeiger.Data
             modelBuilder.Entity<Movie>()
                 .Property(m => m.AvailabilityByService)
                 .HasConversion(dictionaryConverter);
+
+            base.OnModelCreating(modelBuilder);
         }
     }
 }

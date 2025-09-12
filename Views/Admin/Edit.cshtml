@@ -37,6 +37,11 @@
             <label for="Cast" class="form-label">Besetzung (Komma-getrennt)</label>
             <input type="text" name="CastCsv" class="form-control" value="@castCsv" />
         </div>
+        <div class="form-group">
+            <label for="GenreCsv">Genres (Komma-getrennt)</label>
+            <input type="text" class="form-control" id="GenreCsv" name="GenreCsv" value="@ViewBag.GenreCsv" />
+        </div>
+
         <div class="col-md-6">
             <label asp-for="PosterFile" class="form-label">Poster</label>
             <input type="file" name="PosterUpload" class="form-control" />

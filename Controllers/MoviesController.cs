@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using StreamingZeiger.Services;
+using Microsoft.EntityFrameworkCore;
 using StreamingZeiger.Data;
+using StreamingZeiger.Services;
 
 namespace StreamingZeiger.Controllers
 {
@@ -19,7 +20,12 @@ namespace StreamingZeiger.Controllers
             var movies = _context.Movies.AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(filter.Genre))
-                movies = movies.Where(m => m.Genres.Contains(filter.Genre));
+            {
+                movies = movies
+                    .Include(m => m.MovieGenres)
+                    .ThenInclude(mg => mg.Genre)
+                    .Where(m => m.MovieGenres.Any(mg => mg.Genre.Name == filter.Genre));
+            }
             if (filter.YearFrom.HasValue) movies = movies.Where(m => m.Year >= filter.YearFrom.Value);
             if (filter.YearTo.HasValue) movies = movies.Where(m => m.Year <= filter.YearTo.Value);
             if (filter.MinRating.HasValue) movies = movies.Where(m => m.Rating >= filter.MinRating.Value);
@@ -55,7 +61,7 @@ namespace StreamingZeiger.Controllers
 
         public IActionResult Details(int id)
         {
-            var movie = _repo.GetById(id);
+            var movie = _context.Movies.FirstOrDefault(m => m.Id == id);
             if (movie == null) return NotFound();
             return View(movie);
         }

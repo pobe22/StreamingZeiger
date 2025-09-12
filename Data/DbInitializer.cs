@@ -43,53 +43,74 @@ namespace StreamingZeiger.Data
             // Filme
             if (!context.Movies.Any())
             {
-                context.Movies.AddRange(
-                    new Movie
-                    {
-                        Title = "Inception",
-                        OriginalTitle = "Inception",
-                        Genres = new List<string> { "Sci-Fi", "Thriller" },
-                        Year = 2010,
-                        DurationMinutes = 148,
-                        Description = "Ein Dieb dringt in die Träume anderer Menschen ein, um ihre Geheimnisse zu stehlen.",
-                        Cast = new List<string> { "Leonardo DiCaprio", "Joseph Gordon-Levitt", "Elliot Page" },
-                        Director = "Christopher Nolan",
-                        PosterFile = "/images/posters/inception.jpg",
-                        TrailerUrl = "https://www.youtube.com/embed/YoHD9XEInc0",
-                        AvailabilityByService = new Dictionary<string, bool> { { "Netflix", true }, { "Prime Video", false }, { "Disney+", true } },
-                        Rating = 8.8
-                    },
-                    new Movie
-                    {
-                        Title = "The Matrix",
-                        OriginalTitle = "The Matrix",
-                        Genres = new List<string> { "Sci-Fi", "Action" },
-                        Year = 1999,
-                        DurationMinutes = 136,
-                        Description = "Ein Hacker entdeckt, dass die Welt eine Simulation ist.",
-                        Cast = new List<string> { "Keanu Reeves", "Laurence Fishburne", "Carrie-Anne Moss" },
-                        Director = "Lana Wachowski, Lilly Wachowski",
-                        PosterFile = "/images/posters/matrix.jpg",
-                        TrailerUrl = "https://www.youtube.com/embed/vKQi3bBA1y8",
-                        AvailabilityByService = new Dictionary<string, bool> { { "Netflix", false }, { "Prime Video", true }, { "Disney+", false } },
-                        Rating = 8.7
-                    },
-                    new Movie
-                    {
-                        Title = "Interstellar",
-                        OriginalTitle = "Interstellar",
-                        Genres = new List<string> { "Sci-Fi", "Drama" },
-                        Year = 2014,
-                        DurationMinutes = 169,
-                        Description = "Eine Gruppe von Astronauten reist durch ein Wurmloch auf der Suche nach einer neuen Heimat für die Menschheit.",
-                        Cast = new List<string> { "Matthew McConaughey", "Anne Hathaway", "Jessica Chastain" },
-                        Director = "Christopher Nolan",
-                        PosterFile = "/images/posters/interstellar.jpg",
-                        TrailerUrl = "https://www.youtube.com/embed/zSWdZVtXT7E",
-                        AvailabilityByService = new Dictionary<string, bool> { { "Netflix", true }, { "Prime Video", true }, { "Disney+", false } },
-                        Rating = 8.6
-                    }
-                );
+                var sciFi = context.Genres.FirstOrDefault(g => g.Name == "Sci-Fi") ?? new Genre { Name = "Sci-Fi" };
+                var thriller = context.Genres.FirstOrDefault(g => g.Name == "Thriller") ?? new Genre { Name = "Thriller" };
+                var action = context.Genres.FirstOrDefault(g => g.Name == "Action") ?? new Genre { Name = "Action" };
+                var drama = context.Genres.FirstOrDefault(g => g.Name == "Drama") ?? new Genre { Name = "Drama" };
+
+                context.Genres.AddRange(sciFi, thriller, action, drama);
+
+                var inception = new Movie
+                {
+                    Title = "Inception",
+                    OriginalTitle = "Inception",
+                    Year = 2010,
+                    DurationMinutes = 148,
+                    Description = "Ein Dieb dringt in die Träume anderer Menschen ein...",
+                    Cast = new List<string> { "Leonardo DiCaprio", "Joseph Gordon-Levitt", "Elliot Page" },
+                    Director = "Christopher Nolan",
+                    PosterFile = "/images/posters/inception.jpg",
+                    TrailerUrl = "https://www.youtube.com/embed/YoHD9XEInc0",
+                    AvailabilityByService = new Dictionary<string, bool> { { "Netflix", true }, { "Prime Video", false }, { "Disney+", true } },
+                    Rating = 8.8,
+                    MovieGenres = new List<MovieGenre>
+        {
+            new MovieGenre { Genre = sciFi },
+            new MovieGenre { Genre = thriller }
+        }
+                };
+
+                var matrix = new Movie
+                {
+                    Title = "The Matrix",
+                    OriginalTitle = "The Matrix",
+                    Year = 1999,
+                    DurationMinutes = 136,
+                    Description = "Ein Hacker entdeckt, dass die Welt eine Simulation ist.",
+                    Cast = new List<string> { "Keanu Reeves", "Laurence Fishburne", "Carrie-Anne Moss" },
+                    Director = "Lana Wachowski, Lilly Wachowski",
+                    PosterFile = "/images/posters/matrix.jpg",
+                    TrailerUrl = "https://www.youtube.com/embed/vKQi3bBA1y8",
+                    AvailabilityByService = new Dictionary<string, bool> { { "Netflix", false }, { "Prime Video", true }, { "Disney+", false } },
+                    Rating = 8.7,
+                    MovieGenres = new List<MovieGenre>
+        {
+            new MovieGenre { Genre = sciFi },
+            new MovieGenre { Genre = action }
+        }
+                };
+
+                var interstellar = new Movie
+                {
+                    Title = "Interstellar",
+                    OriginalTitle = "Interstellar",
+                    Year = 2014,
+                    DurationMinutes = 169,
+                    Description = "Eine Gruppe von Astronauten reist durch ein Wurmloch...",
+                    Cast = new List<string> { "Matthew McConaughey", "Anne Hathaway", "Jessica Chastain" },
+                    Director = "Christopher Nolan",
+                    PosterFile = "/images/posters/interstellar.jpg",
+                    TrailerUrl = "https://www.youtube.com/embed/zSWdZVtXT7E",
+                    AvailabilityByService = new Dictionary<string, bool> { { "Netflix", true }, { "Prime Video", true }, { "Disney+", false } },
+                    Rating = 8.6,
+                    MovieGenres = new List<MovieGenre>
+        {
+            new MovieGenre { Genre = sciFi },
+            new MovieGenre { Genre = drama }
+        }
+                };
+
+                context.Movies.AddRange(inception, matrix, interstellar);
             }
 
             context.SaveChanges();

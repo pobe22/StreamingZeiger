@@ -19,7 +19,7 @@
             <ul class="list-unstyled">
                 <li>
                     <strong>Genre:</strong>
-                    @foreach (var g in Model.Genres)
+                    @foreach (var g in Model.MovieGenres.Select(mg => mg.Genre.Name))
                     {
                         <span class="badge bg-secondary me-1">@g</span>
                     }
