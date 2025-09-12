@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Identity
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
+@using System.Net
 
 
 @{
@@ -111,36 +112,59 @@
             </div>
 
             @if (SignInManager.IsSignedIn(User))
-{
-    <h5>Bewertung abgeben</h5>
-    <form asp-controller="Rating" asp-action="Add" method="post" class="mb-3">
-        <input type="hidden" name="movieId" value="@Model.Id" />
-        <select name="score" class="form-select w-auto d-inline">
+            {
+                <h5>Bewertung abgeben</h5>
+                <form asp-controller="Rating" asp-action="Add" method="post" class="mb-3">
+                    <input type="hidden" name="movieId" value="@Model.Id" />
+                    <select name="score" class="form-select w-auto d-inline">
                         @for (int i = 1; i <= 5; i++)
                         {
                             var isSelected = userRating == i;
                             <option value="@i" selected="@(isSelected ? "selected" : null)">@i</option>
                         }
-        </select>
-        <button type="submit" class="btn btn-primary btn-sm">Bewerten</button>
-    </form>
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-sm">Bewerten</button>
+                </form>
 
-    <h5>Watchlist</h5>
-    @if (!inWatchlist)
-    {
-        <a asp-controller="Watchlist" asp-action="Add" asp-route-movieId="@Model.Id" class="btn btn-success btn-sm">Zur Watchlist hinzufügen</a>
-    }
-    else
-    {
-        <a asp-controller="Watchlist" asp-action="Remove" asp-route-movieId="@Model.Id" class="btn btn-danger btn-sm">Aus Watchlist entfernen</a>
-    }
-}
-else
-{
-    <p><a asp-controller="Account" asp-action="Login">Login</a>, um Filme zu bewerten oder zur Watchlist hinzuzufügen.</p>
-}
+                <h5>Watchlist</h5>
+                @if (!inWatchlist)
+                {
+                    <a asp-controller="Watchlist" asp-action="Add" asp-route-movieId="@Model.Id" class="btn btn-success btn-sm">Zur Watchlist hinzufügen</a>
+                }
+                else
+                {
+                    <a asp-controller="Watchlist" asp-action="Remove" asp-route-movieId="@Model.Id" class="btn btn-danger btn-sm">Aus Watchlist entfernen</a>
+                }
+            }
+            else
+            {
+                <p><a asp-controller="Account" asp-action="Login">Login</a>, um Filme zu bewerten oder zur Watchlist hinzuzufügen.</p>
+            }
 
-    </div>
+            <div class="social-share mt-3">
+                @{
+                    var movieUrl = $"{Context.Request.Scheme}://{Context.Request.Host}{Url.Action("Details", "Movies", new { id = Model.Id })}";
+                    var encodedUrl = WebUtility.UrlEncode(movieUrl);
+                    var encodedText = WebUtility.UrlEncode($"{Model.Title} - {movieUrl}");
+                }
+
+                <a href="https://www.facebook.com/sharer/sharer.php?u=@encodedUrl"
+                   target="_blank" class="btn btn-primary">
+                    Teilen auf Facebook
+                </a>
+
+                <a href="https://twitter.com/intent/tweet?text=@encodedText"
+                   target="_blank" class="btn btn-info">
+                    Tweeten
+                </a>
+
+                <a href="https://wa.me/?text=@encodedText"
+                   target="_blank" class="btn btn-success d-md-none">
+                    Teilen auf WhatsApp
+                </a>
+            </div>
+
+        </div>
         <h5>Durchschnittliche Bewertung</h5>
         <p>
             @if (Model.Ratings != null && Model.Ratings.Count > 0)
@@ -153,70 +177,70 @@ else
             }
         </p>
 
-    <!-- Trailer -->
-    @if (!string.IsNullOrWhiteSpace(Model.TrailerUrl))
-    {
-        <div class="row mt-5">
-            <div class="col-12">
-                <h3>Trailer</h3>
-                <div class="ratio ratio-16x9">
-                    <iframe src="@Model.TrailerUrl" title="Trailer" allowfullscreen></iframe>
+        <!-- Trailer -->
+        @if (!string.IsNullOrWhiteSpace(Model.TrailerUrl))
+        {
+            <div class="row mt-5">
+                <div class="col-12">
+                    <h3>Trailer</h3>
+                    <div class="ratio ratio-16x9">
+                        <iframe src="@Model.TrailerUrl" title="Trailer" allowfullscreen></iframe>
+                    </div>
                 </div>
             </div>
-        </div>
-    }
+        }
 
-    <!-- Empfehlungen -->
-    <div class="row mt-5">
-        <div class="col-12">
-            <h3>Ähnliche Filme</h3>
-            <div id="recommendCarousel" class="carousel slide" data-bs-ride="carousel">
-                <div class="carousel-inner">
-                    @for (int i = 0; i < chunks.Count; i++)
-                    {
-                        var slide = chunks[i];
-                        <div class="carousel-item @(i == 0 ? "active" : "")">
-                            <div class="row">
-                                @foreach (var movie in slide)
-                                {
-                                    <div class="col-md-3 mb-3">
-                                        <div class="card h-100">
-                                            <img src="@Url.Content(movie.PosterFile)"
-                                                 class="card-img-top"
-                                                 alt="@movie.Title" />
-                                            <div class="card-body text-center">
-                                                <h6 class="card-title">@movie.Title</h6>
-                                                <a href="@Url.Action("Details", "Movies", new { id = movie.Id })"
-                                                   class="btn btn-sm btn-outline-primary">Details</a>
+        <!-- Empfehlungen -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <h3>Ähnliche Filme</h3>
+                <div id="recommendCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        @for (int i = 0; i < chunks.Count; i++)
+                        {
+                            var slide = chunks[i];
+                            <div class="carousel-item @(i == 0 ? "active" : "")">
+                                <div class="row">
+                                    @foreach (var movie in slide)
+                                    {
+                                        <div class="col-md-3 mb-3">
+                                            <div class="card h-100">
+                                                <img src="@Url.Content(movie.PosterFile)"
+                                                     class="card-img-top"
+                                                     alt="@movie.Title" />
+                                                <div class="card-body text-center">
+                                                    <h6 class="card-title">@movie.Title</h6>
+                                                    <a href="@Url.Action("Details", "Movies", new { id = movie.Id })"
+                                                       class="btn btn-sm btn-outline-primary">Details</a>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                }
+                                    }
+                                </div>
                             </div>
-                        </div>
-                    }
-                </div>
+                        }
+                    </div>
 
-                <!-- Steuerung -->
-                <button class="carousel-control-prev" type="button" data-bs-target="#recommendCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#recommendCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                </button>
+                    <!-- Steuerung -->
+                    <button class="carousel-control-prev" type="button" data-bs-target="#recommendCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#recommendCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
-<script>
-    // Fade-In Animation beim Scrollen
-    const fadeElements = document.querySelectorAll('.fade-in');
-    const observer = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-            }
-        });
-    }, { threshold: 0.1 });
-    fadeElements.forEach(el => observer.observe(el));
-</script>
+    <script>
+        // Fade-In Animation beim Scrollen
+        const fadeElements = document.querySelectorAll('.fade-in');
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+        fadeElements.forEach(el => observer.observe(el));
+    </script>

@@ -83,7 +83,17 @@ namespace StreamingZeiger.Controllers
 
             return View(movie);
         }
+        public IActionResult TrackShare(int id, string platform)
+        {
+            var movie = _context.Movies.Find(id);
+            if (movie != null)
+            {
+                //movie.ShareCount++;
+                _context.SaveChanges();
+            }
 
+            return RedirectToAction("Details", new { id });
+        }
 
     }
 }
