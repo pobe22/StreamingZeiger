@@ -12,55 +12,63 @@
 <div class="container mt-4">
     <h1 class="mb-4">Filme</h1>
 
-    <!-- Such- und Filterformular -->
-    <form method="get" class="row g-3 mb-4">
-        <div class="col-md-4">
-            <input type="text" name="Query" class="form-control" placeholder="Suche nach Titel, Cast ..." value="@Context.Request.Query["Query"]" />
-        </div>
-        <div class="col-md-2">
-            <input type="number" name="YearFrom" class="form-control" placeholder="ab Jahr" value="@Context.Request.Query["YearFrom"]" />
-        </div>
-        <div class="col-md-2">
-            <input type="number" name="YearTo" class="form-control" placeholder="bis Jahr" value="@Context.Request.Query["YearTo"]" />
-        </div>
-        <div class="col-md-2">
-            <select name="Genre" class="form-select">
-                <option value="">Genre</option>
-                <option>Sci-Fi</option>
-                <option>Drama</option>
-                <option>Action</option>
-                <option>Thriller</option>
-            </select>
-        </div>
-        <div class="col-md-2">
-            <select name="Service" class="form-select">
-                <option value="">Alle Dienste</option>
-                <option value="Netflix" selected="@(serviceQuery == "Netflix" ? "selected" : null)">Netflix</option>
-                <option value="Disney+" selected="@(serviceQuery == "Disney+" ? "selected" : null)">Disney+</option>
-                <option value="Prime" selected="@(serviceQuery == "Prime" ? "selected" : null)">Prime Video</option>
+    <!-- Toggle-Button -->
+    <button id="toggleSearchBtn" class="btn btn-outline-secondary mb-3">Filter einblenden</button>
 
-            </select>
-        </div>
+    <!-- Such- und Filterformular (zuerst versteckt) -->
+    <div id="searchForm" style="display:none;">
+        <form id="filterForm" method="get" class="row g-3 mb-4">
+            <div class="col-md-4">
+                <input type="text" name="Query" class="form-control" placeholder="Suche nach Titel, Cast ..." value="@Context.Request.Query["Query"]" />
+            </div>
+            <div class="col-md-2">
+                <input type="number" name="YearFrom" class="form-control" placeholder="ab Jahr" value="@Context.Request.Query["YearFrom"]" />
+            </div>
+            <div class="col-md-2">
+                <input type="number" name="YearTo" class="form-control" placeholder="bis Jahr" value="@Context.Request.Query["YearTo"]" />
+            </div>
+            <div class="col-md-2">
+                <select id="categoryFilter" name="Genre" class="form-select">
+                    <option value="">Genre</option>
+                    <option>Sci-Fi</option>
+                    <option>Drama</option>
+                    <option>Action</option>
+                    <option>Thriller</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select id="typeFilter" name="Service" class="form-select">
+                    <option value="">Alle Dienste</option>
+                    <option value="Netflix" selected="@(serviceQuery == "Netflix" ? "selected" : null)">Netflix</option>
+                    <option value="Disney+" selected="@(serviceQuery == "Disney+" ? "selected" : null)">Disney+</option>
+                    <option value="Prime" selected="@(serviceQuery == "Prime" ? "selected" : null)">Prime Video</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="MinRating" class="form-select" id="ratingFilter">
+                    <option value="">Alle Bewertungen</option>
+                    <option value="5" selected="@(ratingQuery == "5" ? "selected" : null)">5+</option>
+                    <option value="7" selected="@(ratingQuery == "7" ? "selected" : null)">7+</option>
+                    <option value="9" selected="@(ratingQuery == "9" ? "selected" : null)">9+</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Filtern</button>
+            </div>
+        </form>
+        <p id="errorMsg" style="color:red; display:none;"></p>
+    </div>
 
-        <div class="col-md-2">
-            <select name="MinRating" class="form-select">
-                <option value="">Alle Bewertungen</option>
-                <option value="5" selected="@(ratingQuery == "5" ? "selected" : null)">5+</option>
-                <option value="7" selected="@(ratingQuery == "7" ? "selected" : null)">7+</option>
-                <option value="9" selected="@(ratingQuery == "9" ? "selected" : null)">9+</option>
-            </select>
-        </div>
-
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-primary w-100">Filtern</button>
-        </div>
-    </form>
+    <!-- Clientseitige Titel-Suche -->
+    <div class="mb-3">
+        <input type="text" id="titleSearch" class="form-control" placeholder="Filmtitel filtern (clientseitig)">
+    </div>
 
     <!-- Film-Grid -->
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+    <div id="movieList" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
         @foreach (var movie in Model)
         {
-            <div class="col">
+            <div class="col movie" data-title="@movie.Title">
                 @await Html.PartialAsync("_MovieCard", movie)
             </div>
         }
@@ -84,3 +92,7 @@
         </ul>
     </nav>
 </div>
+
+@section Scripts {
+    <script src="~/js/search.js"></script>
+}
