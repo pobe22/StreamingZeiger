@@ -17,7 +17,7 @@ namespace StreamingZeiger.Data
                         Genre = "Drama",
                         Seasons = 5,
                         Episodes = 62,
-                        PosterUrl = "/images/breakingbad.jpg"
+                        PosterUrl = "/images/posters/breakingbad.jpg"
                     },
                     new Series
                     {
@@ -26,7 +26,7 @@ namespace StreamingZeiger.Data
                         Genre = "Sci-Fi",
                         Seasons = 4,
                         Episodes = 34,
-                        PosterUrl = "/images/strangerthings.jpg"
+                        PosterUrl = "/images/posters/strangerthings.jpg"
                     },
                     new Series
                     {
@@ -35,7 +35,7 @@ namespace StreamingZeiger.Data
                         Genre = "Fantasy",
                         Seasons = 8,
                         Episodes = 73,
-                        PosterUrl = "/images/got.jpg"
+                        PosterUrl = "/images/posters/got.jpg"
                     }
                 );
             }
