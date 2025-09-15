@@ -9,25 +9,6 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/StreamingZeiger.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <style>
-        /* Navbar hellere Farben */
-        .navbar {
-            background-color: #f8f9fa !important;
-        }
-
-            .navbar .nav-link {
-                color: #343a40 !important; /* dunklerer Text, aber heller als vorher */
-            }
-
-                .navbar .nav-link:hover {
-                    color: #007bff !important;
-                }
-
-            .navbar .navbar-brand {
-                color: #343a40 !important;
-                font-weight: bold;
-            }
-    </style>
 </head>
 <body>
     <div class="wrapper">
@@ -40,10 +21,7 @@
                         <span class="navbar-toggler-icon"></span>
                     </button>
                     <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                        <ul class="navbar-nav flex-grow-1">
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                            </li>
+                        <ul class="navbar-nav flex-grow-1">                           
                             <li class="nav-item">
                                 <a class="nav-link" asp-area="" asp-controller="Movies" asp-action="Index">Filme</a>
                             </li>
