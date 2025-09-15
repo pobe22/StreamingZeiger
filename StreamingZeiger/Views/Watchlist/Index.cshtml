@@ -1,0 +1,20 @@
+﻿@model List<StreamingZeiger.Models.WatchlistItem>
+
+<h2>Meine Watchlist</h2>
+
+@if (!Model.Any())
+{
+    <p>Du hast noch keine Filme in der Watchlist.</p>
+}
+else
+{
+    <ul class="list-group">
+        @foreach (var item in Model)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <a asp-controller="Movies" asp-action="Details" asp-route-id="@item.Movie.Id">@item.Movie.Title</a>
+                <a asp-controller="Watchlist" asp-action="Remove" asp-route-movieId="@item.Movie.Id" class="btn btn-danger btn-sm">Entfernen</a>
+            </li>
+        }
+    </ul>
+}

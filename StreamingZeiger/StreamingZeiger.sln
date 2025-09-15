@@ -5,7 +5,7 @@ VisualStudioVersion = 17.14.36429.23
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamingZeiger", "StreamingZeiger.csproj", "{D61077AB-BAB3-43F7-91AF-C407C7AF1F79}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SteramingZeiger.Tests", "..\SteramingZeiger.Tests\SteramingZeiger.Tests.csproj", "{8C98E065-A9D0-4806-BBB3-5E03B5448039}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamingZeiger.Tests", "..\SteramingZeiger.Tests\StreamingZeiger.Tests.csproj", "{8C98E065-A9D0-4806-BBB3-5E03B5448039}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
