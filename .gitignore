@@ -55,3 +55,8 @@ nunit-*.xml
 
 # .vs\
 .vs/
+
+#Database
+/streamingzeiger.db
+/streamingzeiger.db-shm
+/streamingzeiger.db-wal

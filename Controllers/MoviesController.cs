@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StreamingZeiger.Data;
 using StreamingZeiger.Services;
 using StreamingZeiger.ViewModels;
+using StreamingZeiger.Models;
 
 namespace StreamingZeiger.Controllers
 {
@@ -10,10 +12,12 @@ namespace StreamingZeiger.Controllers
     {
         private readonly IStaticMovieRepository _repo;
         private readonly AppDbContext _context;
-        public MoviesController(IStaticMovieRepository repo, AppDbContext context)
+        private readonly UserManager<ApplicationUser> _userManager;
+        public MoviesController(IStaticMovieRepository repo, AppDbContext context, UserManager<ApplicationUser> userManager)
         {
             _repo = repo;
             _context = context;
+            _userManager = userManager;
         }
 
         public IActionResult Index([FromQuery] MovieFilterViewModel filter)
@@ -65,6 +69,7 @@ namespace StreamingZeiger.Controllers
             var movie = await _context.Movies
                 .Include(m => m.MovieGenres)
                     .ThenInclude(mg => mg.Genre)
+                .Include(m => m.Ratings)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (movie == null) return NotFound();
@@ -80,6 +85,16 @@ namespace StreamingZeiger.Controllers
                 .ToListAsync();
 
             ViewBag.RecommendedMovies = recommended;
+
+            // Prüfen, ob aktueller User den Film in der Watchlist hat
+            bool inWatchlist = false;
+            if (User.Identity.IsAuthenticated)
+            {
+                var user = await _userManager.GetUserAsync(User);
+                inWatchlist = await _context.WatchlistItems
+                    .AnyAsync(w => w.UserId == user.Id && w.MovieId == id);
+            }
+            ViewBag.InWatchlist = inWatchlist;
 
             return View(movie);
         }

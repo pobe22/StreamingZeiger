@@ -31,7 +31,7 @@ namespace StreamingZeiger.Controllers
             return View(items);
         }
 
-        public async Task<IActionResult> Add(int movieId)
+        public async Task<IActionResult> Add(int movieId, string returnUrl = null)
         {
             var user = await _userManager.GetUserAsync(User);
             if (!await _context.WatchlistItems.AnyAsync(w => w.UserId == user.Id && w.MovieId == movieId))
@@ -43,18 +43,27 @@ namespace StreamingZeiger.Controllers
                 });
                 await _context.SaveChangesAsync();
             }
+
+            if (!string.IsNullOrEmpty(returnUrl))
+                return Redirect(returnUrl);
+
             return RedirectToAction("Index", "Movies");
         }
 
-        public async Task<IActionResult> Remove(int movieId)
+        public async Task<IActionResult> Remove(int movieId, string returnUrl = null)
         {
             var user = await _userManager.GetUserAsync(User);
             var item = await _context.WatchlistItems.FirstOrDefaultAsync(w => w.UserId == user.Id && w.MovieId == movieId);
+
             if (item != null)
             {
                 _context.WatchlistItems.Remove(item);
                 await _context.SaveChangesAsync();
             }
+
+            if (!string.IsNullOrEmpty(returnUrl))
+                return Redirect(returnUrl);
+
             return RedirectToAction("Index");
         }
     }

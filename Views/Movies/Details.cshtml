@@ -17,7 +17,8 @@
     ViewData["Title"] = Model.Title;
     var userId = UserManager.GetUserId(User);
     var userRating = Model.Ratings?.FirstOrDefault(r => r.UserId == userId)?.Score;
-    var inWatchlist = Model.WatchlistItems?.Any(w => w.UserId == userId) ?? false;
+    bool inWatchlist = ViewBag.InWatchlist as bool? ?? false;
+    var currentUrl = Context.Request.Path + Context.Request.QueryString;
 }
 
 <style>
@@ -95,14 +96,25 @@
                     <button type="submit" class="btn btn-primary btn-sm">Bewerten</button>
                 </form>
 
-                <h5>Watchlist</h5>
                 @if (!inWatchlist)
                 {
-                    <a asp-controller="Watchlist" asp-action="Add" asp-route-movieId="@Model.Id" class="btn btn-success btn-sm">Zur Watchlist hinzufügen</a>
+                    <a asp-controller="Watchlist"
+                       asp-action="Add"
+                       asp-route-movieId="@Model.Id"
+                       asp-route-returnUrl="@currentUrl"
+                       class="btn btn-success btn-sm">
+                        Zur Watchlist hinzufügen
+                    </a>
                 }
                 else
                 {
-                    <a asp-controller="Watchlist" asp-action="Remove" asp-route-movieId="@Model.Id" class="btn btn-danger btn-sm">Aus Watchlist entfernen</a>
+                    <a asp-controller="Watchlist"
+                       asp-action="Remove"
+                       asp-route-movieId="@Model.Id"
+                       asp-route-returnUrl="@currentUrl"
+                       class="btn btn-danger btn-sm">
+                        Aus Watchlist entfernen
+                    </a>
                 }
             }
             else

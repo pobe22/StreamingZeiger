@@ -17,6 +17,10 @@ html, body {
     flex: 1 0 auto;
 }
 
+.text {
+    color: #e0e0e0
+}
+
 /* ---------- Typografie & Links ---------- */
 a {
     color: #4da6ff;
