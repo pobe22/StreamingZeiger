@@ -63,3 +63,6 @@ nunit-*.xml
 /streamingzeiger.db
 /streamingzeiger.db-shm
 /streamingzeiger.db-wal
+/StreamingZeiger/streamingzeiger.db
+/StreamingZeiger/streamingzeiger.db-shm
+/StreamingZeiger/streamingzeiger.db-wal
