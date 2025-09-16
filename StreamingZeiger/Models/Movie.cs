@@ -32,6 +32,7 @@ namespace StreamingZeiger.Models
         public string Name { get; set; } = string.Empty;
 
         public ICollection<MovieGenre> MovieGenres { get; set; } = new List<MovieGenre>();
+        public ICollection<SeriesGenre> SeriesGenres { get; set; } = new List<SeriesGenre>();
     }
 
     // Join-Tabelle für n:m

@@ -7,38 +7,38 @@ namespace StreamingZeiger.Data
         public static void Initialize(AppDbContext context)
         {
             // Serien
-            if (!context.Series.Any())
-            {
-                context.Series.AddRange(
-                    new Series
-                    {
-                        Title = "Breaking Bad",
-                        Description = "Chemielehrer wird Drogenboss",
-                        Genre = "Drama",
-                        Seasons = 5,
-                        Episodes = 62,
-                        PosterUrl = "/images/posters/breakingbad.jpg"
-                    },
-                    new Series
-                    {
-                        Title = "Stranger Things",
-                        Description = "Mystery in Hawkins",
-                        Genre = "Sci-Fi",
-                        Seasons = 4,
-                        Episodes = 34,
-                        PosterUrl = "/images/posters/strangerthings.jpg"
-                    },
-                    new Series
-                    {
-                        Title = "Game of Thrones",
-                        Description = "Kampf um den Eisernen Thron",
-                        Genre = "Fantasy",
-                        Seasons = 8,
-                        Episodes = 73,
-                        PosterUrl = "/images/posters/got.jpg"
-                    }
-                );
-            }
+            //if (!context.Series.Any())
+            //{
+            //    context.Series.AddRange(
+            //        new Series
+            //        {
+            //            Title = "Breaking Bad",
+            //            Description = "Chemielehrer wird Drogenboss",
+            //            Genre = "Drama",
+            //            Seasons = 5,
+            //            Episodes = 62,
+            //            PosterUrl = "/images/posters/breakingbad.jpg"
+            //        },
+            //        new Series
+            //        {
+            //            Title = "Stranger Things",
+            //            Description = "Mystery in Hawkins",
+            //            Genre = "Sci-Fi",
+            //            Seasons = 4,
+            //            Episodes = 34,
+            //            PosterUrl = "/images/posters/strangerthings.jpg"
+            //        },
+            //        new Series
+            //        {
+            //            Title = "Game of Thrones",
+            //            Description = "Kampf um den Eisernen Thron",
+            //            Genre = "Fantasy",
+            //            Seasons = 8,
+            //            Episodes = 73,
+            //            PosterUrl = "/images/posters/got.jpg"
+            //        }
+            //    );
+            //}
 
             // Filme
             if (!context.Movies.Any())

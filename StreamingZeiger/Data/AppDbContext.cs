@@ -14,6 +14,7 @@ namespace StreamingZeiger.Data
         public DbSet<Series> Series { get; set; }
         public DbSet<Genre> Genres { get; set; }
         public DbSet<MovieGenre> MovieGenres { get; set; }
+        public DbSet<SeriesGenre> SeriesGenres { get; set; }
         public DbSet<Rating> Ratings { get; set; }
         public DbSet<WatchlistItem> WatchlistItems { get; set; }
 
@@ -48,6 +49,20 @@ namespace StreamingZeiger.Data
             modelBuilder.Entity<Movie>()
                 .Property(m => m.AvailabilityByService)
                 .HasConversion(dictionaryConverter);
+
+            modelBuilder.Entity<SeriesGenre>()
+      .HasKey(sg => new { sg.SeriesId, sg.GenreId });
+
+            // Optional: Relationen definieren
+            modelBuilder.Entity<SeriesGenre>()
+                .HasOne(sg => sg.Series)
+                .WithMany(s => s.SeriesGenres)
+                .HasForeignKey(sg => sg.SeriesId);
+
+            modelBuilder.Entity<SeriesGenre>()
+                .HasOne(sg => sg.Genre)
+                .WithMany(g => g.SeriesGenres)
+                .HasForeignKey(sg => sg.GenreId);
 
             base.OnModelCreating(modelBuilder);
         }
