@@ -1,12 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using StreamingZeiger.Models;
-using TMDbLib.Client;
-using TMDbLib.Objects.Movies;
-using TMDbLib.Objects.General;
-using TMDbLib.Objects.Search;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
+using TMDbLib.Client;
+using TMDbLib.Objects.General;
+using TMDbLib.Objects.Movies;
+using TMDbLib.Objects.TvShows;
+using TMDbLib.Objects.Search;
 
 namespace StreamingZeiger.Services
 {
@@ -47,6 +50,38 @@ namespace StreamingZeiger.Services
                 .ToList();
 
             return movie;
+        }
+        public async Task<Series?> GetSeriesByIdAsync(int tmdbId)
+        {
+            var seriesDetails = await _client.GetTvShowAsync(
+                tmdbId,
+                TvShowMethods.Credits | TvShowMethods.Videos
+            );
+
+            if (seriesDetails == null)
+                return null;
+
+            var series = new Series
+            {
+                Title = seriesDetails.Name,
+                OriginalTitle = seriesDetails.OriginalName,
+                Description = seriesDetails.Overview,
+                StartYear = seriesDetails.FirstAirDate?.Year ?? 0,
+                EndYear = seriesDetails.LastAirDate?.Year,
+                Seasons = seriesDetails.NumberOfSeasons,
+                Episodes = seriesDetails.NumberOfEpisodes,
+                PosterFile = $"https://image.tmdb.org/t/p/w500{seriesDetails.PosterPath}",
+                TrailerUrl = seriesDetails.Videos?.Results.FirstOrDefault()?.Key ?? string.Empty,
+                Cast = seriesDetails.Credits?.Cast?.Select(c => c.Name).ToList() ?? new List<string>(),
+                Director = seriesDetails.Credits?.Crew?.FirstOrDefault(c => c.Job == "Director")?.Name ?? string.Empty
+            };
+
+            // Genres als n:m abbilden
+            series.SeriesGenres = seriesDetails.Genres
+                .Select(g => new SeriesGenre { Genre = new Models.Genre { Name = g.Name } })
+                .ToList();
+
+            return series;
         }
     }
 }
