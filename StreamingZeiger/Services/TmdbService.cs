@@ -53,33 +53,37 @@ namespace StreamingZeiger.Services
         }
         public async Task<Series?> GetSeriesByIdAsync(int tmdbId)
         {
-            var seriesDetails = await _client.GetTvShowAsync(
-                tmdbId,
-                TvShowMethods.Credits | TvShowMethods.Videos
-            );
-
-            if (seriesDetails == null)
-                return null;
+            var seriesDetails = await _client.GetTvShowAsync(tmdbId, TvShowMethods.Credits | TvShowMethods.Videos);
 
             var series = new Series
             {
                 Title = seriesDetails.Name,
                 OriginalTitle = seriesDetails.OriginalName,
-                Description = seriesDetails.Overview,
                 StartYear = seriesDetails.FirstAirDate?.Year ?? 0,
                 EndYear = seriesDetails.LastAirDate?.Year,
                 Seasons = seriesDetails.NumberOfSeasons,
                 Episodes = seriesDetails.NumberOfEpisodes,
-                PosterFile = $"https://image.tmdb.org/t/p/w500{seriesDetails.PosterPath}",
-                TrailerUrl = seriesDetails.Videos?.Results.FirstOrDefault()?.Key ?? string.Empty,
-                Cast = seriesDetails.Credits?.Cast?.Select(c => c.Name).ToList() ?? new List<string>(),
-                Director = seriesDetails.Credits?.Crew?.FirstOrDefault(c => c.Job == "Director")?.Name ?? string.Empty
+                Description = seriesDetails.Overview ?? "",
+                PosterFile = "https://image.tmdb.org/t/p/w500" + (seriesDetails.PosterPath ?? ""),
+                Cast = seriesDetails.Credits.Cast.Select(c => c.Name).ToList(),
+                Director = seriesDetails.Credits.Crew
+                            .Where(c => c.Job == "Director")
+                            .Select(c => c.Name)
+                            .FirstOrDefault() ?? ""
             };
+
+            // Trailer-URL als YouTube-Embed setzen
+            var trailerKey = seriesDetails.Videos.Results
+                                .FirstOrDefault(v => v.Site == "YouTube" && v.Type == "Trailer")?.Key;
+
+            series.TrailerUrl = !string.IsNullOrEmpty(trailerKey)
+                                ? $"https://www.youtube.com/embed/{trailerKey}"
+                                : "";
 
             // Genres als n:m abbilden
             series.SeriesGenres = seriesDetails.Genres
-                .Select(g => new SeriesGenre { Genre = new Models.Genre { Name = g.Name } })
-                .ToList();
+                                    .Select(g => new SeriesGenre { Genre = new Models.Genre { Name = g.Name } })
+                                    .ToList();
 
             return series;
         }
