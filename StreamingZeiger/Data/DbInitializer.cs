@@ -1,11 +1,39 @@
-﻿using StreamingZeiger.Models;
+﻿using Microsoft.AspNetCore.Identity;
+using StreamingZeiger.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace StreamingZeiger.Data
 {
     public static class DbInitializer
     {
-        public static void Initialize(AppDbContext context)
+        public static async Task InitializeAsync(
+             AppDbContext context,
+             UserManager<ApplicationUser> userManager,
+             RoleManager<IdentityRole> roleManager)
         {
+            // Datenbank erstellen, falls noch nicht vorhanden
+            await context.Database.EnsureCreatedAsync();
+
+            // Admin-Rolle anlegen, falls nicht vorhanden
+            if (!await roleManager.RoleExistsAsync("Admin"))
+            {
+                await roleManager.CreateAsync(new IdentityRole("Admin"));
+            }
+
+            // Admin-Benutzer anlegen, falls nicht vorhanden
+            var adminUser = await userManager.FindByEmailAsync("admin@streamingzeiger.at");
+            if (adminUser == null)
+            {
+                adminUser = new ApplicationUser
+                {
+                    UserName = "admin@streamingzeiger.at",
+                    Email = "admin@streamingzeiger.at",
+                    EmailConfirmed = true
+                };
+                await userManager.CreateAsync(adminUser, "Admin123!"); // sicheres Passwort wählen
+                await userManager.AddToRoleAsync(adminUser, "Admin");
+            }
+
             // Serien
             //if (!context.Series.Any())
             //{
@@ -41,12 +69,12 @@ namespace StreamingZeiger.Data
             //}
 
             // Filme
-            if (!context.Movies.Any())
+            if (!await context.Movies.AnyAsync())
             {
-                var sciFi = context.Genres.FirstOrDefault(g => g.Name == "Sci-Fi") ?? new Genre { Name = "Sci-Fi" };
-                var thriller = context.Genres.FirstOrDefault(g => g.Name == "Thriller") ?? new Genre { Name = "Thriller" };
-                var action = context.Genres.FirstOrDefault(g => g.Name == "Action") ?? new Genre { Name = "Action" };
-                var drama = context.Genres.FirstOrDefault(g => g.Name == "Drama") ?? new Genre { Name = "Drama" };
+                var sciFi = await context.Genres.FirstOrDefaultAsync(g => g.Name == "Sci-Fi") ?? new Genre { Name = "Sci-Fi" };
+                var thriller = await context.Genres.FirstOrDefaultAsync(g => g.Name == "Thriller") ?? new Genre { Name = "Thriller" };
+                var action = await context.Genres.FirstOrDefaultAsync(g => g.Name == "Action") ?? new Genre { Name = "Action" };
+                var drama = await context.Genres.FirstOrDefaultAsync(g => g.Name == "Drama") ?? new Genre { Name = "Drama" };
 
                 context.Genres.AddRange(sciFi, thriller, action, drama);
 
@@ -64,10 +92,10 @@ namespace StreamingZeiger.Data
                     AvailabilityByService = new Dictionary<string, bool> { { "Netflix", true }, { "Prime Video", false }, { "Disney+", true } },
                     Rating = 8.8,
                     MovieGenres = new List<MovieGenre>
-        {
-            new MovieGenre { Genre = sciFi },
-            new MovieGenre { Genre = thriller }
-        }
+                    {
+                        new MovieGenre { Genre = sciFi },
+                        new MovieGenre { Genre = thriller }
+                    }
                 };
 
                 var matrix = new Movie
@@ -84,10 +112,10 @@ namespace StreamingZeiger.Data
                     AvailabilityByService = new Dictionary<string, bool> { { "Netflix", false }, { "Prime Video", true }, { "Disney+", false } },
                     Rating = 8.7,
                     MovieGenres = new List<MovieGenre>
-        {
-            new MovieGenre { Genre = sciFi },
-            new MovieGenre { Genre = action }
-        }
+                    {
+                        new MovieGenre { Genre = sciFi },
+                        new MovieGenre { Genre = action }
+                    }
                 };
 
                 var interstellar = new Movie
@@ -104,16 +132,16 @@ namespace StreamingZeiger.Data
                     AvailabilityByService = new Dictionary<string, bool> { { "Netflix", true }, { "Prime Video", true }, { "Disney+", false } },
                     Rating = 8.6,
                     MovieGenres = new List<MovieGenre>
-        {
-            new MovieGenre { Genre = sciFi },
-            new MovieGenre { Genre = drama }
-        }
+                    {
+                        new MovieGenre { Genre = sciFi },
+                        new MovieGenre { Genre = drama }
+                    }
                 };
 
                 context.Movies.AddRange(inception, matrix, interstellar);
             }
 
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
     }
 }

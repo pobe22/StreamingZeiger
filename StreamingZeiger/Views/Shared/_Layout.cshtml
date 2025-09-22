@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -28,20 +30,30 @@
                             <li class="nav-item">
                                 <a class="nav-link" asp-area="" asp-controller="Series" asp-action="Index">Serien</a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="Admin" asp-controller="Admin" asp-action="Index">Admin</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link position-relative" href="@Url.Action("Index", "Watchlist")">
-                                    <i class="bi bi-bookmark-heart fs-5"></i>
-                                    @if ((Context.Session.GetObjectFromJson<List<StreamingZeiger.Models.Movie>>("Watchlist")?.Count ?? 0) > 0)
-                                    {
-                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                            @(Context.Session.GetObjectFromJson<List<StreamingZeiger.Models.Movie>>("Watchlist").Count)
-                                        </span>
-                                    }
-                                </a>
-                            </li>
+                            @if (User.Identity != null && User.Identity.IsAuthenticated && User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="Admin" asp-controller="Admin" asp-action="Index">Admin</a>
+                                </li>
+                            }
+                            @if (User.Identity != null && User.Identity.IsAuthenticated)
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link position-relative" href="@Url.Action("Index", "Watchlist")">
+                                        <i class="bi bi-bookmark-heart fs-5"></i>
+                                        @{
+                                            var watchlist = Context.Session.GetObjectFromJson<List<Movie>>("Watchlist");
+                                            var count = watchlist?.Count ?? 0;
+                                        }
+                                        @if (count > 0)
+                                        {
+                                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                                @count
+                                            </span>
+                                        }
+                                    </a>
+                                </li>
+                            }
                         </ul>
                         <ul class="navbar-nav">
                             @if (User.Identity.IsAuthenticated)
