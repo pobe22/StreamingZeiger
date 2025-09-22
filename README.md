@@ -56,14 +56,6 @@ Die Anwendung ist dann unter `https://localhost:5001` erreichbar.
 - Filme können in der Watchlist gespeichert oder bewertet werden.  
 - Admins können Filme hinzufügen, bearbeiten oder löschen.
 
-## 📂 Projektstruktur
-
-- `streamingzeiger.db` – SQLite-Datenbank (im `.gitignore`)  
-- `wwwroot/js/autocomplete.js` – JavaScript für die Suchfunktion  
-- `Controllers/` – ASP.NET Controller  
-- `Models/` – Datenmodelle  
-- `Views/` – Razor Views
-
 ## 🤝 Mitwirken
 
 Beiträge sind willkommen!  
