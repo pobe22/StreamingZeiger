@@ -11,16 +11,13 @@ namespace StreamingZeiger.Data
              UserManager<ApplicationUser> userManager,
              RoleManager<IdentityRole> roleManager)
         {
-            // Datenbank erstellen, falls noch nicht vorhanden
             await context.Database.EnsureCreatedAsync();
 
-            // Admin-Rolle anlegen, falls nicht vorhanden
             if (!await roleManager.RoleExistsAsync("Admin"))
             {
                 await roleManager.CreateAsync(new IdentityRole("Admin"));
             }
 
-            // Admin-Benutzer anlegen, falls nicht vorhanden
             var adminUser = await userManager.FindByEmailAsync("admin@streamingzeiger.at");
             if (adminUser == null)
             {
@@ -30,43 +27,84 @@ namespace StreamingZeiger.Data
                     Email = "admin@streamingzeiger.at",
                     EmailConfirmed = true
                 };
-                await userManager.CreateAsync(adminUser, "Admin123!"); // sicheres Passwort wählen
+                await userManager.CreateAsync(adminUser, "Admin123!");
                 await userManager.AddToRoleAsync(adminUser, "Admin");
             }
 
-            // Serien
-            //if (!context.Series.Any())
-            //{
-            //    context.Series.AddRange(
-            //        new Series
-            //        {
-            //            Title = "Breaking Bad",
-            //            Description = "Chemielehrer wird Drogenboss",
-            //            Genre = "Drama",
-            //            Seasons = 5,
-            //            Episodes = 62,
-            //            PosterUrl = "/images/posters/breakingbad.jpg"
-            //        },
-            //        new Series
-            //        {
-            //            Title = "Stranger Things",
-            //            Description = "Mystery in Hawkins",
-            //            Genre = "Sci-Fi",
-            //            Seasons = 4,
-            //            Episodes = 34,
-            //            PosterUrl = "/images/posters/strangerthings.jpg"
-            //        },
-            //        new Series
-            //        {
-            //            Title = "Game of Thrones",
-            //            Description = "Kampf um den Eisernen Thron",
-            //            Genre = "Fantasy",
-            //            Seasons = 8,
-            //            Episodes = 73,
-            //            PosterUrl = "/images/posters/got.jpg"
-            //        }
-            //    );
-            //}
+            // Serien initialisieren
+            if (!await context.Series.AnyAsync())
+            {
+                // Genres abrufen oder anlegen
+                var drama = await context.Genres.FirstOrDefaultAsync(g => g.Name == "Drama") ?? new Genre { Name = "Drama" };
+                var sciFi = await context.Genres.FirstOrDefaultAsync(g => g.Name == "Sci-Fi") ?? new Genre { Name = "Sci-Fi" };
+                var fantasy = await context.Genres.FirstOrDefaultAsync(g => g.Name == "Fantasy") ?? new Genre { Name = "Fantasy" };
+
+                context.Genres.AddRange(drama, sciFi, fantasy);
+
+                var breakingBad = new Series
+                {
+                    Title = "Breaking Bad",
+                    OriginalTitle = "Breaking Bad",
+                    StartYear = 2008,
+                    EndYear = 2013,
+                    Seasons = 5,
+                    Episodes = 62,
+                    Description = "Chemielehrer wird Drogenboss",
+                    Cast = new List<string> { "Bryan Cranston", "Aaron Paul", "Anna Gunn" },
+                    Director = "Vince Gilligan",
+                    PosterFile = "/images/posters/breakingbad.jpg",
+                    TrailerUrl = "https://www.youtube.com/embed/HhesaQXLuRY",
+                    Rating = 9.5,
+                    SeriesGenres = new List<SeriesGenre>
+        {
+            new SeriesGenre { Genre = drama }
+        }
+                };
+
+                var strangerThings = new Series
+                {
+                    Title = "Stranger Things",
+                    OriginalTitle = "Stranger Things",
+                    StartYear = 2016,
+                    Seasons = 4,
+                    Episodes = 34,
+                    Description = "Mystery in Hawkins",
+                    Cast = new List<string> { "Millie Bobby Brown", "Finn Wolfhard", "Winona Ryder" },
+                    Director = "The Duffer Brothers",
+                    PosterFile = "/images/posters/strangerthings.jpg",
+                    TrailerUrl = "https://www.youtube.com/embed/mnd7sFt5c3A",
+                    Rating = 8.8,
+                    SeriesGenres = new List<SeriesGenre>
+        {
+            new SeriesGenre { Genre = sciFi }
+        }
+                };
+
+                var gameOfThrones = new Series
+                {
+                    Title = "Game of Thrones",
+                    OriginalTitle = "Game of Thrones",
+                    StartYear = 2011,
+                    EndYear = 2019,
+                    Seasons = 8,
+                    Episodes = 73,
+                    Description = "Kampf um den Eisernen Thron",
+                    Cast = new List<string> { "Emilia Clarke", "Kit Harington", "Peter Dinklage" },
+                    Director = "David Benioff & D.B. Weiss",
+                    PosterFile = "/images/posters/got.jpg",
+                    TrailerUrl = "https://www.youtube.com/embed/BpJYNVhGf1s",
+                    Rating = 9.3,
+                    SeriesGenres = new List<SeriesGenre>
+        {
+            new SeriesGenre { Genre = fantasy }
+        }
+                };
+
+                context.Series.AddRange(breakingBad, strangerThings, gameOfThrones);
+
+                await context.SaveChangesAsync();
+            }
+
 
             // Filme
             if (!await context.Movies.AnyAsync())
