@@ -75,9 +75,9 @@
 					<div class="card-body d-flex flex-column">
 						<h5 class="card-title">@s.Title</h5>
 						<p class="card-text">
-							@foreach (var sg in s.SeriesGenres)
+							@foreach (var mg in s.MediaGenres)
 							{
-								<span class="badge bg-secondary me-1">@sg.Genre.Name</span>
+								<span class="badge bg-secondary me-1">@mg.Genre.Name</span>
 							}
 						</p>
 						<a href="@Url.Action("Details", "Series", new { id = s.Id })" class="btn btn-primary mt-auto">Details</a>

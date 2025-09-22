@@ -4,7 +4,6 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @using System.Net
 
-
 @{
     var recommendedMovies = ViewBag.RecommendedMovies as List<StreamingZeiger.Models.Movie>;
     int chunkSize = 4; // 4 Filme pro Slide
@@ -14,16 +13,13 @@
                                      .Select(g => g.Select(x => x.Movie).ToList())
                                      .ToList()
                  : new List<List<StreamingZeiger.Models.Movie>>();
+
     ViewData["Title"] = Model.Title;
     var userId = UserManager.GetUserId(User);
     var userRating = Model.Ratings?.FirstOrDefault(r => r.UserId == userId)?.Score;
     bool inWatchlist = ViewBag.InWatchlist as bool? ?? false;
     var currentUrl = Context.Request.Path + Context.Request.QueryString;
 }
-
-<style>
-    
-</style>
 
 <h2>@Model.Title</h2>
 
@@ -43,7 +39,7 @@
             <ul class="list-unstyled">
                 <li>
                     <strong>Genre:</strong>
-                    @foreach (var g in Model.MovieGenres.Select(mg => mg.Genre.Name))
+                    @foreach (var g in Model.MediaGenres.Select(mg => mg.Genre.Name))
                     {
                         <span class="badge bg-secondary me-1">@g</span>
                     }
@@ -68,7 +64,7 @@
                 <span class="text-warning">
                     @for (int i = 1; i <= 5; i++)
                     {
-                        if (i <= Math.Round(Model.Rating / 2)) // 10er Skala -> 5 Sterne
+                        if (i <= Math.Round(Model.Rating / 2))
                         {
                             <i class="bi bi-star-fill"></i>
                         }
@@ -146,6 +142,7 @@
             </div>
 
         </div>
+
         <h5>Durchschnittliche Bewertung</h5>
         <p>
             @if (Model.Ratings != null && Model.Ratings.Count > 0)
@@ -202,7 +199,6 @@
                         }
                     </div>
 
-                    <!-- Steuerung -->
                     <button class="carousel-control-prev" type="button" data-bs-target="#recommendCarousel" data-bs-slide="prev">
                         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                     </button>
@@ -213,15 +209,4 @@
             </div>
         </div>
     </div>
-    <script>
-        // Fade-In Animation beim Scrollen
-        const fadeElements = document.querySelectorAll('.fade-in');
-        const observer = new IntersectionObserver(entries => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, { threshold: 0.1 });
-        fadeElements.forEach(el => observer.observe(el));
-    </script>
+</div>

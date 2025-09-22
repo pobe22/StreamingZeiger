@@ -1,8 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StreamingZeiger.Models;
 using System.Text.Json;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace StreamingZeiger.Data
 {
@@ -10,61 +10,66 @@ namespace StreamingZeiger.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
+        // MediaItems + Subtypen
+        public DbSet<MediaItem> MediaItems { get; set; }
         public DbSet<Movie> Movies { get; set; }
         public DbSet<Series> Series { get; set; }
+
+        // Genres
         public DbSet<Genre> Genres { get; set; }
-        public DbSet<MovieGenre> MovieGenres { get; set; }
-        public DbSet<SeriesGenre> SeriesGenres { get; set; }
+        public DbSet<MediaGenre> MediaGenres { get; set; }
+
+        // User-bezogene Entitäten
         public DbSet<Rating> Ratings { get; set; }
         public DbSet<WatchlistItem> WatchlistItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Listen und Dictionary als JSON speichern
+            base.OnModelCreating(modelBuilder);
+
+            // --- Vererbung TPH ---
+            modelBuilder.Entity<MediaItem>()
+                .HasDiscriminator<string>("MediaType")
+                .HasValue<Movie>("Movie")
+                .HasValue<Series>("Series");
+
+            // --- JSON Konverter ---
             var stringListConverter = new ValueConverter<List<string>, string>(
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                 v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>());
+
+            modelBuilder.Entity<MediaItem>()
+                .Property(m => m.Cast)
+                .HasConversion(stringListConverter);
 
             var dictionaryConverter = new ValueConverter<Dictionary<string, bool>, string>(
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                 v => JsonSerializer.Deserialize<Dictionary<string, bool>>(v, (JsonSerializerOptions?)null) ?? new Dictionary<string, bool>());
 
-            modelBuilder.Entity<MovieGenre>()
-                .HasKey(mg => new { mg.MovieId, mg.GenreId });
-            
-            modelBuilder.Entity<MovieGenre>()
-            .HasOne(mg => mg.Movie)
-            .WithMany(m => m.MovieGenres)
-            .HasForeignKey(mg => mg.MovieId);
-
-            modelBuilder.Entity<MovieGenre>()
-                .HasOne(mg => mg.Genre)
-                .WithMany(g => g.MovieGenres)
-                .HasForeignKey(mg => mg.GenreId);
-
-            modelBuilder.Entity<Movie>()
-                .Property(m => m.Cast)
-                .HasConversion(stringListConverter);
-
-            modelBuilder.Entity<Movie>()
+            modelBuilder.Entity<MediaItem>()
                 .Property(m => m.AvailabilityByService)
                 .HasConversion(dictionaryConverter);
 
-            modelBuilder.Entity<SeriesGenre>()
-      .HasKey(sg => new { sg.SeriesId, sg.GenreId });
+            // --- MediaGenre Join ---
+            modelBuilder.Entity<MediaGenre>()
+                .HasKey(mg => new { mg.MediaItemId, mg.GenreId });
 
-            // Optional: Relationen definieren
-            modelBuilder.Entity<SeriesGenre>()
-                .HasOne(sg => sg.Series)
-                .WithMany(s => s.SeriesGenres)
-                .HasForeignKey(sg => sg.SeriesId);
+            modelBuilder.Entity<MediaGenre>()
+                .HasOne(mg => mg.MediaItem)
+                .WithMany(mi => mi.MediaGenres)
+                .HasForeignKey(mg => mg.MediaItemId);
 
-            modelBuilder.Entity<SeriesGenre>()
-                .HasOne(sg => sg.Genre)
-                .WithMany(g => g.SeriesGenres)
-                .HasForeignKey(sg => sg.GenreId);
+            modelBuilder.Entity<MediaGenre>()
+                .HasOne(mg => mg.Genre)
+                .WithMany(g => g.MediaGenres)
+                .HasForeignKey(mg => mg.GenreId);
 
-            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<WatchlistItem>()
+    .HasOne(w => w.MediaItem)
+    .WithMany() // oder .WithMany(mi => mi.WatchlistItems) falls Navigation vorhanden
+    .HasForeignKey(w => w.MediaItemId)
+    .OnDelete(DeleteBehavior.Cascade);
+
         }
     }
 }

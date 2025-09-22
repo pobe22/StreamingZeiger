@@ -30,10 +30,11 @@ namespace StreamingZeiger.Tests
             {
                 _context.Movies.Add(new Movie
                 {
-                    Id = 1,
+                    Id = 1001,
                     Title = "Test Movie",
                     Year = 2023,
                     DurationMinutes = 120,
+                    MediaGenres = new List<MediaGenre>(),
                     Director = "Regisseur",
                     Description = "Beschreibung",
                     Cast = new List<string> { "Schauspieler1" }
@@ -45,7 +46,7 @@ namespace StreamingZeiger.Tests
             {
                 _context.Series.Add(new Series
                 {
-                    Id = 1,
+                    Id = 2001,
                     Title = "Test Serie",
                     StartYear = 2020,
                     Seasons = 1,
@@ -112,7 +113,20 @@ namespace StreamingZeiger.Tests
                 as RedirectToActionResult;
 
             Assert.Equal("Index", result.ActionName);
-            Assert.Contains(_context.Movies, m => m.Title == "New Movie");
+
+            // Prüfen, ob der Film existiert
+            var createdMovie = _context.Movies
+                .Include(m => m.MediaGenres)   // EF Core Navigation laden
+                .ThenInclude(mg => mg.Genre)
+                .FirstOrDefault(m => m.Title == "New Movie");
+
+            Assert.NotNull(createdMovie);
+
+            // Prüfen, ob die Genres korrekt zugewiesen wurden
+            var genreNames = createdMovie.MediaGenres.Select(mg => mg.Genre.Name).ToList();
+            Assert.Contains("Action", genreNames);
+            Assert.Contains("Drama", genreNames);
+
             Assert.Equal("Film erfolgreich hinzugefügt.", controller.TempData["Message"]);
         }
 
@@ -121,21 +135,23 @@ namespace StreamingZeiger.Tests
         {
             var controller = GetController();
 
-            var result = await controller.EditMovie(1) as ViewResult;
+            var result = await controller.EditMovie(1001) as ViewResult;
             Assert.NotNull(result);
 
-            var movie = result.Model as Movie;
-            Assert.Equal(1, movie.Id);
+            var movie = result.Model as MediaItem; // statt Movie
+            Assert.Equal(1001, movie.Id);
         }
 
         [Fact]
-        public async Task DeleteMovieConfirmed_RemovesMovie()
+        public async Task DeleteMovie_RemovesMovie()
         {
             var controller = GetController();
 
-            var result = await controller.DeleteMovieConfirmed(1) as RedirectToActionResult;
+            var movieToDelete = _context.Movies.First();
+            var result = await controller.DeleteMovie(movieToDelete.Id) as RedirectToActionResult;
+
             Assert.Equal("Index", result.ActionName);
-            Assert.DoesNotContain(_context.Movies, m => m.Id == 1);
+            Assert.DoesNotContain(_context.Movies, m => m.Id == movieToDelete.Id);
         }
 
         [Fact]
@@ -143,9 +159,15 @@ namespace StreamingZeiger.Tests
         {
             var controller = GetController();
 
-            var result = await controller.ImportFromTmdb(550) as JsonResult;
-            Assert.NotNull(result);
-            Assert.NotNull(result.Value);
+            // Für einen Film
+            var resultMovie = await controller.ImportFromTmdb(550, "movie") as JsonResult;
+            Assert.NotNull(resultMovie);
+            Assert.NotNull(resultMovie.Value);
+
+            // Für eine Serie
+            var resultSeries = await controller.ImportFromTmdb(12345, "series") as JsonResult;
+            Assert.NotNull(resultSeries);
+            Assert.NotNull(resultSeries.Value);
         }
 
         [Fact]

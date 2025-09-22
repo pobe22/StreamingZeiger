@@ -3,6 +3,7 @@
     ViewData["Title"] = "Film bearbeiten";
     var castCsv = ViewBag.CastCsv as string ?? "";
     var allServices = new string[] { "Netflix", "Prime Video", "Disney+" };
+    ViewBag.GenreCsv = string.Join(", ", Model.MediaGenres.Select(mg => mg.Genre.Name));
 }
 
 <div class="container mt-4">
@@ -39,7 +40,7 @@
         </div>
         <div class="form-group">
             <label for="GenreCsv">Genres (Komma-getrennt)</label>
-            <input type="text" class="form-control" id="GenreCsv" name="GenreCsv" value="@ViewBag.GenreCsv" />
+            <input type="text" name="GenreCsv" class="form-control" id="GenreCsv" value="@ViewBag.GenreCsv" />
         </div>
 
         <div class="col-md-6">

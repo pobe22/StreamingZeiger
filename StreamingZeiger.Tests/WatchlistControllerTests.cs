@@ -19,7 +19,15 @@ namespace StreamingZeiger.Tests
                 .UseInMemoryDatabase(dbName)
                 .Options;
             var context = new AppDbContext(options);
-            context.Movies.Add(new Movie { Id = 1, Title = "Movie1" });
+
+            context.Movies.Add(new Movie
+            {
+                Id = 1,
+                Title = "Movie1",
+                Year = 2023,
+                DurationMinutes = 120
+            });
+
             context.SaveChanges();
             return context;
         }
@@ -52,14 +60,15 @@ namespace StreamingZeiger.Tests
             var result = await controller.Add(1) as RedirectToActionResult;
 
             Assert.Equal("Index", result.ActionName);
-            Assert.Contains(context.WatchlistItems, w => w.MovieId == 1 && w.UserId == "user1");
+            Assert.Contains(context.WatchlistItems, w => w.MediaItemId == 1 && w.UserId == "user1");
         }
+
 
         [Fact]
         public async Task Remove_RemovesItem()
         {
             var context = GetDbContext("RemoveRemovesItemDb");
-            context.WatchlistItems.Add(new WatchlistItem { MovieId = 1, UserId = "user1" });
+            context.WatchlistItems.Add(new WatchlistItem { MediaItemId = 1, UserId = "user1" });
             context.SaveChanges();
 
             var userManager = GetUserManagerMock();
@@ -80,7 +89,7 @@ namespace StreamingZeiger.Tests
             var result = await controller.Remove(1) as RedirectToActionResult;
 
             Assert.Equal("Index", result.ActionName);
-            Assert.DoesNotContain(context.WatchlistItems, w => w.MovieId == 1 && w.UserId == "user1");
+            Assert.DoesNotContain(context.WatchlistItems, w => w.MediaItemId == 1 && w.UserId == "user1");
         }
     }
 }

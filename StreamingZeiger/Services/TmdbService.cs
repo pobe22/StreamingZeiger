@@ -2,14 +2,10 @@
 using StreamingZeiger.Models;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Text.Json;
 using System.Threading.Tasks;
 using TMDbLib.Client;
-using TMDbLib.Objects.General;
 using TMDbLib.Objects.Movies;
 using TMDbLib.Objects.TvShows;
-using TMDbLib.Objects.Search;
 
 namespace StreamingZeiger.Services
 {
@@ -45,13 +41,15 @@ namespace StreamingZeiger.Services
             };
 
             // Genres als n:m abbilden
-            movie.MovieGenres = movieDetails.Genres
-                .Select(g => new MovieGenre { Genre = new Models.Genre { Name = g.Name } })
+            movie.MediaGenres = movieDetails.Genres
+                .Select(g => new MediaGenre { Genre = new Genre { Name = g.Name } })
                 .ToList();
 
             return movie;
         }
-        public async Task<Series?> GetSeriesByIdAsync(int tmdbId)
+
+        // Einzelne Serie importieren
+        public async Task<Models.Series> GetSeriesByIdAsync(int tmdbId)
         {
             var seriesDetails = await _client.GetTvShowAsync(tmdbId, TvShowMethods.Credits | TvShowMethods.Videos);
 
@@ -81,8 +79,8 @@ namespace StreamingZeiger.Services
                                 : "";
 
             // Genres als n:m abbilden
-            series.SeriesGenres = seriesDetails.Genres
-                                    .Select(g => new SeriesGenre { Genre = new Models.Genre { Name = g.Name } })
+            series.MediaGenres = seriesDetails.Genres
+                                    .Select(g => new MediaGenre { Genre = new Genre { Name = g.Name } })
                                     .ToList();
 
             return series;

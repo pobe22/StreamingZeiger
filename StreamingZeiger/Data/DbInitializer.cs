@@ -13,6 +13,7 @@ namespace StreamingZeiger.Data
         {
             await context.Database.EnsureCreatedAsync();
 
+            // --- Admin-Rolle und Benutzer ---
             if (!await roleManager.RoleExistsAsync("Admin"))
             {
                 await roleManager.CreateAsync(new IdentityRole("Admin"));
@@ -31,16 +32,24 @@ namespace StreamingZeiger.Data
                 await userManager.AddToRoleAsync(adminUser, "Admin");
             }
 
-            // Serien initialisieren
+            // --- Genres vorbereiten ---
+            if (!await context.Genres.AnyAsync())
+            {
+                var drama = new Genre { Name = "Drama" };
+                var sciFi = new Genre { Name = "Sci-Fi" };
+                var fantasy = new Genre { Name = "Fantasy" };
+                var thriller = new Genre { Name = "Thriller" };
+                var action = new Genre { Name = "Action" };
+
+                context.Genres.AddRange(drama, sciFi, fantasy, thriller, action);
+                await context.SaveChangesAsync();
+            }
+
+            var genres = await context.Genres.ToDictionaryAsync(g => g.Name, g => g);
+
+            // --- Serien ---
             if (!await context.Series.AnyAsync())
             {
-                // Genres abrufen oder anlegen
-                var drama = await context.Genres.FirstOrDefaultAsync(g => g.Name == "Drama") ?? new Genre { Name = "Drama" };
-                var sciFi = await context.Genres.FirstOrDefaultAsync(g => g.Name == "Sci-Fi") ?? new Genre { Name = "Sci-Fi" };
-                var fantasy = await context.Genres.FirstOrDefaultAsync(g => g.Name == "Fantasy") ?? new Genre { Name = "Fantasy" };
-
-                context.Genres.AddRange(drama, sciFi, fantasy);
-
                 var breakingBad = new Series
                 {
                     Title = "Breaking Bad",
@@ -55,10 +64,10 @@ namespace StreamingZeiger.Data
                     PosterFile = "/images/posters/breakingbad.jpg",
                     TrailerUrl = "https://www.youtube.com/embed/HhesaQXLuRY",
                     Rating = 9.5,
-                    SeriesGenres = new List<SeriesGenre>
-        {
-            new SeriesGenre { Genre = drama }
-        }
+                    MediaGenres = new List<MediaGenre>
+                    {
+                        new MediaGenre { Genre = genres["Drama"] }
+                    }
                 };
 
                 var strangerThings = new Series
@@ -74,10 +83,10 @@ namespace StreamingZeiger.Data
                     PosterFile = "/images/posters/strangerthings.jpg",
                     TrailerUrl = "https://www.youtube.com/embed/mnd7sFt5c3A",
                     Rating = 8.8,
-                    SeriesGenres = new List<SeriesGenre>
-        {
-            new SeriesGenre { Genre = sciFi }
-        }
+                    MediaGenres = new List<MediaGenre>
+                    {
+                        new MediaGenre { Genre = genres["Sci-Fi"] }
+                    }
                 };
 
                 var gameOfThrones = new Series
@@ -94,28 +103,19 @@ namespace StreamingZeiger.Data
                     PosterFile = "/images/posters/got.jpg",
                     TrailerUrl = "https://www.youtube.com/embed/BpJYNVhGf1s",
                     Rating = 9.3,
-                    SeriesGenres = new List<SeriesGenre>
-        {
-            new SeriesGenre { Genre = fantasy }
-        }
+                    MediaGenres = new List<MediaGenre>
+                    {
+                        new MediaGenre { Genre = genres["Fantasy"] }
+                    }
                 };
 
                 context.Series.AddRange(breakingBad, strangerThings, gameOfThrones);
-
                 await context.SaveChangesAsync();
             }
 
-
-            // Filme
+            // --- Filme ---
             if (!await context.Movies.AnyAsync())
             {
-                var sciFi = await context.Genres.FirstOrDefaultAsync(g => g.Name == "Sci-Fi") ?? new Genre { Name = "Sci-Fi" };
-                var thriller = await context.Genres.FirstOrDefaultAsync(g => g.Name == "Thriller") ?? new Genre { Name = "Thriller" };
-                var action = await context.Genres.FirstOrDefaultAsync(g => g.Name == "Action") ?? new Genre { Name = "Action" };
-                var drama = await context.Genres.FirstOrDefaultAsync(g => g.Name == "Drama") ?? new Genre { Name = "Drama" };
-
-                context.Genres.AddRange(sciFi, thriller, action, drama);
-
                 var inception = new Movie
                 {
                     Title = "Inception",
@@ -127,12 +127,17 @@ namespace StreamingZeiger.Data
                     Director = "Christopher Nolan",
                     PosterFile = "/images/posters/inception.jpg",
                     TrailerUrl = "https://www.youtube.com/embed/YoHD9XEInc0",
-                    AvailabilityByService = new Dictionary<string, bool> { { "Netflix", true }, { "Prime Video", false }, { "Disney+", true } },
-                    Rating = 8.8,
-                    MovieGenres = new List<MovieGenre>
+                    AvailabilityByService = new Dictionary<string, bool>
                     {
-                        new MovieGenre { Genre = sciFi },
-                        new MovieGenre { Genre = thriller }
+                        { "Netflix", true },
+                        { "Prime Video", false },
+                        { "Disney+", true }
+                    },
+                    Rating = 8.8,
+                    MediaGenres = new List<MediaGenre>
+                    {
+                        new MediaGenre { Genre = genres["Sci-Fi"] },
+                        new MediaGenre { Genre = genres["Thriller"] }
                     }
                 };
 
@@ -147,12 +152,17 @@ namespace StreamingZeiger.Data
                     Director = "Lana Wachowski, Lilly Wachowski",
                     PosterFile = "/images/posters/matrix.jpg",
                     TrailerUrl = "https://www.youtube.com/embed/vKQi3bBA1y8",
-                    AvailabilityByService = new Dictionary<string, bool> { { "Netflix", false }, { "Prime Video", true }, { "Disney+", false } },
-                    Rating = 8.7,
-                    MovieGenres = new List<MovieGenre>
+                    AvailabilityByService = new Dictionary<string, bool>
                     {
-                        new MovieGenre { Genre = sciFi },
-                        new MovieGenre { Genre = action }
+                        { "Netflix", false },
+                        { "Prime Video", true },
+                        { "Disney+", false }
+                    },
+                    Rating = 8.7,
+                    MediaGenres = new List<MediaGenre>
+                    {
+                        new MediaGenre { Genre = genres["Sci-Fi"] },
+                        new MediaGenre { Genre = genres["Action"] }
                     }
                 };
 
@@ -167,19 +177,23 @@ namespace StreamingZeiger.Data
                     Director = "Christopher Nolan",
                     PosterFile = "/images/posters/interstellar.jpg",
                     TrailerUrl = "https://www.youtube.com/embed/zSWdZVtXT7E",
-                    AvailabilityByService = new Dictionary<string, bool> { { "Netflix", true }, { "Prime Video", true }, { "Disney+", false } },
-                    Rating = 8.6,
-                    MovieGenres = new List<MovieGenre>
+                    AvailabilityByService = new Dictionary<string, bool>
                     {
-                        new MovieGenre { Genre = sciFi },
-                        new MovieGenre { Genre = drama }
+                        { "Netflix", true },
+                        { "Prime Video", true },
+                        { "Disney+", false }
+                    },
+                    Rating = 8.6,
+                    MediaGenres = new List<MediaGenre>
+                    {
+                        new MediaGenre { Genre = genres["Sci-Fi"] },
+                        new MediaGenre { Genre = genres["Drama"] }
                     }
                 };
 
                 context.Movies.AddRange(inception, matrix, interstellar);
+                await context.SaveChangesAsync();
             }
-
-            await context.SaveChangesAsync();
         }
     }
 }

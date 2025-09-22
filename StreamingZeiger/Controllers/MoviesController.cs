@@ -13,6 +13,7 @@ namespace StreamingZeiger.Controllers
         private readonly IStaticMovieRepository _repo;
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+
         public MoviesController(IStaticMovieRepository repo, AppDbContext context, UserManager<ApplicationUser> userManager)
         {
             _repo = repo;
@@ -22,14 +23,14 @@ namespace StreamingZeiger.Controllers
 
         public IActionResult Index([FromQuery] MovieFilterViewModel filter)
         {
-            var movies = _context.Movies.AsQueryable();
+            var movies = _context.Movies
+     .Include(m => (m as MediaItem).MediaGenres)
+         .ThenInclude(mg => mg.Genre)
+     .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(filter.Genre))
             {
-                movies = movies
-                    .Include(m => m.MovieGenres)
-                    .ThenInclude(mg => mg.Genre)
-                    .Where(m => m.MovieGenres.Any(mg => mg.Genre.Name == filter.Genre));
+                movies = movies.Where(m => m.MediaGenres.Any(mg => mg.Genre.Name == filter.Genre));
             }
             if (filter.YearFrom.HasValue) movies = movies.Where(m => m.Year >= filter.YearFrom.Value);
             if (filter.YearTo.HasValue) movies = movies.Where(m => m.Year <= filter.YearTo.Value);
@@ -61,25 +62,25 @@ namespace StreamingZeiger.Controllers
             ViewBag.PageSize = filter.PageSize;
 
             return View(items);
-
         }
 
         public async Task<IActionResult> Details(int id)
         {
             var movie = await _context.Movies
-                .Include(m => m.MovieGenres)
-                    .ThenInclude(mg => mg.Genre)
+                .Include(m => (m as MediaItem).MediaGenres)
+                .ThenInclude(mg => mg.Genre)
                 .Include(m => m.Ratings)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (movie == null) return NotFound();
 
-            // Empfehlungen: gleiche Genres, außer aktuellen Film
-            var genreIds = movie.MovieGenres.Select(mg => mg.GenreId).ToList();
+            // Empfehlungen: gleiche Genres, außer aktueller Film
+            var genreIds = movie.MediaGenres.Select(mg => mg.Genre.Id).ToList();
 
             var recommended = await _context.Movies
-                .Include(m => m.MovieGenres)
-                .Where(m => m.Id != id && m.MovieGenres.Any(mg => genreIds.Contains(mg.GenreId)))
+                .Include(m => (m as MediaItem).MediaGenres)
+                    .ThenInclude(mg => mg.Genre)
+                .Where(m => m.Id != id && m.MediaGenres.Any(mg => genreIds.Contains(mg.Genre.Id)))
                 .OrderByDescending(m => m.Rating)
                 .Take(8)
                 .ToListAsync();
@@ -92,7 +93,7 @@ namespace StreamingZeiger.Controllers
             {
                 var user = await _userManager.GetUserAsync(User);
                 inWatchlist = await _context.WatchlistItems
-                    .AnyAsync(w => w.UserId == user.Id && w.MovieId == id);
+                    .AnyAsync(w => w.UserId == user.Id && w.MediaItemId == id);
             }
             ViewBag.InWatchlist = inWatchlist;
 
@@ -109,7 +110,7 @@ namespace StreamingZeiger.Controllers
                 .Where(m => m.Title.Contains(term))
                 .OrderBy(m => m.Title)
                 .Select(m => m.Title)
-                .Take(10) // max 10 Vorschläge
+                .Take(10)
                 .ToList();
 
             return Json(titles);
@@ -120,12 +121,11 @@ namespace StreamingZeiger.Controllers
             var movie = _context.Movies.Find(id);
             if (movie != null)
             {
-                //movie.ShareCount++;
+                // movie.ShareCount++; // optional
                 _context.SaveChanges();
             }
 
             return RedirectToAction("Details", new { id });
         }
-
     }
 }

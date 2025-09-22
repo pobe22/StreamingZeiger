@@ -12,8 +12,27 @@ else
         @foreach (var item in Model)
         {
             <li class="list-group-item d-flex justify-content-between align-items-center">
-                <a asp-controller="Movies" asp-action="Details" asp-route-id="@item.Movie.Id">@item.Movie.Title</a>
-                <a asp-controller="Watchlist" asp-action="Remove" asp-route-movieId="@item.Movie.Id" class="btn btn-danger btn-sm">Entfernen</a>
+                <a asp-controller="Movies" asp-action="Details" asp-route-id="@item.MediaItem.Id">
+                    @item.MediaItem.Title
+                </a>
+
+                <!-- Optional: Genre-Badges anzeigen -->
+                @if (item.MediaItem.MediaGenres != null && item.MediaItem.MediaGenres.Any())
+                {
+                    <span>
+                        @foreach (var mg in item.MediaItem.MediaGenres)
+                        {
+                            <span class="badge bg-secondary me-1">@mg.Genre.Name</span>
+                        }
+                    </span>
+                }
+
+                <a asp-controller="Watchlist"
+                   asp-action="Remove"
+                   asp-route-movieId="@item.MediaItem.Id"
+                   class="btn btn-danger btn-sm">
+                    Entfernen
+                </a>
             </li>
         }
     </ul>

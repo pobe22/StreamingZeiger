@@ -24,22 +24,23 @@ namespace StreamingZeiger.Controllers
         {
             var user = await _userManager.GetUserAsync(User);
             var items = await _context.WatchlistItems
-                .Include(w => w.Movie)
+                .Include(w => w.MediaItem)
                 .Where(w => w.UserId == user.Id)
                 .ToListAsync();
 
             return View(items);
         }
 
-        public async Task<IActionResult> Add(int movieId, string returnUrl = null)
+        public async Task<IActionResult> Add(int mediaItemId, string returnUrl = null)
         {
             var user = await _userManager.GetUserAsync(User);
-            if (!await _context.WatchlistItems.AnyAsync(w => w.UserId == user.Id && w.MovieId == movieId))
+
+            if (!await _context.WatchlistItems.AnyAsync(w => w.UserId == user.Id && w.MediaItemId == mediaItemId))
             {
                 _context.WatchlistItems.Add(new WatchlistItem
                 {
                     UserId = user.Id,
-                    MovieId = movieId
+                    MediaItemId = mediaItemId
                 });
                 await _context.SaveChangesAsync();
             }
@@ -50,10 +51,11 @@ namespace StreamingZeiger.Controllers
             return RedirectToAction("Index", "Movies");
         }
 
-        public async Task<IActionResult> Remove(int movieId, string returnUrl = null)
+        public async Task<IActionResult> Remove(int mediaItemId, string returnUrl = null)
         {
             var user = await _userManager.GetUserAsync(User);
-            var item = await _context.WatchlistItems.FirstOrDefaultAsync(w => w.UserId == user.Id && w.MovieId == movieId);
+            var item = await _context.WatchlistItems
+                .FirstOrDefaultAsync(w => w.UserId == user.Id && w.MediaItemId == mediaItemId);
 
             if (item != null)
             {

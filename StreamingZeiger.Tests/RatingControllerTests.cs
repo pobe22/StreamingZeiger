@@ -54,7 +54,7 @@ namespace StreamingZeiger.Tests
 
             Assert.Equal("Details", result.ActionName);
             Assert.Equal("Movies", result.ControllerName);
-            Assert.Contains(context.Ratings, r => r.MovieId == 1 && r.UserId == "user1" && r.Score == 5);
+            Assert.Contains(context.Ratings, r => r.MediaItemId == 1 && r.UserId == "user1" && r.Score == 5);
         }
     }
 }
