@@ -1,10 +1,11 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using StreamingZeiger.Data;
+using StreamingZeiger.Models;
 using StreamingZeiger.Services;
 using StreamingZeiger.ViewModels;
-using StreamingZeiger.Models;
 
 namespace StreamingZeiger.Controllers
 {
@@ -23,46 +24,64 @@ namespace StreamingZeiger.Controllers
 
         public IActionResult Index([FromQuery] MovieFilterViewModel filter)
         {
-            var movies = _context.Movies
-     .Include(m => (m as MediaItem).MediaGenres)
-         .ThenInclude(mg => mg.Genre)
-     .AsQueryable();
+            var moviesQuery = _context.Movies
+    .Include(m => m.MediaGenres)
+        .ThenInclude(mg => mg.Genre)
+    .AsNoTracking();
+
+            var movies = moviesQuery.ToList();
+
+            var services = movies
+                .SelectMany(m => m.AvailabilityByService.Keys)
+                .Distinct()
+                .OrderBy(s => s)
+                .ToList();
+            ViewBag.Services = new SelectList(services, filter.Service);
+
+            var genres = _context.Genres.OrderBy(g => g.Name).ToList();
+            ViewBag.Genres = new SelectList(genres, "Name", "Name", filter.Genre);
 
             if (!string.IsNullOrWhiteSpace(filter.Genre))
-            {
-                movies = movies.Where(m => m.MediaGenres.Any(mg => mg.Genre.Name == filter.Genre));
-            }
-            if (filter.YearFrom.HasValue) movies = movies.Where(m => m.Year >= filter.YearFrom.Value);
-            if (filter.YearTo.HasValue) movies = movies.Where(m => m.Year <= filter.YearTo.Value);
-            if (filter.MinRating.HasValue) movies = movies.Where(m => m.Rating >= filter.MinRating.Value);
-
-            var result = movies.AsEnumerable();
+                movies = movies.Where(m => m.MediaGenres.Any(mg => mg.Genre.Name == filter.Genre)).ToList();
 
             if (!string.IsNullOrWhiteSpace(filter.Service))
-            {
-                result = result.Where(m => m.AvailabilityByService != null
-                                         && m.AvailabilityByService.ContainsKey(filter.Service)
-                                         && m.AvailabilityByService[filter.Service]);
-            }
+                movies = movies.Where(m => m.AvailabilityByService != null &&
+                                           m.AvailabilityByService.ContainsKey(filter.Service) &&
+                                           m.AvailabilityByService[filter.Service]).ToList();
+
+            if (filter.MinRating.HasValue)
+                movies = movies.Where(m => m.Rating >= filter.MinRating.Value).ToList();
 
             if (!string.IsNullOrWhiteSpace(filter.Query))
+                movies = movies.Where(m => (m.Title?.Contains(filter.Query, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                                           (m.OriginalTitle?.Contains(filter.Query, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                                           (m.Cast?.Any(c => c.Contains(filter.Query, StringComparison.OrdinalIgnoreCase)) ?? false))
+                               .ToList();
+
+            if (filter.YearFrom.HasValue)
+                movies = movies.Where(m => m.Year >= filter.YearFrom.Value).ToList();
+
+            if (filter.YearTo.HasValue)
+                movies = movies.Where(m => m.Year <= filter.YearTo.Value).ToList();
+
+            var pagedMovies = movies.Skip((filter.Page - 1) * filter.PageSize).Take(filter.PageSize);
+
+            var vm = new MovieIndexViewModel
             {
-                result = result.Where(m =>
-                    (!string.IsNullOrWhiteSpace(m.Title) && m.Title.Contains(filter.Query, StringComparison.OrdinalIgnoreCase)) ||
-                    (!string.IsNullOrWhiteSpace(m.OriginalTitle) && m.OriginalTitle.Contains(filter.Query, StringComparison.OrdinalIgnoreCase)) ||
-                    (m.Cast != null && m.Cast.Any(c => c.Contains(filter.Query, StringComparison.OrdinalIgnoreCase)))
-                );
-            }
+                Movies = pagedMovies,
+                Page = filter.Page,
+                PageSize = filter.PageSize,
+                Total = movies.Count,
+                Genre = filter.Genre,
+                Service = filter.Service,
+                MinRating = filter.MinRating.HasValue ? (int?)filter.MinRating.Value : null,
+                YearFrom = filter.YearFrom,
+                YearTo = filter.YearTo,
+            };
 
-            var total = result.Count();
-            var items = result.Skip((filter.Page - 1) * filter.PageSize).Take(filter.PageSize).ToList();
-
-            ViewBag.Total = total;
-            ViewBag.Page = filter.Page;
-            ViewBag.PageSize = filter.PageSize;
-
-            return View(items);
+            return View(vm);
         }
+
 
         public async Task<IActionResult> Details(int id)
         {
@@ -102,6 +121,12 @@ namespace StreamingZeiger.Controllers
             ViewBag.InWatchlist = inWatchlist;
 
             return View(movie);
+        }
+
+        [HttpPost]
+        public IActionResult Search(MovieFilterViewModel filter)
+        {
+            return Index(filter); 
         }
 
         [HttpGet]

@@ -1,12 +1,11 @@
-﻿@model IEnumerable<StreamingZeiger.Models.MediaItem>
+﻿@model StreamingZeiger.ViewModels.MovieIndexViewModel
+
 @{
     ViewData["Title"] = "Filme & Serien";
-    var total = ViewBag.Total as int? ?? 0;
-    var page = ViewBag.Page as int? ?? 1;
-    var pageSize = ViewBag.PageSize as int? ?? 12;
+    var total = Model.Total;
+    var page = Model.Page;
+    var pageSize = Model.PageSize;
     var totalPages = (int)Math.Ceiling(total / (double)pageSize);
-    var serviceQuery = Context.Request.Query["Service"];
-    var ratingQuery = Context.Request.Query["MinRating"];
 }
 
 <div class="container mt-4">
@@ -15,48 +14,40 @@
     <!-- Toggle-Button -->
     <button id="toggleSearchBtn" class="btn btn-outline-secondary mb-3">Filter einblenden</button>
 
-    <!-- Such- und Filterformular (zuerst versteckt) -->
+    <!-- Such- und Filterformular -->
     <div id="searchForm" style="display:none;">
         <form id="filterForm" method="get" class="row g-3 mb-4">
             <div class="col-md-4">
-                <input type="text" name="Query" class="form-control" placeholder="Suche nach Titel, Cast ..." value="@Context.Request.Query["Query"]" />
+                <input asp-for="Query" class="form-control" placeholder="Suche nach Titel, Cast ..." />
             </div>
             <div class="col-md-2">
-                <input type="number" name="YearFrom" class="form-control" placeholder="ab Jahr" value="@Context.Request.Query["YearFrom"]" />
+                <input asp-for="YearFrom" type="number" class="form-control" placeholder="ab Jahr" />
             </div>
             <div class="col-md-2">
-                <input type="number" name="YearTo" class="form-control" placeholder="bis Jahr" value="@Context.Request.Query["YearTo"]" />
+                <input asp-for="YearTo" type="number" class="form-control" placeholder="bis Jahr" />
             </div>
             <div class="col-md-2">
-                <select id="categoryFilter" name="Genre" class="form-select">
-                    <option value="">Genre</option>
-                    <option>Sci-Fi</option>
-                    <option>Drama</option>
-                    <option>Action</option>
-                    <option>Thriller</option>
+                <select asp-for="Genre" asp-items="ViewBag.Genres" class="form-select" id="categoryFilter">
+                    <option value="">Alle Genres</option>
                 </select>
             </div>
             <div class="col-md-2">
-                <select id="typeFilter" name="Service" class="form-select">
+                <select asp-for="Service" asp-items="ViewBag.Services" class="form-select" id="typeFilter">
                     <option value="">Alle Dienste</option>
-                    <option value="Netflix" selected="@(serviceQuery == "Netflix" ? "selected" : null)">Netflix</option>
-                    <option value="Disney+" selected="@(serviceQuery == "Disney+" ? "selected" : null)">Disney+</option>
-                    <option value="Prime" selected="@(serviceQuery == "Prime" ? "selected" : null)">Prime Video</option>
                 </select>
             </div>
             <div class="col-md-2">
-                <select name="MinRating" class="form-select" id="ratingFilter">
+                <select asp-for="MinRating" class="form-select" id="ratingFilter">
                     <option value="">Alle Bewertungen</option>
-                    <option value="5" selected="@(ratingQuery == "5" ? "selected" : null)">5+</option>
-                    <option value="7" selected="@(ratingQuery == "7" ? "selected" : null)">7+</option>
-                    <option value="9" selected="@(ratingQuery == "9" ? "selected" : null)">9+</option>
+                    <option value="5">5+</option>
+                    <option value="7">7+</option>
+                    <option value="9">9+</option>
                 </select>
             </div>
             <div class="col-md-2">
                 <button type="submit" class="btn btn-primary w-100">Filtern</button>
             </div>
         </form>
-        <p id="errorMsg" style="color:red; display:none;"></p>
     </div>
 
     <!-- Clientseitige Titel-Suche -->
@@ -66,10 +57,11 @@
 
     <!-- Film-Grid -->
     <div id="movieList" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-        @foreach (var movie in Model)
+        @foreach (var movie in Model.Movies)
         {
             <div class="col movie" data-title="@movie.Title">
                 @await Html.PartialAsync("_MovieCard", movie)
+                <p class="mt-2"><strong>Genres:</strong> @string.Join(", ", movie.Genres.Select(g => g.Name))</p>
             </div>
         }
     </div>
@@ -78,16 +70,16 @@
     <nav class="mt-4">
         <ul class="pagination justify-content-center">
             <li class="page-item @(page == 1 ? "disabled" : "")">
-                <a class="page-link" href="@Url.Action("Index", new { Page = page - 1 })">Vorherige</a>
+                <a class="page-link" href="@Url.Action("Index", new { Page = page - 1, Genre = Model.Genre, Service = Model.Service, MinRating = Model.MinRating, YearFrom = Model.YearFrom, YearTo = Model.YearTo, Query = Model.Query })">Vorherige</a>
             </li>
             @for (var i = 1; i <= totalPages; i++)
             {
                 <li class="page-item @(i == page ? "active" : "")">
-                    <a class="page-link" href="@Url.Action("Index", new { Page = i })">@i</a>
+                    <a class="page-link" href="@Url.Action("Index", new { Page = i, Genre = Model.Genre, Service = Model.Service, MinRating = Model.MinRating, YearFrom = Model.YearFrom, YearTo = Model.YearTo, Query = Model.Query })">@i</a>
                 </li>
             }
             <li class="page-item @(page == totalPages ? "disabled" : "")">
-                <a class="page-link" href="@Url.Action("Index", new { Page = page + 1 })">Nächste</a>
+                <a class="page-link" href="@Url.Action("Index", new { Page = page + 1, Genre = Model.Genre, Service = Model.Service, MinRating = Model.MinRating, YearFrom = Model.YearFrom, YearTo = Model.YearTo, Query = Model.Query })">Nächste</a>
             </li>
         </ul>
     </nav>
