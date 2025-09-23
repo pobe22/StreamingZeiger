@@ -52,17 +52,46 @@ namespace StreamingZeiger.Tests
                 {
                     HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
                     {
-                        User = new ClaimsPrincipal()
+                        User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+                        {
+                            new Claim(ClaimTypes.NameIdentifier, "user1")
+                        }, "mock"))
                     }
                 }
             };
 
-            var result = await controller.Add(1) as RedirectToActionResult;
+            var result = await controller.Add(1) as RedirectResult;
 
-            Assert.Equal("Index", result.ActionName);
+            Assert.NotNull(result);
+            Assert.Equal("/", result.Url); 
             Assert.Contains(context.WatchlistItems, w => w.MediaItemId == 1 && w.UserId == "user1");
         }
 
+        [Fact]
+        public async Task Add_ReturnsNotFound_WhenMediaItemDoesNotExist()
+        {
+            var context = GetDbContext("NoMediaItemDb");
+            var userManager = GetUserManagerMock();
+            var user = new ApplicationUser { Id = "user1" };
+            userManager.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+
+            var controller = new WatchlistController(context, userManager.Object)
+            {
+                ControllerContext = new ControllerContext
+                {
+                    HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
+                    {
+                        User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+                        {
+                            new Claim(ClaimTypes.NameIdentifier, "user1")
+                        }, "mock"))
+                    }
+                }
+            };
+
+            var result = await controller.Add(99);
+            Assert.IsType<NotFoundObjectResult>(result);
+        }
 
         [Fact]
         public async Task Remove_RemovesItem()
@@ -81,15 +110,49 @@ namespace StreamingZeiger.Tests
                 {
                     HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
                     {
-                        User = new ClaimsPrincipal()
+                        User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+                        {
+                            new Claim(ClaimTypes.NameIdentifier, "user1")
+                        }, "mock"))
                     }
                 }
             };
 
-            var result = await controller.Remove(1) as RedirectToActionResult;
+            var result = await controller.Remove(1) as RedirectResult;
 
-            Assert.Equal("Index", result.ActionName);
+            Assert.NotNull(result);
+            Assert.Equal("/", result.Url);
             Assert.DoesNotContain(context.WatchlistItems, w => w.MediaItemId == 1 && w.UserId == "user1");
+        }
+
+        [Fact]
+        public async Task Remove_DoesNothing_WhenItemNotExists()
+        {
+            var context = GetDbContext("RemoveDoesNothingDb");
+
+            var userManager = GetUserManagerMock();
+            var user = new ApplicationUser { Id = "user1" };
+            userManager.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+
+            var controller = new WatchlistController(context, userManager.Object)
+            {
+                ControllerContext = new ControllerContext
+                {
+                    HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
+                    {
+                        User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+                        {
+                            new Claim(ClaimTypes.NameIdentifier, "user1")
+                        }, "mock"))
+                    }
+                }
+            };
+
+            var result = await controller.Remove(42) as RedirectResult;
+
+            Assert.NotNull(result);
+            Assert.Equal("/", result.Url);
+            Assert.Empty(context.WatchlistItems); 
         }
     }
 }

@@ -96,7 +96,7 @@
                 {
                     <a asp-controller="Watchlist"
                        asp-action="Add"
-                       asp-route-movieId="@Model.Id"
+                       asp-route-mediaItemId="@Model.Id"
                        asp-route-returnUrl="@currentUrl"
                        class="btn btn-success btn-sm">
                         Zur Watchlist hinzufügen
@@ -106,7 +106,7 @@
                 {
                     <a asp-controller="Watchlist"
                        asp-action="Remove"
-                       asp-route-movieId="@Model.Id"
+                       asp-route-mediaItemId="@Model.Id"
                        asp-route-returnUrl="@currentUrl"
                        class="btn btn-danger btn-sm">
                         Aus Watchlist entfernen

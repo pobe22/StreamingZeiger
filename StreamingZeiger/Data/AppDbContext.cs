@@ -65,11 +65,10 @@ namespace StreamingZeiger.Data
                 .HasForeignKey(mg => mg.GenreId);
 
             modelBuilder.Entity<WatchlistItem>()
-    .HasOne(w => w.MediaItem)
-    .WithMany() // oder .WithMany(mi => mi.WatchlistItems) falls Navigation vorhanden
-    .HasForeignKey(w => w.MediaItemId)
-    .OnDelete(DeleteBehavior.Cascade);
-
+                .HasOne(w => w.MediaItem)
+                .WithMany(mi => mi.WatchlistItems)
+                .HasForeignKey(w => w.MediaItemId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

@@ -89,11 +89,15 @@ namespace StreamingZeiger.Controllers
 
             // Prüfen, ob aktueller User den Film in der Watchlist hat
             bool inWatchlist = false;
+
             if (User.Identity.IsAuthenticated)
             {
                 var user = await _userManager.GetUserAsync(User);
-                inWatchlist = await _context.WatchlistItems
-                    .AnyAsync(w => w.UserId == user.Id && w.MediaItemId == id);
+                if (user != null)
+                {
+                    inWatchlist = await _context.WatchlistItems
+                        .AnyAsync(w => w.UserId == user.Id && w.MediaItemId == id);
+                }
             }
             ViewBag.InWatchlist = inWatchlist;
 

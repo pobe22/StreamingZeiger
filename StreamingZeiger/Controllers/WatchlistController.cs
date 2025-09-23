@@ -34,21 +34,30 @@ namespace StreamingZeiger.Controllers
         public async Task<IActionResult> Add(int mediaItemId, string returnUrl = null)
         {
             var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Challenge();
+            }
 
-            if (!await _context.WatchlistItems.AnyAsync(w => w.UserId == user.Id && w.MediaItemId == mediaItemId))
+            var mediaItem = await _context.MediaItems.FindAsync(mediaItemId);
+            if (mediaItem == null)
+            {
+                return NotFound("MediaItem nicht gefunden.");
+            }
+
+            if (!await _context.WatchlistItems
+                .AnyAsync(w => w.UserId == user.Id && w.MediaItemId == mediaItemId))
             {
                 _context.WatchlistItems.Add(new WatchlistItem
                 {
                     UserId = user.Id,
                     MediaItemId = mediaItemId
                 });
+
                 await _context.SaveChangesAsync();
             }
 
-            if (!string.IsNullOrEmpty(returnUrl))
-                return Redirect(returnUrl);
-
-            return RedirectToAction("Index", "Movies");
+            return Redirect(returnUrl ?? "/");
         }
 
         public async Task<IActionResult> Remove(int mediaItemId, string returnUrl = null)
@@ -66,7 +75,7 @@ namespace StreamingZeiger.Controllers
             if (!string.IsNullOrEmpty(returnUrl))
                 return Redirect(returnUrl);
 
-            return RedirectToAction("Index");
+            return Redirect(returnUrl ?? "/");
         }
     }
 }

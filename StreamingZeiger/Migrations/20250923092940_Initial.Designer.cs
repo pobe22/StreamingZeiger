@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StreamingZeiger.Data;
 
@@ -10,9 +11,11 @@ using StreamingZeiger.Data;
 namespace StreamingZeiger.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250923092940_Initial")]
+    partial class Initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
@@ -328,6 +331,9 @@ namespace StreamingZeiger.Migrations
                     b.Property<int>("MediaItemId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("MediaItemId1")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -335,6 +341,8 @@ namespace StreamingZeiger.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("MediaItemId");
+
+                    b.HasIndex("MediaItemId1");
 
                     b.HasIndex("UserId");
 
@@ -465,10 +473,14 @@ namespace StreamingZeiger.Migrations
             modelBuilder.Entity("StreamingZeiger.Models.WatchlistItem", b =>
                 {
                     b.HasOne("StreamingZeiger.Models.MediaItem", "MediaItem")
-                        .WithMany("WatchlistItems")
+                        .WithMany()
                         .HasForeignKey("MediaItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("StreamingZeiger.Models.MediaItem", null)
+                        .WithMany("WatchlistItems")
+                        .HasForeignKey("MediaItemId1");
 
                     b.HasOne("StreamingZeiger.Models.ApplicationUser", "User")
                         .WithMany("Watchlist")
