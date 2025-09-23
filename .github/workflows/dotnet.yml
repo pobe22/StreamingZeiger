@@ -33,7 +33,14 @@ jobs:
         run: dotnet publish -c Release -o ./publish
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: StreamingZeigerApp
           path: ./publish
+          
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: StreamingZeigerApp
+          path: ./app
+
