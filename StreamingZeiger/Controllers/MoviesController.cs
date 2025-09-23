@@ -22,6 +22,7 @@ namespace StreamingZeiger.Controllers
             _userManager = userManager;
         }
 
+        // Arbeitsauftrag Aufgabe 2
         public IActionResult Index([FromQuery] MovieFilterViewModel filter)
         {
             var moviesQuery = _context.Movies
@@ -82,7 +83,7 @@ namespace StreamingZeiger.Controllers
             return View(vm);
         }
 
-
+        //Arbeitsauftrag Aufgabe 5
         public async Task<IActionResult> Details(int id)
         {
             var movie = await _context.Movies
@@ -106,7 +107,6 @@ namespace StreamingZeiger.Controllers
 
             ViewBag.RecommendedMovies = recommended;
 
-            // Prüfen, ob aktueller User den Film in der Watchlist hat
             bool inWatchlist = false;
 
             if (User.Identity.IsAuthenticated)
@@ -123,6 +123,7 @@ namespace StreamingZeiger.Controllers
             return View(movie);
         }
 
+        //Arbeitsauftrag Aufgabe 3
         [HttpPost]
         public IActionResult Search(MovieFilterViewModel filter)
         {

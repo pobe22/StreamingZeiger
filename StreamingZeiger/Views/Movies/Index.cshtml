@@ -16,7 +16,7 @@
 
     <!-- Such- und Filterformular -->
     <div id="searchForm" style="display:none;">
-        <form id="filterForm" method="get" class="row g-3 mb-4">
+        <form id="filterForm" method="post" asp-action="Search" class="row g-3 mb-4">
             <div class="col-md-4">
                 <input asp-for="Query" class="form-control" placeholder="Suche nach Titel, Cast ..." />
             </div>
@@ -57,11 +57,11 @@
 
     <!-- Film-Grid -->
     <div id="movieList" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+        <!-- Arbeitsauftrag Aufgabe 4 -->
         @foreach (var movie in Model.Movies)
         {
             <div class="col movie" data-title="@movie.Title">
                 @await Html.PartialAsync("_MovieCard", movie)
-                <p class="mt-2"><strong>Genres:</strong> @string.Join(", ", movie.Genres.Select(g => g.Name))</p>
             </div>
         }
     </div>
