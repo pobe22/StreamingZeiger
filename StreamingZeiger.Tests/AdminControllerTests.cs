@@ -18,14 +18,12 @@ namespace StreamingZeiger.Tests
 
         public AdminControllerTests()
         {
-            // InMemory DbContext erstellen
             var options = new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(databaseName: $"TestDb_{Guid.NewGuid()}")
                 .Options;
 
             _context = new AppDbContext(options);
 
-            // Test-Filme anlegen
             if (!_context.Movies.Any())
             {
                 _context.Movies.Add(new Movie
@@ -41,16 +39,24 @@ namespace StreamingZeiger.Tests
                 });
             }
 
-            // Test-Serien anlegen
             if (!_context.Series.Any())
             {
+                var season = new Season
+                {
+                    SeasonNumber = 1,
+                    Episodes = new List<Episode>
+                    {
+                        new Episode { EpisodeNumber = 1, Title = "Pilot", DurationMinutes = 45 },
+                        new Episode { EpisodeNumber = 2, Title = "Episode 2", DurationMinutes = 50 }
+                    }
+                };
+
                 _context.Series.Add(new Series
                 {
                     Id = 2001,
                     Title = "Test Serie",
                     StartYear = 2020,
-                    Seasons = 1,
-                    Episodes = 10,
+                    Seasons = new List<Season> { season },
                     Director = "Regisseur",
                     Description = "Beschreibung",
                     Cast = new List<string> { "Schauspieler A" }
@@ -59,22 +65,14 @@ namespace StreamingZeiger.Tests
 
             _context.SaveChanges();
 
-            // Mocked Environment
             _env = new Mock<IWebHostEnvironment>();
             _env.Setup(e => e.WebRootPath).Returns(Directory.GetCurrentDirectory());
         }
 
-        // Controller mit TempData erstellen
         private AdminController GetController()
         {
             var controller = new AdminController(_context, _env.Object);
-
-            // TempData für Tests initialisieren
-            controller.TempData = new TempDataDictionary(
-                new DefaultHttpContext(),
-                Mock.Of<ITempDataProvider>()
-            );
-
+            controller.TempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
             return controller;
         }
 
@@ -82,7 +80,6 @@ namespace StreamingZeiger.Tests
         public async Task Index_ReturnsViewWithMoviesAndSeries()
         {
             var controller = GetController();
-
             var result = await controller.Index() as ViewResult;
             var model = result.Model as AdminIndexViewModel;
 
@@ -92,11 +89,11 @@ namespace StreamingZeiger.Tests
             Assert.NotEmpty(model.Series);
         }
 
+        // ---------------- Movies ----------------
         [Fact]
         public void CreateMovie_Get_ReturnsView()
         {
             var controller = GetController();
-
             var result = controller.CreateMovie() as ViewResult;
             Assert.NotNull(result);
         }
@@ -105,7 +102,6 @@ namespace StreamingZeiger.Tests
         public async Task CreateMovie_Post_ValidMovie_AddsMovie()
         {
             var controller = GetController();
-
             var movie = new Movie { Title = "New Movie" };
             var services = new List<string> { "Netflix" };
 
@@ -114,15 +110,12 @@ namespace StreamingZeiger.Tests
 
             Assert.Equal("Index", result.ActionName);
 
-            // Prüfen, ob der Film existiert
             var createdMovie = _context.Movies
-                .Include(m => m.MediaGenres)   // EF Core Navigation laden
+                .Include(m => m.MediaGenres)
                 .ThenInclude(mg => mg.Genre)
                 .FirstOrDefault(m => m.Title == "New Movie");
 
             Assert.NotNull(createdMovie);
-
-            // Prüfen, ob die Genres korrekt zugewiesen wurden
             var genreNames = createdMovie.MediaGenres.Select(mg => mg.Genre.Name).ToList();
             Assert.Contains("Action", genreNames);
             Assert.Contains("Drama", genreNames);
@@ -131,22 +124,9 @@ namespace StreamingZeiger.Tests
         }
 
         [Fact]
-        public async Task EditMovie_Get_ReturnsView_WhenMovieExists()
-        {
-            var controller = GetController();
-
-            var result = await controller.EditMovie(1001) as ViewResult;
-            Assert.NotNull(result);
-
-            var movie = result.Model as MediaItem; // statt Movie
-            Assert.Equal(1001, movie.Id);
-        }
-
-        [Fact]
         public async Task DeleteMovie_RemovesMovie()
         {
             var controller = GetController();
-
             var movieToDelete = _context.Movies.First();
             var result = await controller.DeleteMovie(movieToDelete.Id) as RedirectToActionResult;
 
@@ -154,22 +134,80 @@ namespace StreamingZeiger.Tests
             Assert.DoesNotContain(_context.Movies, m => m.Id == movieToDelete.Id);
         }
 
+        // ---------------- Series ----------------
+        [Fact]
+        public void CreateSeries_Get_ReturnsView()
+        {
+            var controller = GetController();
+            var result = controller.CreateSeries() as ViewResult;
+            Assert.NotNull(result);
+        }
+
+        [Fact]
+        public async Task CreateSeries_Post_ValidSeries_AddsSeriesWithSeasons()
+        {
+            var controller = GetController();
+            var series = new Series { Title = "New Series", StartYear = 2022, EndYear = 2023 };
+            var services = new List<string> { "Netflix" };
+
+            var result = await controller.CreateSeries(series, "Actor A, Actor B", services, "Drama, Fantasy", null)
+                as RedirectToActionResult;
+
+            Assert.Equal("Index", result.ActionName);
+
+            var createdSeries = _context.Series
+                .Include(s => s.MediaGenres)
+                    .ThenInclude(mg => mg.Genre)
+                .Include(s => s.Seasons)
+                    .ThenInclude(se => se.Episodes)
+                .FirstOrDefault(s => s.Title == "New Series");
+
+            Assert.NotNull(createdSeries);
+            Assert.Equal("Serie erfolgreich hinzugefügt.", controller.TempData["Message"]);
+        }
+
+        [Fact]
+        public async Task EditSeries_Get_ReturnsView_WhenSeriesExists()
+        {
+            var controller = GetController();
+            var result = await controller.EditSeries(2001) as ViewResult;
+
+            Assert.NotNull(result);
+            var series = result.Model as Series;
+            Assert.Equal(2001, series.Id);
+        }
+
+        [Fact]
+        public async Task DeleteSeries_RemovesSeriesWithSeasonsAndEpisodes()
+        {
+            var controller = GetController();
+            var seriesToDelete = _context.Series
+                .Include(s => s.Seasons)
+                    .ThenInclude(se => se.Episodes)
+                .First();
+
+            var result = await controller.DeleteSeries(seriesToDelete.Id) as RedirectToActionResult;
+
+            Assert.Equal("Index", result.ActionName);
+            Assert.DoesNotContain(_context.Series, s => s.Id == seriesToDelete.Id);
+        }
+
+        // ---------------- Import ----------------
         [Fact]
         public async Task ImportFromTmdb_ReturnsJsonResult()
         {
             var controller = GetController();
 
-            // Für einen Film
             var resultMovie = await controller.ImportFromTmdb(550, "movie") as JsonResult;
             Assert.NotNull(resultMovie);
             Assert.NotNull(resultMovie.Value);
 
-            // Für eine Serie
             var resultSeries = await controller.ImportFromTmdb(12345, "series") as JsonResult;
             Assert.NotNull(resultSeries);
             Assert.NotNull(resultSeries.Value);
         }
 
+        // ---------------- ModelState ----------------
         [Fact]
         public async Task CreateMovie_Post_InvalidModel_ReturnsView()
         {

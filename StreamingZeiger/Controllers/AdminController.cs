@@ -91,8 +91,8 @@ namespace StreamingZeiger.Controllers
                     {
                         item.MediaGenres.Add(new MediaGenre
                         {
-                            MediaItem = item,  
-                            Genre = genre      
+                            MediaItem = item,
+                            Genre = genre
                         });
                     }
                 }
@@ -177,6 +177,22 @@ namespace StreamingZeiger.Controllers
 
             await HandleMediaItemBaseAsync(series, castCsv, services, genreCsv, posterUpload);
 
+            // Seasons und Episodes manuell setzen, falls aus ViewModel vorhanden
+            if (series.Seasons != null)
+            {
+                foreach (var season in series.Seasons)
+                {
+                    season.Series = series; // FK setzen
+                    if (season.Episodes != null)
+                    {
+                        foreach (var ep in season.Episodes)
+                        {
+                            ep.Season = season; // FK setzen
+                        }
+                    }
+                }
+            }
+
             _context.Series.Add(series);
             await _context.SaveChangesAsync();
 
@@ -187,9 +203,10 @@ namespace StreamingZeiger.Controllers
         public async Task<IActionResult> EditSeries(int id)
         {
             var series = await _context.Series
-                .Include(s => s.MediaGenres)
-                    .ThenInclude(mg => mg.Genre)
+                .Include(s => s.MediaGenres).ThenInclude(mg => mg.Genre)
+                .Include(s => s.Seasons).ThenInclude(se => se.Episodes)
                 .FirstOrDefaultAsync(s => s.Id == id);
+
             if (series == null) return NotFound();
 
             ViewBag.CastCsv = string.Join(", ", series.Cast ?? new List<string>());
@@ -200,34 +217,92 @@ namespace StreamingZeiger.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditSeries(int id, Series series, string castCsv, List<string> services, string genreCsv, IFormFile? posterUpload)
+        public async Task<IActionResult> EditSeries(int id, Series series, string castCsv, List<string> services, string genreCsv)
         {
             if (id != series.Id) return NotFound();
             if (!ModelState.IsValid) return View(series);
 
             var existing = await _context.Series
-                .Include(s => s.MediaGenres)
-                    .ThenInclude(mg => mg.Genre)
+                .Include(s => s.MediaGenres).ThenInclude(mg => mg.Genre)
+                .Include(s => s.Seasons).ThenInclude(se => se.Episodes)
                 .FirstOrDefaultAsync(s => s.Id == id);
+
             if (existing == null) return NotFound();
 
+            // Basis-Eigenschaften aktualisieren
             _context.Entry(existing).CurrentValues.SetValues(series);
             existing.MediaGenres.Clear();
+            await HandleMediaItemBaseAsync(existing, castCsv, services, genreCsv, null);
 
-            await HandleMediaItemBaseAsync(existing, castCsv, services, genreCsv, posterUpload);
+            // Seasons & Episodes synchronisieren
+            if (series.Seasons != null)
+            {
+                // Entferne alte Seasons/Episodes, die nicht mehr existieren
+                var seasonsToRemove = existing.Seasons.Where(se => !series.Seasons.Any(s => s.SeasonNumber == se.SeasonNumber)).ToList();
+                _context.Seasons.RemoveRange(seasonsToRemove);
+
+                foreach (var season in series.Seasons)
+                {
+                    var existingSeason = existing.Seasons.FirstOrDefault(se => se.SeasonNumber == season.SeasonNumber);
+                    if (existingSeason == null)
+                    {
+                        // Neue Season
+                        season.Series = existing;
+                        if (season.Episodes != null)
+                        {
+                            foreach (var ep in season.Episodes)
+                                ep.Season = season;
+                        }
+                        existing.Seasons.Add(season);
+                    }
+                    else
+                    {
+                        // Bestehende Season aktualisieren
+                        _context.Entry(existingSeason).CurrentValues.SetValues(season);
+
+                        if (season.Episodes != null)
+                        {
+                            // Entferne alte Episodes
+                            var episodesToRemove = existingSeason.Episodes
+                                .Where(e => !season.Episodes.Any(sep => sep.EpisodeNumber == e.EpisodeNumber))
+                                .ToList();
+                            _context.Episodes.RemoveRange(episodesToRemove);
+
+                            foreach (var ep in season.Episodes)
+                            {
+                                var existingEp = existingSeason.Episodes.FirstOrDefault(e => e.EpisodeNumber == ep.EpisodeNumber);
+                                if (existingEp == null)
+                                {
+                                    ep.Season = existingSeason;
+                                    existingSeason.Episodes.Add(ep);
+                                }
+                                else
+                                {
+                                    _context.Entry(existingEp).CurrentValues.SetValues(ep);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             await _context.SaveChangesAsync();
-
             TempData["Message"] = "Serie erfolgreich bearbeitet.";
             return RedirectToAction(nameof(Index));
         }
 
         public async Task<IActionResult> DeleteSeries(int id)
         {
-            var series = await _context.Series.FindAsync(id);
+            var series = await _context.Series
+                .Include(s => s.Seasons).ThenInclude(se => se.Episodes)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
             if (series == null) return NotFound();
 
-            _context.Series.Remove(series);
+            _context.Series.Remove(series); 
             await _context.SaveChangesAsync();
+
+            TempData["Message"] = "Serie erfolgreich gelöscht.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -262,14 +337,31 @@ namespace StreamingZeiger.Controllers
                 if (series == null)
                     return NotFound(new { message = "Serie nicht gefunden" });
 
+                // Alle Episoden über alle Staffeln zusammenfassen
+                var allEpisodes = series.Seasons?
+                    .SelectMany(s => s.Episodes)
+                    .Select(e => new
+                    {
+                        seasonNumber = e.Season.SeasonNumber,
+                        episodeNumber = e.EpisodeNumber,
+                        title = e.Title,
+                        description = e.Description,
+                        durationMinutes = e.DurationMinutes,
+                    })
+                    .ToList();
+
                 return Json(new
                 {
                     title = series.Title,
                     originalTitle = series.OriginalTitle,
                     startYear = series.StartYear,
                     endYear = series.EndYear,
-                    seasons = series.Seasons,
-                    episodes = series.Episodes,
+                    seasons = series.Seasons?.Select(s => new
+                    {
+                        seasonNumber = s.SeasonNumber,
+                        episodesCount = s.Episodes.Count
+                    }).ToList(),
+                    episodes = allEpisodes,
                     description = series.Description,
                     director = series.Director,
                     posterFile = series.PosterFile,

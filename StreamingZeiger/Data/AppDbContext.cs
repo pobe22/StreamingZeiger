@@ -14,6 +14,8 @@ namespace StreamingZeiger.Data
         public DbSet<MediaItem> MediaItems { get; set; }
         public DbSet<Movie> Movies { get; set; }
         public DbSet<Series> Series { get; set; }
+        public DbSet<Season> Seasons { get; set; }
+        public DbSet<Episode> Episodes { get; set; }
 
         // Genres
         public DbSet<Genre> Genres { get; set; }

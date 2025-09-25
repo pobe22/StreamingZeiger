@@ -56,8 +56,10 @@ namespace StreamingZeiger.Tests
             var result = _controller.Index(filter) as ViewResult;
 
             Assert.NotNull(result);
-            var model = Assert.IsAssignableFrom<IEnumerable<Movie>>(result.Model);
-            Assert.Equal(3, model.Count());
+
+            var model = Assert.IsType<MovieIndexViewModel>(result.Model);
+            Assert.NotNull(model.Movies);
+            Assert.Equal(3, model.Movies.Count());
         }
 
         [Fact]

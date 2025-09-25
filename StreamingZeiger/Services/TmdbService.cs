@@ -49,7 +49,7 @@ namespace StreamingZeiger.Services
         }
 
         // Einzelne Serie importieren
-        public async Task<Models.Series> GetSeriesByIdAsync(int tmdbId)
+        public async Task<Series> GetSeriesByIdAsync(int tmdbId)
         {
             var seriesDetails = await _client.GetTvShowAsync(tmdbId, TvShowMethods.Credits | TvShowMethods.Videos);
 
@@ -59,8 +59,6 @@ namespace StreamingZeiger.Services
                 OriginalTitle = seriesDetails.OriginalName,
                 StartYear = seriesDetails.FirstAirDate?.Year ?? 0,
                 EndYear = seriesDetails.LastAirDate?.Year,
-                Seasons = seriesDetails.NumberOfSeasons,
-                Episodes = seriesDetails.NumberOfEpisodes,
                 Description = seriesDetails.Overview ?? "",
                 PosterFile = "https://image.tmdb.org/t/p/w500" + (seriesDetails.PosterPath ?? ""),
                 Cast = seriesDetails.Credits.Cast.Select(c => c.Name).ToList(),
@@ -70,18 +68,46 @@ namespace StreamingZeiger.Services
                             .FirstOrDefault() ?? ""
             };
 
-            // Trailer-URL als YouTube-Embed setzen
+            // Trailer-URL
             var trailerKey = seriesDetails.Videos.Results
                                 .FirstOrDefault(v => v.Site == "YouTube" && v.Type == "Trailer")?.Key;
-
             series.TrailerUrl = !string.IsNullOrEmpty(trailerKey)
                                 ? $"https://www.youtube.com/embed/{trailerKey}"
                                 : "";
 
-            // Genres als n:m abbilden
+            // Genres
             series.MediaGenres = seriesDetails.Genres
                                     .Select(g => new MediaGenre { Genre = new Genre { Name = g.Name } })
                                     .ToList();
+
+            // Seasons und Episodes
+            series.Seasons = new List<Season>();
+            foreach (var sInfo in seriesDetails.Seasons)
+            {
+                var seasonDetails = await _client.GetTvSeasonAsync(tmdbId, sInfo.SeasonNumber);
+
+                var season = new Season
+                {
+                    SeasonNumber = seasonDetails.SeasonNumber,
+                    Series = series,           // FK setzen
+                    Episodes = seasonDetails.Episodes.Select(e => new Episode
+                    {
+                        EpisodeNumber = e.EpisodeNumber,
+                        Title = e.Name,
+                        Description = e.Overview ?? "",
+                        DurationMinutes = e.Runtime ?? 0,
+                        Season = null             // Setzen wir später, EF Core füllt es über Collection
+                    }).ToList()
+                };
+
+                // FK in Episodes setzen
+                foreach (var ep in season.Episodes)
+                {
+                    ep.Season = season;
+                }
+
+                series.Seasons.Add(season);
+            }
 
             return series;
         }

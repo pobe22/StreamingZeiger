@@ -1,0 +1,7 @@
+﻿@model IEnumerable<StreamingZeiger.Models.Genre>
+
+<strong>Genres:</strong>
+@foreach (var g in Model)
+{
+    <span class="badge bg-secondary me-1">@g.Name</span>
+}

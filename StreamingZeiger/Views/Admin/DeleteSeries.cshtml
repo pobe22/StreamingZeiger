@@ -1,0 +1,33 @@
+﻿@model StreamingZeiger.Models.Series
+@{
+    ViewData["Title"] = "Serie löschen";
+}
+
+<div class="container mt-4">
+    <h2>Serie löschen</h2>
+    <div class="alert alert-warning">
+        <strong>Achtung!</strong> Diese Aktion kann nicht rückgängig gemacht werden.
+    </div>
+
+    <div class="card mb-3" style="max-width: 500px;">
+        <div class="row g-0">
+            <div class="col-md-4">
+                <img src="@Url.Content(Model.PosterFile)" class="img-fluid rounded-start" alt="@Model.Title Poster">
+            </div>
+            <div class="col-md-8">
+                <div class="card-body">
+                    <h5 class="card-title">@Model.Title (@Model.StartYear - @(Model.EndYear?.ToString() ?? "heute"))</h5>
+                    <p class="card-text">@Model.Description</p>
+                    <p class="card-text"><strong>Staffeln:</strong> @Model.Seasons?.Count()</p>
+                    <p class="card-text"><strong>Genres:</strong> @string.Join(", ", Model.MediaGenres.Select(mg => mg.Genre.Name))</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form asp-action="DeleteSeries" method="post">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-danger">Serie endgültig löschen</button>
+        <a asp-action="Index" class="btn btn-secondary">Abbrechen</a>
+    </form>
+</div>

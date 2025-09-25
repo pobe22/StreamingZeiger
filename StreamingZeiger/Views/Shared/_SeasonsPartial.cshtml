@@ -1,0 +1,20 @@
+﻿@model IEnumerable<StreamingZeiger.Models.Season>
+
+<h4 class="mt-4">Staffeln</h4>
+@if (Model != null && Model.Any())
+{
+    <ul class="list-group">
+        @foreach (var season in Model.OrderBy(s => s.SeasonNumber))
+        {
+            <li class="list-group-item">
+                Staffel @season.SeasonNumber
+                <a asp-controller="Seasons" asp-action="Details" asp-route-id="@season.Id"
+                   class="btn btn-sm btn-outline-primary float-end">Ansehen</a>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p>Keine Staffeln vorhanden.</p>
+}

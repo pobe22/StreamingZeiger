@@ -1,0 +1,25 @@
+﻿@model IEnumerable<StreamingZeiger.Models.Series>
+
+<h3>Ähnliche Serien</h3>
+<div class="row">
+    @if (Model != null && Model.Any())
+    {
+        @foreach (var s in Model)
+        {
+            <div class="col-md-3 mb-3">
+                <div class="card h-100">
+                    <img src="@Url.Content(s.PosterFile)" class="card-img-top" alt="@s.Title" />
+                    <div class="card-body text-center">
+                        <h6 class="card-title">@s.Title</h6>
+                        <a asp-controller="Series" asp-action="Details" asp-route-id="@s.Id"
+                           class="btn btn-sm btn-outline-primary">Details</a>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <p>Keine Empfehlungen verfügbar.</p>
+    }
+</div>

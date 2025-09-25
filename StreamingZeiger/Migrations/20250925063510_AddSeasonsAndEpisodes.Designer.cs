@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StreamingZeiger.Data;
 
@@ -10,9 +11,11 @@ using StreamingZeiger.Data;
 namespace StreamingZeiger.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250925063510_AddSeasonsAndEpisodes")]
+    partial class AddSeasonsAndEpisodes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
@@ -235,7 +238,7 @@ namespace StreamingZeiger.Migrations
 
                     b.HasIndex("SeasonId");
 
-                    b.ToTable("Episodes", (string)null);
+                    b.ToTable("Episodes");
                 });
 
             modelBuilder.Entity("StreamingZeiger.Models.Genre", b =>
@@ -250,7 +253,7 @@ namespace StreamingZeiger.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Genres", (string)null);
+                    b.ToTable("Genres");
                 });
 
             modelBuilder.Entity("StreamingZeiger.Models.MediaGenre", b =>
@@ -265,7 +268,7 @@ namespace StreamingZeiger.Migrations
 
                     b.HasIndex("GenreId");
 
-                    b.ToTable("MediaGenres", (string)null);
+                    b.ToTable("MediaGenres");
                 });
 
             modelBuilder.Entity("StreamingZeiger.Models.MediaItem", b =>
@@ -316,7 +319,7 @@ namespace StreamingZeiger.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("MediaItems", (string)null);
+                    b.ToTable("MediaItems");
 
                     b.HasDiscriminator<string>("MediaType").HasValue("MediaItem");
 
@@ -345,7 +348,7 @@ namespace StreamingZeiger.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Ratings", (string)null);
+                    b.ToTable("Ratings");
                 });
 
             modelBuilder.Entity("StreamingZeiger.Models.Season", b =>
@@ -364,7 +367,7 @@ namespace StreamingZeiger.Migrations
 
                     b.HasIndex("SeriesId");
 
-                    b.ToTable("Seasons", (string)null);
+                    b.ToTable("Seasons");
                 });
 
             modelBuilder.Entity("StreamingZeiger.Models.WatchlistItem", b =>
@@ -386,7 +389,7 @@ namespace StreamingZeiger.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("WatchlistItems", (string)null);
+                    b.ToTable("WatchlistItems");
                 });
 
             modelBuilder.Entity("StreamingZeiger.Models.Movie", b =>

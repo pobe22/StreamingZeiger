@@ -56,8 +56,6 @@ namespace StreamingZeiger.Data
                     OriginalTitle = "Breaking Bad",
                     StartYear = 2008,
                     EndYear = 2013,
-                    Seasons = 5,
-                    Episodes = 62,
                     Description = "Chemielehrer wird Drogenboss",
                     Cast = new List<string> { "Bryan Cranston", "Aaron Paul", "Anna Gunn" },
                     Director = "Vince Gilligan",
@@ -65,9 +63,29 @@ namespace StreamingZeiger.Data
                     TrailerUrl = "https://www.youtube.com/embed/HhesaQXLuRY",
                     Rating = 9.5,
                     MediaGenres = new List<MediaGenre>
-                    {
-                        new MediaGenre { Genre = genres["Drama"] }
-                    }
+        {
+            new MediaGenre { Genre = genres["Drama"] }
+        },
+                    Seasons = new List<Season>
+        {
+            new Season
+            {
+                SeasonNumber = 1,
+                Episodes = new List<Episode>
+                {
+                    new Episode { EpisodeNumber = 1, Title = "Pilot", DurationMinutes = 58 },
+                    new Episode { EpisodeNumber = 2, Title = "Die Katze ist im Sack", DurationMinutes = 48 }
+                }
+            },
+            new Season
+            {
+                SeasonNumber = 2,
+                Episodes = new List<Episode>
+                {
+                    new Episode { EpisodeNumber = 1, Title = "Sieben Dreißig Sieben", DurationMinutes = 47 }
+                }
+            }
+        }
                 };
 
                 var strangerThings = new Series
@@ -75,8 +93,6 @@ namespace StreamingZeiger.Data
                     Title = "Stranger Things",
                     OriginalTitle = "Stranger Things",
                     StartYear = 2016,
-                    Seasons = 4,
-                    Episodes = 34,
                     Description = "Mystery in Hawkins",
                     Cast = new List<string> { "Millie Bobby Brown", "Finn Wolfhard", "Winona Ryder" },
                     Director = "The Duffer Brothers",
@@ -84,9 +100,21 @@ namespace StreamingZeiger.Data
                     TrailerUrl = "https://www.youtube.com/embed/mnd7sFt5c3A",
                     Rating = 8.8,
                     MediaGenres = new List<MediaGenre>
-                    {
-                        new MediaGenre { Genre = genres["Sci-Fi"] }
-                    }
+        {
+            new MediaGenre { Genre = genres["Sci-Fi"] }
+        },
+                    Seasons = new List<Season>
+        {
+            new Season
+            {
+                SeasonNumber = 1,
+                Episodes = new List<Episode>
+                {
+                    new Episode { EpisodeNumber = 1, Title = "Kapitel Eins: Das Verschwinden des Will Byers", DurationMinutes = 47 },
+                    new Episode { EpisodeNumber = 2, Title = "Kapitel Zwei: Die seltsame Verrückte", DurationMinutes = 55 }
+                }
+            }
+        }
                 };
 
                 var gameOfThrones = new Series
@@ -95,8 +123,6 @@ namespace StreamingZeiger.Data
                     OriginalTitle = "Game of Thrones",
                     StartYear = 2011,
                     EndYear = 2019,
-                    Seasons = 8,
-                    Episodes = 73,
                     Description = "Kampf um den Eisernen Thron",
                     Cast = new List<string> { "Emilia Clarke", "Kit Harington", "Peter Dinklage" },
                     Director = "David Benioff & D.B. Weiss",
@@ -104,10 +130,32 @@ namespace StreamingZeiger.Data
                     TrailerUrl = "https://www.youtube.com/embed/BpJYNVhGf1s",
                     Rating = 9.3,
                     MediaGenres = new List<MediaGenre>
-                    {
-                        new MediaGenre { Genre = genres["Fantasy"] }
-                    }
+    {
+        new MediaGenre { Genre = genres["Fantasy"] }
+    },
+                    Seasons = new List<Season>
+    {
+        new Season
+        {
+            SeasonNumber = 1,
+            Episodes = new List<Episode>
+            {
+                new Episode { EpisodeNumber = 1, Title = "Winter Is Coming", DurationMinutes = 62 },
+                new Episode { EpisodeNumber = 2, Title = "The Kingsroad", DurationMinutes = 56 }
+            }
+        },
+        new Season
+        {
+            SeasonNumber = 2,
+            Episodes = new List<Episode>
+            {
+                new Episode { EpisodeNumber = 1, Title = "The North Remembers", DurationMinutes = 53 },
+                new Episode { EpisodeNumber = 2, Title = "The Night Lands", DurationMinutes = 54 }
+            }
+        },
+    }
                 };
+
 
                 context.Series.AddRange(breakingBad, strangerThings, gameOfThrones);
                 await context.SaveChangesAsync();
