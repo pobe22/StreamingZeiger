@@ -8,7 +8,7 @@
         {
             <li class="list-group-item">
                 Staffel @season.SeasonNumber
-                <a asp-controller="Seasons" asp-action="Details" asp-route-id="@season.Id"
+                <a asp-controller="Series" asp-action="SeasonDetails" asp-route-id="@season.Id"
                    class="btn btn-sm btn-outline-primary float-end">Ansehen</a>
             </li>
         }

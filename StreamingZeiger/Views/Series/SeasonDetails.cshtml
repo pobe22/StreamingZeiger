@@ -1,0 +1,23 @@
+﻿@model StreamingZeiger.Models.Season
+
+<h2>Staffel @Model.SeasonNumber</h2>
+<h4>@Model.Series.Title</h4>
+
+<h4>Episoden</h4>
+@if (Model.Episodes != null && Model.Episodes.Any())
+{
+    <ul class="list-group">
+        @foreach (var episode in Model.Episodes.OrderBy(e => e.EpisodeNumber))
+        {
+            <li class="list-group-item">
+                Folge @episode.EpisodeNumber: @episode.Title
+                <a asp-controller="Series" asp-action="EpisodeDetails" asp-route-id="@episode.Id"
+                   class="btn btn-sm btn-outline-primary float-end">Ansehen</a>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p>Keine Episoden vorhanden.</p>
+}

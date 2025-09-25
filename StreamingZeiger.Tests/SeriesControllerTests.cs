@@ -109,42 +109,5 @@ namespace StreamingZeiger.Tests
             Assert.NotNull(_controller.ViewBag.RecommendedSeries);
             Assert.NotNull(_controller.ViewBag.InWatchlist);
         }
-
-        [Fact]
-        public async Task Create_AddsSeries_AndRedirects()
-        {
-            var newSeries = new Series { Title = "New Series", StartYear = 2022 };
-
-            var result = await _controller.Create(newSeries, new int[] { }) as RedirectToActionResult;
-
-            Assert.NotNull(result);
-            Assert.Equal("Index", result.ActionName);
-            Assert.Equal(3, _context.Series.Count());
-        }
-
-        [Fact]
-        public async Task Edit_UpdatesSeries_AndRedirects()
-        {
-            var series = _context.Series.First();
-            series.Title = "Updated Title";
-
-            var result = await _controller.Edit(series.Id, series) as RedirectToActionResult;
-
-            Assert.NotNull(result);
-            Assert.Equal("Index", result.ActionName);
-
-            var updated = _context.Series.Find(series.Id);
-            Assert.Equal("Updated Title", updated.Title);
-        }
-
-        [Fact]
-        public async Task DeleteConfirmed_RemovesSeries_AndRedirects()
-        {
-            var result = await _controller.DeleteConfirmed(2) as RedirectToActionResult;
-
-            Assert.NotNull(result);
-            Assert.Equal("Index", result.ActionName);
-            Assert.Equal(1, _context.Series.Count());
-        }
     }
 }

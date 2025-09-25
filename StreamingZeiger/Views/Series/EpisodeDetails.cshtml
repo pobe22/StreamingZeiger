@@ -1,0 +1,26 @@
+﻿@model StreamingZeiger.Models.Episode
+
+<h2>@Model.Title</h2>
+<h5>Staffel @Model.Season.SeasonNumber | Episode @Model.EpisodeNumber</h5>
+<h6>Serie: @Model.Season.Series.Title</h6>
+
+@if (!string.IsNullOrEmpty(Model.Description))
+{
+    <p>@Model.Description</p>
+}
+
+<p>Dauer: @Model.DurationMinutes Minuten</p>
+
+@if (!string.IsNullOrEmpty(Model.Season.Series.PosterFile))
+{
+    <img src="@Model.Season.Series.PosterFile" alt="@Model.Season.Series.Title Poster" class="img-fluid mb-3" />
+}
+
+@if (!string.IsNullOrEmpty(Model.Season.Series.TrailerUrl))
+{
+    <div class="ratio ratio-16x9 mb-3">
+        <iframe src="@Model.Season.Series.TrailerUrl" title="Trailer" allowfullscreen></iframe>
+    </div>
+}
+
+<a asp-controller="Series" asp-action="SeasonDetails" asp-route-id="@Model.SeasonId" class="btn btn-secondary">Zurück zur Staffel</a>
