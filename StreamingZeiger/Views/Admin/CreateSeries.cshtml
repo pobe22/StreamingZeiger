@@ -1,118 +1,125 @@
 ﻿@model StreamingZeiger.Models.Series
 @{
-    ViewData["Title"] = "Serie hinzufügen";
+	ViewData["Title"] = "Serie hinzufügen";
 }
 
 <div class="container mt-4">
-    <h2>Serie hinzufügen</h2>
-    <form asp-action="CreateSeries" method="post" enctype="multipart/form-data" class="row g-3">
+	<h2>Serie hinzufügen</h2>
+	<form asp-action="CreateSeries" method="post" enctype="multipart/form-data" class="row g-3">
 
-        <!-- Basisfelder -->
-        <div class="col-md-6">
-            <label asp-for="Title" class="form-label"></label>
-            <input asp-for="Title" class="form-control" />
-        </div>
-        <div class="col-md-6">
-            <label asp-for="OriginalTitle" class="form-label"></label>
-            <input asp-for="OriginalTitle" class="form-control" />
-        </div>
-        <div class="col-md-3">
-            <label asp-for="StartYear" class="form-label"></label>
-            <input asp-for="StartYear" type="number" class="form-control" />
-        </div>
-        <div class="col-md-3">
-            <label asp-for="EndYear" class="form-label"></label>
-            <input asp-for="EndYear" type="number" class="form-control" />
-        </div>
-        <div class="col-12">
-            <label asp-for="Description" class="form-label"></label>
-            <textarea asp-for="Description" class="form-control"></textarea>
-        </div>
-        <div class="col-12">
-            <label for="CastCsv" class="form-label">Besetzung (Komma-getrennt)</label>
-            <input type="text" name="CastCsv" class="form-control" />
-        </div>
-        <div class="col-md-6">
-            <label asp-for="Director" class="form-label"></label>
-            <input asp-for="Director" class="form-control" />
-        </div>
-        <div class="col-md-6">
-            <label for="GenreCsv" class="form-label">Genres (Komma-getrennt)</label>
-            <input type="text" class="form-control" name="GenreCsv" />
-        </div>
-        <div class="col-md-6">
-            <label asp-for="PosterFile" class="form-label">Poster</label>
-            <input type="file" name="PosterUpload" class="form-control" />
-        </div>
-        <div class="col-md-6">
-            <label asp-for="TrailerUrl" class="form-label"></label>
-            <input asp-for="TrailerUrl" class="form-control" />
-        </div>
+		<!-- Basisfelder -->
+		<div class="col-md-6">
+			<label asp-for="Title" class="form-label"></label>
+			<input asp-for="Title" class="form-control" />
+		</div>
+		<div class="col-md-6">
+			<label asp-for="OriginalTitle" class="form-label"></label>
+			<input asp-for="OriginalTitle" class="form-control" />
+		</div>
+		<div class="col-md-3">
+			<label asp-for="StartYear" class="form-label"></label>
+			<input asp-for="StartYear" type="number" class="form-control" />
+		</div>
+		<div class="col-md-3">
+			<label asp-for="EndYear" class="form-label"></label>
+			<input asp-for="EndYear" type="number" class="form-control" />
+		</div>
+		<div class="col-12">
+			<label asp-for="Description" class="form-label"></label>
+			<textarea asp-for="Description" class="form-control"></textarea>
+		</div>
+		<div class="col-12">
+			<label for="CastCsv" class="form-label">Besetzung (Komma-getrennt)</label>
+			<input type="text" name="CastCsv" class="form-control" />
+		</div>
+		<div class="col-md-6">
+			<label asp-for="Director" class="form-label"></label>
+			<input asp-for="Director" class="form-control" />
+		</div>
+		<div class="col-md-6">
+			<label for="GenreCsv" class="form-label">Genres (Komma-getrennt)</label>
+			<input type="text" class="form-control" name="GenreCsv" />
+		</div>
+		<div class="col-md-6">
+			<label asp-for="PosterFile" class="form-label">Poster</label>
+			<input type="file" name="PosterUpload" class="form-control" />
+		</div>
+		<div class="col-md-6">
+			<label asp-for="TrailerUrl" class="form-label"></label>
+			<input asp-for="TrailerUrl" class="form-control" />
+		</div>
 
-        <!-- Verfügbarkeit -->
-        <div class="col-12">
-            <label class="form-label">Verfügbarkeit</label><br />
-            @foreach (var service in new string[] { "Netflix", "Prime Video", "Disney+" })
-            {
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" name="Services" value="@service" />
-                    <label class="form-check-label">@service</label>
-                </div>
-            }
-        </div>
+		<!-- Verfügbarkeit -->
+		<div class="col-12">
+			<label class="form-label">Verfügbarkeit</label><br />
+			@foreach (var service in new string[] { "Netflix", "Prime Video", "Disney+" })
+			{
+				<div class="form-check form-check-inline">
+					<input class="form-check-input" type="checkbox" name="Services" value="@service" />
+					<label class="form-check-label">@service</label>
+				</div>
+			}
+		</div>
 
-        <!-- Seasons & Episodes -->
-        <div class="col-12">
-            <h4>Staffeln & Episoden</h4>
-            <div id="seasonsContainer"></div>
-            <button type="button" class="btn btn-outline-primary mt-2" id="addSeason">Staffel hinzufügen</button>
-        </div>
+		<!-- Seasons & Episodes -->
+		<div class="col-12">
+			<h4>Staffeln & Episoden</h4>
+			<div id="seasonsContainer"></div>
+			<button type="button" class="btn btn-outline-primary mt-2" id="addSeason">Staffel hinzufügen</button>
+		</div>
 
-        <div class="col-12">
-            <button type="submit" class="btn btn-success mt-3">Speichern</button>
-        </div>
-    </form>
+		<div class="mb-3 mt-3">
+			<label for="tmdbId">TMDb ID</label>
+			<input type="number" id="tmdbId" class="form-control" placeholder="TMDb ID eingeben">
+			<button type="button" id="importTmdbSeries" class="btn btn-primary mt-2">Importieren</button>
+		</div>
+
+		<div class="col-12">
+			<button type="submit" class="btn btn-success mt-3">Speichern</button>
+		</div>
+	</form>
 </div>
 
 @section Scripts {
-    <script>
-        let seasonIndex = 0;
+	<script>
+		let seasonIndex = 0;
 
-        function createEpisodeInput(seasonIdx, episodeIdx) {
-            return `
-                <div class="input-group mb-2">
-                    <span class="input-group-text">Episode ${episodeIdx + 1}</span>
-                    <input type="number" name="Seasons[${seasonIdx}].Episodes[${episodeIdx}].EpisodeNumber" class="form-control" placeholder="Nummer" required />
-                    <input type="text" name="Seasons[${seasonIdx}].Episodes[${episodeIdx}].Title" class="form-control" placeholder="Titel" required />
-                    <input type="text" name="Seasons[${seasonIdx}].Episodes[${episodeIdx}].Description" class="form-control" placeholder="Beschreibung" />
-                    <button type="button" class="btn btn-danger" onclick="this.closest('.input-group').remove()">Löschen</button>
-                </div>
-            `;
-        }
+		function createEpisodeInput(seasonIdx, episodeIdx) {
+			return `
+				<div class="input-group mb-2">
+					<span class="input-group-text">Episode ${episodeIdx + 1}</span>
+					<input type="number" name="Seasons[${seasonIdx}].Episodes[${episodeIdx}].EpisodeNumber" class="form-control" placeholder="Nummer" required />
+					<input type="text" name="Seasons[${seasonIdx}].Episodes[${episodeIdx}].Title" class="form-control" placeholder="Titel" required />
+					<input type="text" name="Seasons[${seasonIdx}].Episodes[${episodeIdx}].Description" class="form-control" placeholder="Beschreibung" />
+					<button type="button" class="btn btn-danger" onclick="this.closest('.input-group').remove()">Löschen</button>
+				</div>
+			`;
+		}
 
-        function createSeasonInput(idx) {
-            return `
-                <div class="card mb-3 season-card p-3">
-                    <h5>Staffel ${idx + 1} <button type="button" class="btn btn-sm btn-danger float-end" onclick="this.closest('.season-card').remove()">Löschen</button></h5>
-                    <input type="number" name="Seasons[${idx}].SeasonNumber" class="form-control mb-2" placeholder="Staffelnummer" required />
-                    <textarea name="Seasons[${idx}].Description" class="form-control mb-2" placeholder="Beschreibung"></textarea>
-                    <button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="addEpisode(${idx})">Episode hinzufügen</button>
-                    <div class="episodesContainer"></div>
-                </div>
-            `;
-        }
+		function createSeasonInput(idx) {
+			return `
+				<div class="card mb-3 season-card p-3">
+					<h5>Staffel ${idx + 1} <button type="button" class="btn btn-sm btn-danger float-end" onclick="this.closest('.season-card').remove()">Löschen</button></h5>
+					<input type="number" name="Seasons[${idx}].SeasonNumber" class="form-control mb-2" placeholder="Staffelnummer" required />
+					<textarea name="Seasons[${idx}].Description" class="form-control mb-2" placeholder="Beschreibung"></textarea>
+					<button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="addEpisode(${idx})">Episode hinzufügen</button>
+					<div class="episodesContainer"></div>
+				</div>
+			`;
+		}
 
-        function addEpisode(seasonIdx) {
-            const seasonCard = document.getElementsByClassName('season-card')[seasonIdx];
-            const episodesContainer = seasonCard.querySelector('.episodesContainer');
-            const episodeIdx = episodesContainer.children.length;
-            episodesContainer.insertAdjacentHTML('beforeend', createEpisodeInput(seasonIdx, episodeIdx));
-        }
+		function addEpisode(seasonIdx) {
+			const seasonCard = document.getElementsByClassName('season-card')[seasonIdx];
+			const episodesContainer = seasonCard.querySelector('.episodesContainer');
+			const episodeIdx = episodesContainer.children.length;
+			episodesContainer.insertAdjacentHTML('beforeend', createEpisodeInput(seasonIdx, episodeIdx));
+		}
 
-        document.getElementById('addSeason').addEventListener('click', () => {
-            const container = document.getElementById('seasonsContainer');
-            container.insertAdjacentHTML('beforeend', createSeasonInput(seasonIndex));
-            seasonIndex++;
-        });
-    </script>
+		document.getElementById('addSeason').addEventListener('click', () => {
+			const container = document.getElementById('seasonsContainer');
+			container.insertAdjacentHTML('beforeend', createSeasonInput(seasonIndex));
+			seasonIndex++;
+		});
+	</script>
+	<script src="~/js/importseries.js"></script>
 }

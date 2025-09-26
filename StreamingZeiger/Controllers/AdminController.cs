@@ -105,9 +105,9 @@ namespace StreamingZeiger.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateMovie(Movie movie, string castCsv, List<string> services, string genreCsv, IFormFile? posterUpload)
+        public async Task<IActionResult> Create(Movie movie, string castCsv, List<string> services, string genreCsv, IFormFile? posterUpload)
         {
-            if (!ModelState.IsValid) return View(movie);
+            if (!ModelState.IsValid) return View("CreateMovie", movie);
 
             await HandleMediaItemBaseAsync(movie, castCsv, services, genreCsv, posterUpload);
 
@@ -337,19 +337,6 @@ namespace StreamingZeiger.Controllers
                 if (series == null)
                     return NotFound(new { message = "Serie nicht gefunden" });
 
-                // Alle Episoden über alle Staffeln zusammenfassen
-                var allEpisodes = series.Seasons?
-                    .SelectMany(s => s.Episodes)
-                    .Select(e => new
-                    {
-                        seasonNumber = e.Season.SeasonNumber,
-                        episodeNumber = e.EpisodeNumber,
-                        title = e.Title,
-                        description = e.Description,
-                        durationMinutes = e.DurationMinutes,
-                    })
-                    .ToList();
-
                 return Json(new
                 {
                     title = series.Title,
@@ -359,9 +346,14 @@ namespace StreamingZeiger.Controllers
                     seasons = series.Seasons?.Select(s => new
                     {
                         seasonNumber = s.SeasonNumber,
-                        episodesCount = s.Episodes.Count
+                        episodes = s.Episodes.Select(e => new
+                        {
+                            episodeNumber = e.EpisodeNumber,
+                            title = e.Title,
+                            description = e.Description,
+                            durationMinutes = e.DurationMinutes
+                        }).ToList()
                     }).ToList(),
-                    episodes = allEpisodes,
                     description = series.Description,
                     director = series.Director,
                     posterFile = series.PosterFile,
@@ -370,7 +362,6 @@ namespace StreamingZeiger.Controllers
                     genres = series.MediaGenres?.Select(mg => mg.Genre.Name).ToList()
                 });
             }
-
             return BadRequest(new { message = "Ungültiger Typ. Erlaubt: 'movie' oder 'series'." });
         }
 

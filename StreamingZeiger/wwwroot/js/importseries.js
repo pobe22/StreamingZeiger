@@ -39,40 +39,39 @@
                 let seasonIndex = 0;
 
                 if (series.seasons && Array.isArray(series.seasons)) {
-                    series.seasons.forEach(season => {
+                    series.seasons.forEach((season, seasonIdx) => {
                         const seasonCard = document.createElement("div");
                         seasonCard.classList.add("card", "mb-3", "season-card", "p-3");
                         seasonCard.innerHTML = `
-                            <h5>Staffel ${season.seasonNumber}
-                                <button type="button" class="btn btn-sm btn-danger float-end" onclick="this.closest('.season-card').remove()">Löschen</button>
-                            </h5>
-                            <input type="number" name="Seasons[${seasonIndex}].SeasonNumber" class="form-control mb-2" value="${season.seasonNumber}" required />
-                            <textarea name="Seasons[${seasonIndex}].Description" class="form-control mb-2">${season.description || ""}</textarea>
-                            <button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="addEpisode(${seasonIndex})">Episode hinzufügen</button>
-                            <div class="episodesContainer"></div>
-                        `;
+            <h5>Staffel ${season.seasonNumber}
+                <button type="button" class="btn btn-sm btn-danger float-end" onclick="this.closest('.season-card').remove()">Löschen</button>
+            </h5>
+            <input type="number" name="Seasons[${seasonIdx}].SeasonNumber" class="form-control mb-2" value="${season.seasonNumber}" required />
+            <textarea name="Seasons[${seasonIdx}].Description" class="form-control mb-2">${season.description || ""}</textarea>
+            <button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="addEpisode(${seasonIdx})">Episode hinzufügen</button>
+            <div class="episodesContainer"></div>
+        `;
                         seasonsContainer.appendChild(seasonCard);
 
                         // Episoden hinzufügen
                         if (season.episodes && Array.isArray(season.episodes)) {
                             const episodesContainer = seasonCard.querySelector(".episodesContainer");
-                            season.episodes.forEach((ep, eIdx) => {
+                            season.episodes.forEach((ep, epIdx) => {
                                 const epHtml = `
-                                    <div class="input-group mb-2">
-                                        <span class="input-group-text">Episode ${ep.episodeNumber}</span>
-                                        <input type="number" name="Seasons[${seasonIndex}].Episodes[${eIdx}].EpisodeNumber" class="form-control" value="${ep.episodeNumber}" required />
-                                        <input type="text" name="Seasons[${seasonIndex}].Episodes[${eIdx}].Title" class="form-control" value="${ep.title}" required />
-                                        <input type="text" name="Seasons[${seasonIndex}].Episodes[${eIdx}].Description" class="form-control" value="${ep.description || ""}" />
-                                        <button type="button" class="btn btn-danger" onclick="this.closest('.input-group').remove()">Löschen</button>
-                                    </div>
-                                `;
+                    <div class="input-group mb-2">
+                        <span class="input-group-text">Episode ${ep.episodeNumber}</span>
+                        <input type="number" name="Seasons[${seasonIdx}].Episodes[${epIdx}].EpisodeNumber" class="form-control" value="${ep.episodeNumber}" required />
+                        <input type="text" name="Seasons[${seasonIdx}].Episodes[${epIdx}].Title" class="form-control" value="${ep.title}" required />
+                        <input type="text" name="Seasons[${seasonIdx}].Episodes[${epIdx}].Description" class="form-control" value="${ep.description || ""}" />
+                        <button type="button" class="btn btn-danger" onclick="this.closest('.input-group').remove()">Löschen</button>
+                    </div>
+                `;
                                 episodesContainer.insertAdjacentHTML("beforeend", epHtml);
                             });
                         }
-
-                        seasonIndex++;
                     });
                 }
+
 
                 alert("Daten erfolgreich importiert!");
             } catch (err) {
