@@ -307,63 +307,76 @@ namespace StreamingZeiger.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ImportFromTmdb(int tmdbId, string type)
+        public async Task<IActionResult> ImportFromTmdb(int tmdbId, string type, string region = "DE")
         {
-            var tmdbService = new TmdbService();
-
-            if (string.Equals(type, "movie", StringComparison.OrdinalIgnoreCase))
+            try
             {
-                var movie = await tmdbService.GetMovieByIdAsync(tmdbId);
-                if (movie == null)
-                    return NotFound(new { message = "Film nicht gefunden" });
+                var tmdbService = new TmdbService();
 
-                return Json(new
+                if (string.Equals(type, "movie", StringComparison.OrdinalIgnoreCase))
                 {
-                    title = movie.Title,
-                    originalTitle = movie.OriginalTitle,
-                    year = movie.Year,
-                    durationMinutes = movie.DurationMinutes,
-                    description = movie.Description,
-                    director = movie.Director,
-                    posterFile = movie.PosterFile,
-                    trailerUrl = movie.TrailerUrl,
-                    cast = movie.Cast,
-                    genres = movie.MediaGenres?.Select(mg => mg.Genre.Name).ToList()
-                });
-            }
-            else if (string.Equals(type, "series", StringComparison.OrdinalIgnoreCase))
-            {
-                var series = await tmdbService.GetSeriesByIdAsync(tmdbId);
-                if (series == null)
-                    return NotFound(new { message = "Serie nicht gefunden" });
+                    var movie = await tmdbService.GetMovieByIdAsync(tmdbId, region);
+                    if (movie == null)
+                        return NotFound(new { message = "Film nicht gefunden" });
 
-                return Json(new
-                {
-                    title = series.Title,
-                    originalTitle = series.OriginalTitle,
-                    startYear = series.StartYear,
-                    endYear = series.EndYear,
-                    seasons = series.Seasons?.Select(s => new
+                    return Json(new
                     {
-                        seasonNumber = s.SeasonNumber,
-                        episodes = s.Episodes.Select(e => new
-                        {
-                            episodeNumber = e.EpisodeNumber,
-                            title = e.Title,
-                            description = e.Description,
-                            durationMinutes = e.DurationMinutes
-                        }).ToList()
-                    }).ToList(),
-                    description = series.Description,
-                    director = series.Director,
-                    posterFile = series.PosterFile,
-                    trailerUrl = series.TrailerUrl,
-                    cast = series.Cast,
-                    genres = series.MediaGenres?.Select(mg => mg.Genre.Name).ToList()
-                });
-            }
-            return BadRequest(new { message = "Ungültiger Typ. Erlaubt: 'movie' oder 'series'." });
-        }
+                        title = movie.Title,
+                        originalTitle = movie.OriginalTitle,
+                        year = movie.Year,
+                        durationMinutes = movie.DurationMinutes,
+                        description = movie.Description,
+                        director = movie.Director,
+                        posterFile = movie.PosterFile,
+                        trailerUrl = movie.TrailerUrl,
+                        cast = movie.Cast,
+                        genres = movie.MediaGenres?.Select(mg => mg.Genre.Name).ToList(),
+                        services = movie.AvailabilityByService
+                                   .Where(kv => kv.Value)
+                                   .Select(kv => kv.Key)
+                                   .ToList()
+                    });
+                }
+                else if (string.Equals(type, "series", StringComparison.OrdinalIgnoreCase))
+                {
+                    var series = await tmdbService.GetSeriesByIdAsync(tmdbId);
+                    if (series == null)
+                        return NotFound(new { message = "Serie nicht gefunden" });
 
+                    return Json(new
+                    {
+                        title = series.Title,
+                        originalTitle = series.OriginalTitle,
+                        startYear = series.StartYear,
+                        endYear = series.EndYear,
+                        seasons = series.Seasons?.Select(s => new
+                        {
+                            seasonNumber = s.SeasonNumber,
+                            episodes = s.Episodes.Select(e => new
+                            {
+                                episodeNumber = e.EpisodeNumber,
+                                title = e.Title,
+                                description = e.Description,
+                                durationMinutes = e.DurationMinutes
+                            }).ToList()
+                        }).ToList(),
+                        description = series.Description,
+                        director = series.Director,
+                        posterFile = series.PosterFile,
+                        trailerUrl = series.TrailerUrl,
+                        cast = series.Cast,
+                        genres = series.MediaGenres?.Select(mg => mg.Genre.Name).ToList()
+                    });
+                }
+                else
+                {
+                    return BadRequest(new { message = "Ungültiger Typ. 'movie' oder 'series' erwartet." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

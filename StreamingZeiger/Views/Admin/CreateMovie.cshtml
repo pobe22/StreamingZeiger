@@ -20,7 +20,7 @@
         </div>
         <div class="col-md-4">
             <label asp-for="DurationMinutes" class="form-label"></label>
-            <input asp-for="DurationMinutes" type="number" class="form-control" />
+            <input asp-for="DurationMinutes" type="number" class="form-control" id="DurationMinutes" />
         </div>
         <div class="col-md-4">
             <label asp-for="Director" class="form-label"></label>
@@ -57,7 +57,7 @@
             }
         </div>
         <div class="col-12">
-            <button type="submit" class="btn btn-success">Speichern</button>
+            <button type="submit" formaction="/Admin/CreateMovie" formmethod="post" class="btn btn-success">Speichern</button>
         </div>
     </form>
 

@@ -9,44 +9,59 @@
 
 		<!-- Basisfelder -->
 		<div class="col-md-6">
-			<label asp-for="Title" class="form-label"></label>
-			<input asp-for="Title" class="form-control" />
+			<label for="Title" class="form-label">Titel</label>
+			<input asp-for="Title" id="Title" class="form-control" />
+			<span asp-validation-for="Title" class="text-danger"></span>
 		</div>
+
 		<div class="col-md-6">
-			<label asp-for="OriginalTitle" class="form-label"></label>
-			<input asp-for="OriginalTitle" class="form-control" />
+			<label for="OriginalTitle" class="form-label">Originaltitel</label>
+			<input asp-for="OriginalTitle" id="OriginalTitle" class="form-control" />
+			<span asp-validation-for="OriginalTitle" class="text-danger"></span>
 		</div>
+
 		<div class="col-md-3">
-			<label asp-for="StartYear" class="form-label"></label>
-			<input asp-for="StartYear" type="number" class="form-control" />
+			<label for="StartYear" class="form-label">Startjahr</label>
+			<input asp-for="StartYear" id="StartYear" class="form-control" />
+			<span asp-validation-for="StartYear" class="text-danger"></span>
 		</div>
+
 		<div class="col-md-3">
-			<label asp-for="EndYear" class="form-label"></label>
-			<input asp-for="EndYear" type="number" class="form-control" />
+			<label for="EndYear" class="form-label">Endjahr</label>
+			<input asp-for="EndYear" id="EndYear" class="form-control" />
+			<span asp-validation-for="EndYear" class="text-danger"></span>
 		</div>
+
 		<div class="col-12">
-			<label asp-for="Description" class="form-label"></label>
-			<textarea asp-for="Description" class="form-control"></textarea>
+			<label for="Description" class="form-label">Beschreibung</label>
+			<textarea asp-for="Description" id="Description" class="form-control"></textarea>
+			<span asp-validation-for="Description" class="text-danger"></span>
 		</div>
-		<div class="col-12">
-			<label for="CastCsv" class="form-label">Besetzung (Komma-getrennt)</label>
-			<input type="text" name="CastCsv" class="form-control" />
-		</div>
-		<div class="col-md-6">
-			<label asp-for="Director" class="form-label"></label>
-			<input asp-for="Director" class="form-control" />
-		</div>
+
 		<div class="col-md-6">
 			<label for="GenreCsv" class="form-label">Genres (Komma-getrennt)</label>
-			<input type="text" class="form-control" name="GenreCsv" />
+			<input type="text" id="GenreCsv" name="GenreCsv" class="form-control" />
 		</div>
+
+		<div class="col-12">
+			<label for="CastCsv" class="form-label">Besetzung (Komma-getrennt)</label>
+			<input type="text" id="CastCsv" name="CastCsv" class="form-control" />
+		</div>
+
+		<div class="col-md-4">
+			<label asp-for="Director" class="form-label"></label>
+			<input asp-for="Director" class="form-control" id="Director" />
+		</div>
+
+		<div class="col-md-6">
+			<label for="TrailerUrl" class="form-label">Trailer URL</label>
+			<input asp-for="TrailerUrl" id="TrailerUrl" class="form-control" />
+			<span asp-validation-for="TrailerUrl" class="text-danger"></span>
+		</div>
+
 		<div class="col-md-6">
 			<label asp-for="PosterFile" class="form-label">Poster</label>
-			<input type="file" name="PosterUpload" class="form-control" />
-		</div>
-		<div class="col-md-6">
-			<label asp-for="TrailerUrl" class="form-label"></label>
-			<input asp-for="TrailerUrl" class="form-control" />
+			<input type="text" name="PosterFile" class="form-control" id="PosterFile" />
 		</div>
 
 		<!-- Verfügbarkeit -->
@@ -75,7 +90,7 @@
 		</div>
 
 		<div class="col-12">
-			<button type="submit" class="btn btn-success mt-3">Speichern</button>
+			<button type="submit" formaction="/Admin/CreateSeries" formmethod="post" class="btn btn-success mt-3">Speichern</button>
 		</div>
 	</form>
 </div>
@@ -83,6 +98,10 @@
 @section Scripts {
 	<script>
 		let seasonIndex = 0;
+
+		function refreshSeasonIndex() {
+			seasonIndex = document.querySelectorAll('.season-card').length;
+		}
 
 		function createEpisodeInput(seasonIdx, episodeIdx) {
 			return `
@@ -99,7 +118,9 @@
 		function createSeasonInput(idx) {
 			return `
 				<div class="card mb-3 season-card p-3">
-					<h5>Staffel ${idx + 1} <button type="button" class="btn btn-sm btn-danger float-end" onclick="this.closest('.season-card').remove()">Löschen</button></h5>
+					<h5>Staffel ${idx + 1}
+						<button type="button" class="btn btn-sm btn-danger float-end" onclick="this.closest('.season-card').remove(); refreshSeasonIndex();">Löschen</button>
+					</h5>
 					<input type="number" name="Seasons[${idx}].SeasonNumber" class="form-control mb-2" placeholder="Staffelnummer" required />
 					<textarea name="Seasons[${idx}].Description" class="form-control mb-2" placeholder="Beschreibung"></textarea>
 					<button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="addEpisode(${idx})">Episode hinzufügen</button>
@@ -118,7 +139,7 @@
 		document.getElementById('addSeason').addEventListener('click', () => {
 			const container = document.getElementById('seasonsContainer');
 			container.insertAdjacentHTML('beforeend', createSeasonInput(seasonIndex));
-			seasonIndex++;
+			refreshSeasonIndex();
 		});
 	</script>
 	<script src="~/js/importseries.js"></script>

@@ -1,9 +1,11 @@
 ﻿document.addEventListener("DOMContentLoaded", () => {
+    console.log("✅ DOM geladen, Script aktiv.");
+
     const importBtn = document.getElementById("importTmdbSeries");
 
     if (importBtn) {
         importBtn.addEventListener("click", async () => {
-            const tmdbId = document.getElementById("tmdbId").value;
+            const tmdbId = document.getElementById("tmdbId")?.value;
             if (!tmdbId) {
                 alert("Bitte eine TMDb ID eingeben.");
                 return;
@@ -14,78 +16,89 @@
                 if (!response.ok) throw new Error("Fehler beim Abrufen der Daten.");
 
                 const series = await response.json();
+                console.log("Series-Daten empfangen:", series);
 
                 // Basisfelder automatisch füllen
-                document.getElementById("Title").value = series.title || "";
-                document.getElementById("OriginalTitle").value = series.originalTitle || "";
-                document.getElementById("StartYear").value = series.startYear || "";
-                document.getElementById("EndYear").value = series.endYear || "";
-                document.getElementById("Description").value = series.description || "";
-                document.getElementById("Director").value = series.director || "";
-                document.getElementById("PosterFile").value = series.posterFile || "";
-                document.getElementById("TrailerUrl").value = series.trailerUrl || "";
+                const baseFields = [
+                    { id: "Title", value: series.title },
+                    { id: "OriginalTitle", value: series.originalTitle },
+                    { id: "StartYear", value: series.startYear },
+                    { id: "EndYear", value: series.endYear },
+                    { id: "Description", value: series.description },
+                    { id: "Director", value: series.director },
+                    { id: "TrailerUrl", value: series.trailerUrl },
+                    { id: "PosterFile", value: series.posterFile }
+                ];
 
-                if (series.cast && Array.isArray(series.cast)) {
-                    document.getElementById("CastCsv").value = series.cast.join(", ");
-                }
+                baseFields.forEach(f => {
+                    const el = document.getElementById(f.id);
+                    if (el) el.value = f.value || "";
+                });
 
-                if (series.genres && Array.isArray(series.genres)) {
-                    document.getElementById("GenreCsv").value = series.genres.join(", ");
-                }
+                // Cast & Genres
+                const castInput = document.getElementById("CastCsv");
+                if (castInput && Array.isArray(series.cast)) castInput.value = series.cast.join(", ");
 
-                // Staffeln und Episoden in die View einfügen
+                const genreInput = document.getElementById("GenreCsv");
+                if (genreInput && Array.isArray(series.genres)) genreInput.value = series.genres.join(", ");
+
+                // Staffeln & Episoden
                 const seasonsContainer = document.getElementById("seasonsContainer");
-                seasonsContainer.innerHTML = ""; // vorherige Einträge löschen
-                let seasonIndex = 0;
+                seasonsContainer.innerHTML = "";
+                seasonIndex = 0; // Reset globaler Index
 
                 if (series.seasons && Array.isArray(series.seasons)) {
-                    series.seasons.forEach((season, seasonIdx) => {
-                        const seasonCard = document.createElement("div");
-                        seasonCard.classList.add("card", "mb-3", "season-card", "p-3");
-                        seasonCard.innerHTML = `
-            <h5>Staffel ${season.seasonNumber}
-                <button type="button" class="btn btn-sm btn-danger float-end" onclick="this.closest('.season-card').remove()">Löschen</button>
-            </h5>
-            <input type="number" name="Seasons[${seasonIdx}].SeasonNumber" class="form-control mb-2" value="${season.seasonNumber}" required />
-            <textarea name="Seasons[${seasonIdx}].Description" class="form-control mb-2">${season.description || ""}</textarea>
-            <button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="addEpisode(${seasonIdx})">Episode hinzufügen</button>
-            <div class="episodesContainer"></div>
-        `;
-                        seasonsContainer.appendChild(seasonCard);
+                    series.seasons.forEach((season) => {
+                        seasonsContainer.insertAdjacentHTML("beforeend", createSeasonInput(seasonIndex));
+                        const seasonCard = seasonsContainer.lastElementChild;
 
-                        // Episoden hinzufügen
+                        const seasonNumberInput = seasonCard.querySelector(`input[name="Seasons[${seasonIndex}].SeasonNumber"]`);
+                        if (seasonNumberInput) seasonNumberInput.value = season.seasonNumber || "";
+
+                        const seasonDesc = seasonCard.querySelector(`textarea[name="Seasons[${seasonIndex}].Description"]`);
+                        if (seasonDesc) seasonDesc.value = season.description || "";
+
+                        const episodesContainer = seasonCard.querySelector(".episodesContainer");
+
                         if (season.episodes && Array.isArray(season.episodes)) {
-                            const episodesContainer = seasonCard.querySelector(".episodesContainer");
                             season.episodes.forEach((ep, epIdx) => {
-                                const epHtml = `
-                    <div class="input-group mb-2">
-                        <span class="input-group-text">Episode ${ep.episodeNumber}</span>
-                        <input type="number" name="Seasons[${seasonIdx}].Episodes[${epIdx}].EpisodeNumber" class="form-control" value="${ep.episodeNumber}" required />
-                        <input type="text" name="Seasons[${seasonIdx}].Episodes[${epIdx}].Title" class="form-control" value="${ep.title}" required />
-                        <input type="text" name="Seasons[${seasonIdx}].Episodes[${epIdx}].Description" class="form-control" value="${ep.description || ""}" />
-                        <button type="button" class="btn btn-danger" onclick="this.closest('.input-group').remove()">Löschen</button>
-                    </div>
-                `;
-                                episodesContainer.insertAdjacentHTML("beforeend", epHtml);
+                                episodesContainer.insertAdjacentHTML("beforeend", createEpisodeInput(seasonIndex, epIdx));
+                                const epGroup = episodesContainer.lastElementChild;
+
+                                const epNumberInput = epGroup.querySelector(`input[name="Seasons[${seasonIndex}].Episodes[${epIdx}].EpisodeNumber"]`);
+                                if (epNumberInput) epNumberInput.value = ep.episodeNumber || "";
+
+                                const epTitleInput = epGroup.querySelector(`input[name="Seasons[${seasonIndex}].Episodes[${epIdx}].Title"]`);
+                                if (epTitleInput) epTitleInput.value = ep.title || "";
+
+                                const epDescInput = epGroup.querySelector(`input[name="Seasons[${seasonIndex}].Episodes[${epIdx}].Description"]`);
+                                if (epDescInput) epDescInput.value = ep.description || "";
                             });
                         }
+
+                        seasonIndex++;
                     });
                 }
 
-
+                refreshSeasonIndex();
                 alert("Daten erfolgreich importiert!");
             } catch (err) {
-                console.error(err);
+                console.error("❌ Fehler beim Import:", err);
                 alert("Fehler beim Importieren der Serie.");
             }
         });
     }
 });
 
-// Die Funktion addEpisode muss global verfügbar sein
+// Funktion global verfügbar
 function addEpisode(seasonIdx) {
+    console.log(`➕ Neue Episode zu Staffel ${seasonIdx} hinzufügen.`);
     const seasonCard = document.getElementsByClassName('season-card')[seasonIdx];
+    if (!seasonCard) return;
+
     const episodesContainer = seasonCard.querySelector('.episodesContainer');
+    if (!episodesContainer) return;
+
     const episodeIdx = episodesContainer.children.length;
     const epHtml = `
         <div class="input-group mb-2">

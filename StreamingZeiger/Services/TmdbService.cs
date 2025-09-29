@@ -24,20 +24,25 @@ namespace StreamingZeiger.Services
         }
 
         // Einzelnen Film importieren
-        public async Task<Models.Movie> GetMovieByIdAsync(int tmdbId)
+        public async Task<Models.Movie> GetMovieByIdAsync(int tmdbId, string region)
         {
-            var movieDetails = await _client.GetMovieAsync(tmdbId, MovieMethods.Credits | MovieMethods.Videos);
+            int tmdbIdLocal = tmdbId;
+            var movieDetails = await _client.GetMovieAsync(tmdbIdLocal, MovieMethods.Credits | MovieMethods.Videos);
 
             var movie = new Models.Movie
             {
                 Title = movieDetails.Title,
                 OriginalTitle = movieDetails.OriginalTitle,
                 Description = movieDetails.Overview,
+                DurationMinutes = movieDetails.Runtime ?? 0,
                 Year = movieDetails.ReleaseDate?.Year ?? 0,
                 PosterFile = $"https://image.tmdb.org/t/p/w500{movieDetails.PosterPath}",
-                TrailerUrl = movieDetails.Videos.Results.FirstOrDefault()?.Key ?? string.Empty,
+                TrailerUrl = movieDetails.Videos.Results.FirstOrDefault()?.Key is string key && !string.IsNullOrEmpty(key)
+                            ? $"https://www.youtube.com/embed/{key}"
+                            : string.Empty,
                 Cast = movieDetails.Credits.Cast.Select(c => c.Name).ToList(),
-                Director = movieDetails.Credits.Crew.FirstOrDefault(c => c.Job == "Director")?.Name ?? string.Empty
+                Director = movieDetails.Credits.Crew.FirstOrDefault(c => c.Job == "Director")?.Name ?? string.Empty,
+                AvailabilityByService = new Dictionary<string, bool>()
             };
 
             // Genres als n:m abbilden
@@ -45,7 +50,43 @@ namespace StreamingZeiger.Services
                 .Select(g => new MediaGenre { Genre = new Genre { Name = g.Name } })
                 .ToList();
 
+            await FillAvailabilityAsync(tmdbIdLocal, movie, region);
+
             return movie;
+        }
+        private async Task FillAvailabilityAsync(int tmdbIdLocal, Models.Movie movie, string region)
+        {
+            var providers = await _client.GetMovieWatchProvidersAsync(tmdbIdLocal);
+
+            // Default: alle Services false
+            movie.AvailabilityByService["Netflix"] = false;
+            movie.AvailabilityByService["Disney+"] = false;
+            movie.AvailabilityByService["Prime Video"] = false;
+
+            if (providers?.Results != null && providers.Results.ContainsKey(region))
+            {
+                var regionData = providers.Results[region];
+
+                IEnumerable<dynamic> flatrateList = Enumerable.Empty<dynamic>();
+                var property = regionData.GetType().GetProperty("FlatRate"); 
+                if (property != null)
+                    flatrateList = property.GetValue(regionData) as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+
+                foreach (var p in flatrateList)
+                {
+                    string name = null;
+                    try { name = p.ProviderName as string; } catch { }
+
+                    if (string.IsNullOrEmpty(name)) continue;
+
+                    if (name.StartsWith("Netflix"))
+                        movie.AvailabilityByService["Netflix"] = true;
+                    else if (name.StartsWith("Disney"))
+                        movie.AvailabilityByService["Disney+"] = true;
+                    else if (name.StartsWith("Amazon Prime"))
+                        movie.AvailabilityByService["Prime Video"] = true;
+                }
+            }
         }
 
         // Einzelne Serie importieren
@@ -62,10 +103,7 @@ namespace StreamingZeiger.Services
                 Description = seriesDetails.Overview ?? "",
                 PosterFile = "https://image.tmdb.org/t/p/w500" + (seriesDetails.PosterPath ?? ""),
                 Cast = seriesDetails.Credits.Cast.Select(c => c.Name).ToList(),
-                Director = seriesDetails.Credits.Crew
-                            .Where(c => c.Job == "Director")
-                            .Select(c => c.Name)
-                            .FirstOrDefault() ?? ""
+                Director = seriesDetails.Credits.Crew.FirstOrDefault(c => c.Job == "Director")?.Name ?? string.Empty
             };
 
             // Trailer-URL
