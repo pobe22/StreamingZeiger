@@ -104,7 +104,7 @@ namespace StreamingZeiger.Services
                 Description = seriesDetails.Overview ?? "",
                 PosterFile = "https://image.tmdb.org/t/p/w500" + (seriesDetails.PosterPath ?? ""),
                 Cast = seriesDetails.Credits.Cast.Select(c => c.Name).ToList(),
-                Director = seriesDetails.Credits.Crew.FirstOrDefault(c => c.Job == "Director")?.Name ?? "",
+                Director = seriesDetails.CreatedBy.FirstOrDefault()?.Name ?? "",
                 AvailabilityByService = new Dictionary<string, bool>()
             };
 
