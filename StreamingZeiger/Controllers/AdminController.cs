@@ -105,7 +105,7 @@ namespace StreamingZeiger.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Movie movie, string castCsv, List<string> services, string genreCsv, IFormFile? posterUpload)
+        public async Task<IActionResult> CreateMovie(Movie movie, string castCsv, List<string> services, string genreCsv, IFormFile? posterUpload)
         {
             if (!ModelState.IsValid) return View("CreateMovie", movie);
 

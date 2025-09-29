@@ -71,28 +71,6 @@ namespace StreamingZeiger.Controllers
             return View(series);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Edit(int id, Series series)
-        {
-            if (id != series.Id) return NotFound();
-
-            if (ModelState.IsValid)
-            {
-                _context.Update(series);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(series);
-        }
-
-        // Delete
-        public async Task<IActionResult> Delete(int id)
-        {
-            var series = await _context.Series.FindAsync(id);
-            if (series == null) return NotFound();
-            return View(series);
-        }
-
         // ======================
         // SEASONS
         // ======================

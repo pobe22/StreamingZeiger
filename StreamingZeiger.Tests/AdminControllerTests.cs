@@ -124,6 +124,36 @@ namespace StreamingZeiger.Tests
         }
 
         [Fact]
+        public async Task EditMovie_Get_ReturnsView_WhenMovieExists()
+        {
+            var controller = GetController();
+            var result = await controller.EditMovie(1001) as ViewResult;
+            Assert.NotNull(result);
+            var movie = result.Model as Movie;
+            Assert.Equal(1001, movie.Id);
+        }
+
+        [Fact]
+        public async Task EditMovie_Post_ValidMovie_UpdatesMovie()
+        {
+            var controller = GetController();
+            var movie = _context.Movies.First(m => m.Id == 1001);
+            movie.Title = "Updated Title";
+            var services = new List<string> { "Amazon Prime" };
+            var result = await controller.EditMovie(1001, movie, "Actor1, Actor2", services, "Comedy", null)
+                as RedirectToActionResult;
+            Assert.Equal("Index", result.ActionName);
+            var updatedMovie = _context.Movies
+                .Include(m => m.MediaGenres)
+                .ThenInclude(mg => mg.Genre)
+                .FirstOrDefault(m => m.Id == 1001);
+            Assert.NotNull(updatedMovie);
+            Assert.Equal("Updated Title", updatedMovie.Title);
+            var genreNames = updatedMovie.MediaGenres.Select(mg => mg.Genre.Name).ToList();
+            Assert.Contains("Comedy", genreNames);
+        }
+
+        [Fact]
         public async Task DeleteMovie_RemovesMovie()
         {
             var controller = GetController();
@@ -175,6 +205,26 @@ namespace StreamingZeiger.Tests
             Assert.NotNull(result);
             var series = result.Model as Series;
             Assert.Equal(2001, series.Id);
+        }
+
+        [Fact]
+        public async Task EditSeries_Post_ValidSeries_UpdatesSeries()
+        {
+            var controller = GetController();
+            var series = _context.Series.First(s => s.Id == 2001);
+            series.Title = "Updated Series Title";
+            var services = new List<string> { "Amazon Prime" };
+            var result = await controller.EditSeries(2001, series, "Actor X, Actor Y", services, "Thriller")
+                as RedirectToActionResult;
+            Assert.Equal("Index", result.ActionName);
+            var updatedSeries = _context.Series
+                .Include(s => s.MediaGenres)
+                    .ThenInclude(mg => mg.Genre)
+                .FirstOrDefault(s => s.Id == 2001);
+            Assert.NotNull(updatedSeries);
+            Assert.Equal("Updated Series Title", updatedSeries.Title);
+            var genreNames = updatedSeries.MediaGenres.Select(mg => mg.Genre.Name).ToList();
+            Assert.Contains("Thriller", genreNames);
         }
 
         [Fact]

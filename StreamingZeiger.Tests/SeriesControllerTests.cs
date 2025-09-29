@@ -109,5 +109,65 @@ namespace StreamingZeiger.Tests
             Assert.NotNull(_controller.ViewBag.RecommendedSeries);
             Assert.NotNull(_controller.ViewBag.InWatchlist);
         }
+        [Fact]
+        public async Task SeasonDetails_ReturnsViewResult_WithSeasonAndEpisodes()
+        {
+            // Arrange: Get existing season id
+            var season = await _context.Seasons.Include(s => s.Episodes).FirstOrDefaultAsync();
+            Assert.NotNull(season);
+
+            // Act
+            var result = await _controller.SeasonDetails(season.Id) as ViewResult;
+
+            // Assert
+            Assert.NotNull(result);
+            var model = Assert.IsType<Season>(result.Model);
+            Assert.Equal(season.Id, model.Id);
+            Assert.NotNull(model.Episodes);
+            Assert.Equal(season.Episodes.Count, model.Episodes.Count);
+        }
+
+        [Fact]
+        public async Task SeasonDetails_ReturnsNotFound_WhenSeasonDoesNotExist()
+        {
+            // Arrange: Use a non-existent season id
+            int nonExistentId = 9999;
+
+            // Act
+            var result = await _controller.SeasonDetails(nonExistentId);
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
+        [Fact]
+        public async Task EpisodeDetails_ReturnsViewResult_WithEpisode()
+        {
+            // Arrange: Get existing episode id
+            var episode = await _context.Episodes.Include(e => e.Season).ThenInclude(s => s.Series).FirstOrDefaultAsync();
+            Assert.NotNull(episode);
+
+            // Act
+            var result = await _controller.EpisodeDetails(episode.Id) as ViewResult;
+
+            // Assert
+            Assert.NotNull(result);
+            var model = Assert.IsType<Episode>(result.Model);
+            Assert.Equal(episode.Id, model.Id);
+            Assert.NotNull(model.Season);
+            Assert.NotNull(model.Season.Series);
+        }
+
+        [Fact]
+        public async Task EpisodeDetails_ReturnsNotFound_WhenEpisodeDoesNotExist()
+        {
+            // Arrange: Use a non-existent episode id
+            int nonExistentId = 9999;
+
+            // Act
+            var result = await _controller.EpisodeDetails(nonExistentId);
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
     }
 }
