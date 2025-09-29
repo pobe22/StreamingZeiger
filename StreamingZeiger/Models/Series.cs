@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace StreamingZeiger.Models
 {
@@ -17,6 +18,8 @@ namespace StreamingZeiger.Models
         public int SeasonNumber { get; set; }
 
         public int SeriesId { get; set; }
+
+        [BindNever]
         public Series Series { get; set; }
 
         public ICollection<Episode> Episodes { get; set; } = new List<Episode>();

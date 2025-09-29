@@ -90,8 +90,9 @@ namespace StreamingZeiger.Services
         }
 
         // Einzelne Serie importieren
-        public async Task<Series> GetSeriesByIdAsync(int tmdbId)
+        public async Task<Series> GetSeriesByIdAsync(int tmdbId, string region)
         {
+            // Serien-Details mit Credits & Videos
             var seriesDetails = await _client.GetTvShowAsync(tmdbId, TvShowMethods.Credits | TvShowMethods.Videos);
 
             var series = new Series
@@ -103,10 +104,11 @@ namespace StreamingZeiger.Services
                 Description = seriesDetails.Overview ?? "",
                 PosterFile = "https://image.tmdb.org/t/p/w500" + (seriesDetails.PosterPath ?? ""),
                 Cast = seriesDetails.Credits.Cast.Select(c => c.Name).ToList(),
-                Director = seriesDetails.Credits.Crew.FirstOrDefault(c => c.Job == "Director")?.Name ?? string.Empty
+                Director = seriesDetails.Credits.Crew.FirstOrDefault(c => c.Job == "Director")?.Name ?? "",
+                AvailabilityByService = new Dictionary<string, bool>()
             };
 
-            // Trailer-URL
+            // Trailer URL
             var trailerKey = seriesDetails.Videos.Results
                                 .FirstOrDefault(v => v.Site == "YouTube" && v.Type == "Trailer")?.Key;
             series.TrailerUrl = !string.IsNullOrEmpty(trailerKey)
@@ -118,7 +120,7 @@ namespace StreamingZeiger.Services
                                     .Select(g => new MediaGenre { Genre = new Genre { Name = g.Name } })
                                     .ToList();
 
-            // Seasons und Episodes
+            // Seasons & Episodes
             series.Seasons = new List<Season>();
             foreach (var sInfo in seriesDetails.Seasons)
             {
@@ -127,27 +129,64 @@ namespace StreamingZeiger.Services
                 var season = new Season
                 {
                     SeasonNumber = seasonDetails.SeasonNumber,
-                    Series = series,           // FK setzen
+                    Series = series,
                     Episodes = seasonDetails.Episodes.Select(e => new Episode
                     {
                         EpisodeNumber = e.EpisodeNumber,
                         Title = e.Name,
                         Description = e.Overview ?? "",
                         DurationMinutes = e.Runtime ?? 0,
-                        Season = null             // Setzen wir später, EF Core füllt es über Collection
+                        Season = null
                     }).ToList()
                 };
 
                 // FK in Episodes setzen
                 foreach (var ep in season.Episodes)
-                {
                     ep.Season = season;
-                }
 
                 series.Seasons.Add(season);
             }
 
+            // Streaming-Verfügbarkeit
+            await FillSeriesAvailabilityAsync(tmdbId, series, region);
+
             return series;
+        }
+
+        // Hilfsmethode: Streaming-Verfügbarkeit
+        private async Task FillSeriesAvailabilityAsync(int tmdbId, Series series, string region)
+        {
+            var providers = await _client.GetTvShowWatchProvidersAsync(tmdbId);
+
+            // Default: alle Services false
+            series.AvailabilityByService["Netflix"] = false;
+            series.AvailabilityByService["Disney+"] = false;
+            series.AvailabilityByService["Prime Video"] = false;
+
+            if (providers?.Results != null && providers.Results.ContainsKey(region))
+            {
+                var regionData = providers.Results[region];
+
+                IEnumerable<dynamic> flatrateList = Enumerable.Empty<dynamic>();
+                var property = regionData.GetType().GetProperty("Flatrate");
+                if (property != null)
+                    flatrateList = property.GetValue(regionData) as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+
+                foreach (var p in flatrateList)
+                {
+                    string name = null;
+                    try { name = p.ProviderName as string; } catch { }
+
+                    if (string.IsNullOrEmpty(name)) continue;
+
+                    if (name.StartsWith("Netflix"))
+                        series.AvailabilityByService["Netflix"] = true;
+                    else if (name.StartsWith("Disney"))
+                        series.AvailabilityByService["Disney+"] = true;
+                    else if (name.StartsWith("Amazon Prime"))
+                        series.AvailabilityByService["Prime Video"] = true;
+                }
+            }
         }
     }
 }

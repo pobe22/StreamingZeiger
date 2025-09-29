@@ -122,7 +122,6 @@
 						<button type="button" class="btn btn-sm btn-danger float-end" onclick="this.closest('.season-card').remove(); refreshSeasonIndex();">Löschen</button>
 					</h5>
 					<input type="number" name="Seasons[${idx}].SeasonNumber" class="form-control mb-2" placeholder="Staffelnummer" required />
-					<textarea name="Seasons[${idx}].Description" class="form-control mb-2" placeholder="Beschreibung"></textarea>
 					<button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="addEpisode(${idx})">Episode hinzufügen</button>
 					<div class="episodesContainer"></div>
 				</div>

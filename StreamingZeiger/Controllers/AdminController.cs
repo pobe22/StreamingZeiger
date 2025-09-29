@@ -173,6 +173,18 @@ namespace StreamingZeiger.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateSeries(Series series, string castCsv, List<string> services, string genreCsv, IFormFile? posterUpload)
         {
+            var seasons = series.Seasons.ToList();
+            for (int i = 0; i < seasons.Count; i++)
+            {
+                ModelState.Remove($"Seasons[{i}].Series");
+
+                var episodes = seasons[i].Episodes.ToList();
+                for (int j = 0; j < episodes.Count; j++)
+                {
+                    ModelState.Remove($"Seasons[{i}].Episodes[{j}].Season");
+                }
+            }
+
             if (!ModelState.IsValid) return View(series);
 
             await HandleMediaItemBaseAsync(series, castCsv, services, genreCsv, posterUpload);
@@ -339,7 +351,7 @@ namespace StreamingZeiger.Controllers
                 }
                 else if (string.Equals(type, "series", StringComparison.OrdinalIgnoreCase))
                 {
-                    var series = await tmdbService.GetSeriesByIdAsync(tmdbId);
+                    var series = await tmdbService.GetSeriesByIdAsync(tmdbId, region);
                     if (series == null)
                         return NotFound(new { message = "Serie nicht gefunden" });
 
@@ -365,7 +377,11 @@ namespace StreamingZeiger.Controllers
                         posterFile = series.PosterFile,
                         trailerUrl = series.TrailerUrl,
                         cast = series.Cast,
-                        genres = series.MediaGenres?.Select(mg => mg.Genre.Name).ToList()
+                        genres = series.MediaGenres?.Select(mg => mg.Genre.Name).ToList(),
+                        services = series.AvailabilityByService
+                                   .Where(kv => kv.Value)
+                                   .Select(kv => kv.Key)
+                                   .ToList()
                     });
                 }
                 else

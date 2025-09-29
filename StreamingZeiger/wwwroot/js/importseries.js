@@ -11,8 +11,10 @@
                 return;
             }
 
+            const region = "DE"; // Region für Streaming-Verfügbarkeit
+
             try {
-                const response = await fetch(`/Admin/ImportFromTmdb?tmdbId=${tmdbId}&type=series`);
+                const response = await fetch(`/Admin/ImportFromTmdb?tmdbId=${tmdbId}&type=series&region=${region}`);
                 if (!response.ok) throw new Error("Fehler beim Abrufen der Daten.");
 
                 const series = await response.json();
@@ -42,6 +44,18 @@
                 const genreInput = document.getElementById("GenreCsv");
                 if (genreInput && Array.isArray(series.genres)) genreInput.value = series.genres.join(", ");
 
+                // Streaming-Verfügbarkeit (Services)
+                const serviceCheckboxes = document.querySelectorAll('input[name="Services"]');
+                serviceCheckboxes.forEach(cb => cb.checked = false); // alle zurücksetzen
+
+                if (series.availabilityByService) {
+                    Object.keys(series.availabilityByService).forEach(serviceName => {
+                        const isAvailable = series.availabilityByService[serviceName];
+                        const checkbox = document.querySelector(`input[name="Services"][value="${serviceName}"]`);
+                        if (checkbox) checkbox.checked = !!isAvailable;
+                    });
+                }
+
                 // Staffeln & Episoden
                 const seasonsContainer = document.getElementById("seasonsContainer");
                 seasonsContainer.innerHTML = "";
@@ -54,9 +68,6 @@
 
                         const seasonNumberInput = seasonCard.querySelector(`input[name="Seasons[${seasonIndex}].SeasonNumber"]`);
                         if (seasonNumberInput) seasonNumberInput.value = season.seasonNumber || "";
-
-                        const seasonDesc = seasonCard.querySelector(`textarea[name="Seasons[${seasonIndex}].Description"]`);
-                        if (seasonDesc) seasonDesc.value = season.description || "";
 
                         const episodesContainer = seasonCard.querySelector(".episodesContainer");
 
