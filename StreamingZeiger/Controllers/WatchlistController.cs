@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StreamingZeiger.Data;
 using StreamingZeiger.Models;
+using StreamingZeiger.ViewModels;
 using System.Threading.Tasks;
 
 namespace StreamingZeiger.Controllers
@@ -23,12 +24,21 @@ namespace StreamingZeiger.Controllers
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
+
             var items = await _context.WatchlistItems
                 .Include(w => w.MediaItem)
+                .ThenInclude(mi => mi.MediaGenres) 
+                .ThenInclude(mg => mg.Genre)
                 .Where(w => w.UserId == user.Id)
                 .ToListAsync();
 
-            return View(items);
+            var viewModel = new WatchlistViewModel
+            {
+                Movies = items.Where(w => w.MediaItem is Movie).ToList(),
+                Series = items.Where(w => w.MediaItem is Series).ToList()
+            };
+
+            return View(viewModel);
         }
 
         public async Task<IActionResult> Add(int mediaItemId, string returnUrl = null)
