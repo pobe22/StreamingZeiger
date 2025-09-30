@@ -3,8 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using StreamingZeiger.Data;
 using StreamingZeiger.Services;
 using StreamingZeiger.Models;
+using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
+
+DotNetEnv.Env.Load();
+builder.Services.AddSingleton<TmdbService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))

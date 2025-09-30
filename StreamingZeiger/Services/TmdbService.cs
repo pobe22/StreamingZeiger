@@ -11,12 +11,14 @@ namespace StreamingZeiger.Services
 {
     public class TmdbService
     {
-        private readonly string _apiKey = "3263dddf46e4c2af1440296270193547";
+        private readonly string _apiKey;
         private readonly TMDbClient _client;
         private readonly Dictionary<int, string> _genreDictionary;
 
         public TmdbService()
         {
+            _apiKey = Environment.GetEnvironmentVariable("TMDB_API_KEY")
+                     ?? throw new Exception("TMDB_API_KEY is not set!");
             _client = new TMDbClient(_apiKey);
             var genres = _client.GetMovieGenresAsync();
             genres.Wait();
