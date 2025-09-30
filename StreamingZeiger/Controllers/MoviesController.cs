@@ -22,13 +22,31 @@ namespace StreamingZeiger.Controllers
             _userManager = userManager;
         }
 
-        // Arbeitsauftrag Aufgabe 2
         public IActionResult Index([FromQuery] MovieFilterViewModel filter)
         {
+            if (string.IsNullOrEmpty(filter.Query) &&
+                string.IsNullOrEmpty(filter.Genre) &&
+                string.IsNullOrEmpty(filter.Service) &&
+                !filter.MinRating.HasValue &&
+                !filter.YearFrom.HasValue &&
+                !filter.YearTo.HasValue)
+            {
+                // Aufgabe 2: Formulardaten persistent halten
+                var savedFilter = HttpContext.Session.GetObjectFromJson<MovieFilterViewModel>("MovieFilter");
+                if (savedFilter != null)
+                {
+                    filter = savedFilter;
+                }
+            }
+            else
+            {
+                // Aufgabe 4: Mehrere Formulare gleichzeitig unterstützen
+                HttpContext.Session.SetObjectAsJson("MovieFilter", filter);
+            }
+
             var moviesQuery = _context.Movies
-    .Include(m => m.MediaGenres)
-        .ThenInclude(mg => mg.Genre)
-    .AsNoTracking();
+                .Include(m => m.MediaGenres).ThenInclude(mg => mg.Genre)
+                .AsNoTracking();
 
             var movies = moviesQuery.ToList();
 
@@ -54,10 +72,11 @@ namespace StreamingZeiger.Controllers
                 movies = movies.Where(m => m.Rating >= filter.MinRating.Value).ToList();
 
             if (!string.IsNullOrWhiteSpace(filter.Query))
-                movies = movies.Where(m => (m.Title?.Contains(filter.Query, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                                           (m.OriginalTitle?.Contains(filter.Query, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                                           (m.Cast?.Any(c => c.Contains(filter.Query, StringComparison.OrdinalIgnoreCase)) ?? false))
-                               .ToList();
+                movies = movies.Where(m =>
+                    (m.Title?.Contains(filter.Query, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (m.OriginalTitle?.Contains(filter.Query, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (m.Cast?.Any(c => c.Contains(filter.Query, StringComparison.OrdinalIgnoreCase)) ?? false))
+                    .ToList();
 
             if (filter.YearFrom.HasValue)
                 movies = movies.Where(m => m.Year >= filter.YearFrom.Value).ToList();
@@ -78,12 +97,12 @@ namespace StreamingZeiger.Controllers
                 MinRating = filter.MinRating.HasValue ? (int?)filter.MinRating.Value : null,
                 YearFrom = filter.YearFrom,
                 YearTo = filter.YearTo,
+                Query = filter.Query
             };
 
             return View(vm);
         }
 
-        //Arbeitsauftrag Aufgabe 5
         public async Task<IActionResult> Details(int id)
         {
             var movie = await _context.Movies
@@ -123,11 +142,12 @@ namespace StreamingZeiger.Controllers
             return View(movie);
         }
 
-        //Arbeitsauftrag Aufgabe 3
         [HttpPost]
         public IActionResult Search(MovieFilterViewModel filter)
         {
-            return Index(filter); 
+            HttpContext.Session.SetObjectAsJson("MovieFilter", filter);
+
+            return RedirectToAction("Index", filter);
         }
 
         [HttpGet]

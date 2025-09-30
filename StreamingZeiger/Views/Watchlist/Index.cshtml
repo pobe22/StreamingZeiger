@@ -1,39 +1,49 @@
-﻿@model List<StreamingZeiger.Models.WatchlistItem>
-
-<h2>Meine Watchlist</h2>
-
+﻿@* @model StreamingZeiger.ViewModels.AdminIndexViewModel
 @if (!Model.Any())
 {
-    <p>Du hast noch keine Filme in der Watchlist.</p>
+	<p>Du hast noch keine Medieninhalte in der Watchlist.</p>
 }
 else
 {
-    <ul class="list-group">
-        @foreach (var item in Model)
-        {
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <a asp-controller="Movies" asp-action="Details" asp-route-id="@item.MediaItem.Id">
-                    @item.MediaItem.Title
-                </a>
 
-                <!-- Optional: Genre-Badges anzeigen -->
-                @if (item.MediaItem.MediaGenres != null && item.MediaItem.MediaGenres.Any())
-                {
-                    <span>
-                        @foreach (var mg in item.MediaItem.MediaGenres)
-                        {
-                            <span class="badge bg-secondary me-1">@mg.Genre.Name</span>
-                        }
-                    </span>
-                }
+	<div class="container mt-4">
+		<h2>Filme</h2>
+		<a asp-action="CreateMovie" class="btn btn-success mb-3">Neuen Film hinzufügen</a>
 
-                <a asp-controller="Watchlist"
-                   asp-action="Remove"
-                   asp-route-movieId="@item.MediaItem.Id"
-                   class="btn btn-danger btn-sm">
-                    Entfernen
-                </a>
-            </li>
-        }
-    </ul>
+		<ul class="list-group mb-5">
+			@foreach (var movie in Model.Movies)
+			{
+				<li class="list-group-item d-flex justify-content-between align-items-center">
+					<div>
+						<strong>@movie.Title</strong>
+						<span class="text-muted">(@movie.Year) – @movie.Director</span>
+					</div>
+					<div>
+						<a asp-action="EditMovie" asp-route-id="@movie.Id" class="btn btn-primary btn-sm me-2">Bearbeiten</a>
+						<a asp-action="DeleteMovie" asp-route-id="@movie.Id" class="btn btn-danger btn-sm">Löschen</a>
+					</div>
+				</li>
+			}
+		</ul>
+
+		<h2>Serien</h2>
+		<a asp-action="CreateSeries" class="btn btn-success mb-3">Neue Serie hinzufügen</a>
+
+		<ul class="list-group">
+			@foreach (var series in Model.Series)
+			{
+				<li class="list-group-item d-flex justify-content-between align-items-center">
+					<div>
+						<strong>@series.Title</strong>
+						<span class="text-muted">(@series.StartYear - @(series.EndYear?.ToString() ?? "heute"))</span>
+					</div>
+					<div>
+						<a asp-action="EditSeries" asp-route-id="@series.Id" class="btn btn-primary btn-sm me-2">Bearbeiten</a>
+						<a asp-action="DeleteSeries" asp-route-id="@series.Id" class="btn btn-danger btn-sm">Löschen</a>
+					</div>
+				</li>
+			}
+		</ul>
+	</div>
 }
+ *@
