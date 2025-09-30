@@ -21,8 +21,6 @@
     var currentUrl = Context.Request.Path + Context.Request.QueryString;
 }
 
-<h2>@Model.Title</h2>
-
 <div class="container mt-4">
     <div class="row">
         <!-- Poster -->
@@ -32,7 +30,7 @@
 
         <!-- Informationen -->
         <div class="col-md-8">
-            <h1>@Model.Title (@Model.Year)</h1>
+            <h2>@Model.Title (@Model.Year)</h2>
             <h5 class="text-muted">Originaltitel: @Model.OriginalTitle</h5>
             <p class="mt-3">@Model.Description</p>
 
@@ -58,9 +56,9 @@
                 }
             </p>
 
-            <!-- Bewertung -->
+            <!-- IMDb Rating -->
             <div class="my-3">
-                <strong>Bewertung:</strong>
+                <strong>IMDb Bewertung:</strong>
                 <span class="text-warning">
                     @for (int i = 1; i <= 5; i++)
                     {
@@ -74,14 +72,68 @@
                         }
                     }
                 </span>
-                <span class="ms-2">(@Model.Rating.ToString("0.0")/10)</span>
+                <span class="ms-2">(@Model.Rating.ToString("0.0") / 10)</span>
+            </div>
+            <!-- Durchschnitt aller Bewertungen -->
+            <div class="my-3">
+                <strong>Community Bewertung:</strong>
+                @if (Model.Ratings != null && Model.Ratings.Any())
+                {
+                    var avg = Model.Ratings.Average(r => r.Score);
+                    <span class="text-warning">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            if (i <= avg)
+                            {
+                                <i class="bi bi-star-fill"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-star"></i>
+                            }
+                        }
+                    </span>
+                    <span class="ms-2">(@avg.ToString("0.0") / 5 · @Model.Ratings.Count Stimmen)</span>
+                }
+                else
+                {
+                    <span>Noch keine User-Bewertungen</span>
+                }
             </div>
 
+            <!-- Bewertung des aktuellen Users -->
             @if (SignInManager.IsSignedIn(User))
             {
+                <div class="my-3">
+                    <strong>Deine Bewertung:</strong>
+                    @if (userRating.HasValue)
+                    {
+                        <span class="text-warning">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= userRating.Value)
+                                {
+                                    <i class="bi bi-star-fill"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-star"></i>
+                                }
+                            }
+                        </span>
+                        <span class="ms-2">(@userRating.Value / 5)</span>
+                    }
+                    else
+                    {
+                        <span>Du hast diesen Film noch nicht bewertet.</span>
+                    }
+                </div>
+
+                <!-- Formular zur Abgabe/Aktualisierung -->
                 <h5>Bewertung abgeben</h5>
                 <form asp-controller="Rating" asp-action="Add" method="post" class="mb-3">
-                    <input type="hidden" name="movieId" value="@Model.Id" />
+                    <input type="hidden" name="mediaItemId" value="@Model.Id" />
+                    <input type="hidden" name="returnUrl" value="@currentUrl" />
                     <select name="score" class="form-select w-auto d-inline">
                         @for (int i = 1; i <= 5; i++)
                         {
@@ -89,7 +141,7 @@
                             <option value="@i" selected="@(isSelected ? "selected" : null)">@i</option>
                         }
                     </select>
-                    <button type="submit" class="btn btn-primary btn-sm">Bewerten</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Speichern</button>
                 </form>
 
                 @if (!inWatchlist)
@@ -142,19 +194,6 @@
             </div>
 
         </div>
-
-        <h5>Durchschnittliche Bewertung</h5>
-        <p>
-            @if (Model.Ratings != null && Model.Ratings.Count > 0)
-            {
-                @($"{Model.Ratings.Average(r => r.Score):0.0} / 5 ({Model.Ratings.Count} Bewertungen)")
-            }
-            else
-            {
-                <span>Noch keine Bewertungen</span>
-            }
-        </p>
-
         <!-- Trailer -->
         @if (!string.IsNullOrWhiteSpace(Model.TrailerUrl))
         {
@@ -171,7 +210,11 @@
         <!-- Empfehlungen -->
         <div class="row mt-5">
             <div class="col-12">
-                <h3>Ähnliche Filme</h3>
+                <h3>
+                    Weitere Filme mit
+                    @string.Join(", ", Model.Genres.Select(g => g.Name))
+                </h3>
+
                 <div id="recommendCarousel" class="carousel slide" data-bs-ride="carousel">
                     <div class="carousel-inner">
                         @for (int i = 0; i < chunks.Count; i++)

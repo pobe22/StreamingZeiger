@@ -18,7 +18,7 @@ public class RatingController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> Add(int mediaItemId, int score)
+    public async Task<IActionResult> Add(int mediaItemId, int score, string? returnUrl = null)
     {
         var user = await _userManager.GetUserAsync(User);
 
@@ -42,6 +42,10 @@ public class RatingController : Controller
         }
 
         await _context.SaveChangesAsync();
+
+        if (!string.IsNullOrEmpty(returnUrl))
+            return Redirect(returnUrl);
+
         return RedirectToAction("Details", "Movies", new { id = mediaItemId });
     }
 }
