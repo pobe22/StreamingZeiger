@@ -22,8 +22,12 @@ namespace StreamingZeiger.Controllers
             _userManager = userManager;
         }
 
-        public IActionResult Index([FromQuery] MovieFilterViewModel filter)
+        public async Task<IActionResult> Index([FromQuery] MovieFilterViewModel filter)
         {
+            var user = await _userManager.GetUserAsync(User);
+            var userId = user?.Id;
+
+            // Filter aus Session laden/speichern (wie bisher)
             if (string.IsNullOrEmpty(filter.Query) &&
                 string.IsNullOrEmpty(filter.Genre) &&
                 string.IsNullOrEmpty(filter.Service) &&
@@ -36,7 +40,7 @@ namespace StreamingZeiger.Controllers
                 if (savedFilter != null)
                 {
                     filter = savedFilter;
-                }
+            }
             }
             else
             {
@@ -49,16 +53,6 @@ namespace StreamingZeiger.Controllers
                 .AsNoTracking();
 
             var movies = moviesQuery.ToList();
-
-            var services = movies
-                .SelectMany(m => m.AvailabilityByService.Keys)
-                .Distinct()
-                .OrderBy(s => s)
-                .ToList();
-            ViewBag.Services = new SelectList(services, filter.Service);
-
-            var genres = _context.Genres.OrderBy(g => g.Name).ToList();
-            ViewBag.Genres = new SelectList(genres, "Name", "Name", filter.Genre);
 
             if (!string.IsNullOrWhiteSpace(filter.Genre))
                 movies = movies.Where(m => m.MediaGenres.Any(mg => mg.Genre.Name == filter.Genre)).ToList();
@@ -84,11 +78,18 @@ namespace StreamingZeiger.Controllers
             if (filter.YearTo.HasValue)
                 movies = movies.Where(m => m.Year <= filter.YearTo.Value).ToList();
 
-            var pagedMovies = movies.Skip((filter.Page - 1) * filter.PageSize).Take(filter.PageSize);
+            var pagedMovies = movies.Skip((filter.Page - 1) * filter.PageSize).Take(filter.PageSize).ToList();
+
+            // Watchlist-Status pro Film
+            var moviesVm = pagedMovies.Select(m => new MovieIndexItemViewModel
+            {
+                Movie = m,
+                InWatchlist = userId != null && _context.WatchlistItems.Any(w => w.UserId == userId && w.MediaItemId == m.Id)
+            }).ToList();
 
             var vm = new MovieIndexViewModel
             {
-                Movies = pagedMovies,
+                Movies = moviesVm,
                 Page = filter.Page,
                 PageSize = filter.PageSize,
                 Total = movies.Count,
@@ -99,6 +100,11 @@ namespace StreamingZeiger.Controllers
                 YearTo = filter.YearTo,
                 Query = filter.Query
             };
+
+            var services = movies.SelectMany(m => m.AvailabilityByService.Keys).Distinct().OrderBy(s => s).ToList();
+            ViewBag.Services = new SelectList(services, filter.Service);
+            var genres = _context.Genres.OrderBy(g => g.Name).ToList();
+            ViewBag.Genres = new SelectList(genres, "Name", "Name", filter.Genre);
 
             return View(vm);
         }

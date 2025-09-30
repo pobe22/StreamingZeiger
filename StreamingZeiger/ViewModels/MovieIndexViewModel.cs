@@ -6,7 +6,7 @@ namespace StreamingZeiger.ViewModels
     public class MovieIndexViewModel
     {
         // Gefilterte Filme
-        public IEnumerable<MediaItem> Movies { get; set; } = new List<MediaItem>();
+        public IEnumerable<MovieIndexItemViewModel> Movies { get; set; } = new List<MovieIndexItemViewModel>();
 
         // Filterfelder
         public string? Query { get; set; }           
@@ -20,5 +20,7 @@ namespace StreamingZeiger.ViewModels
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 12;
         public int Total { get; set; } = 0;
+
+        public bool InWatchlist { get; set; }
     }
 }
