@@ -31,6 +31,11 @@ namespace StreamingZeiger.Services
             int tmdbIdLocal = tmdbId;
             var movieDetails = await _client.GetMovieAsync(tmdbIdLocal, MovieMethods.Credits | MovieMethods.Videos);
 
+            if (movieDetails == null)
+            {
+                return null; 
+            }
+
             var movie = new Models.Movie
             {
                 Title = movieDetails.Title,
@@ -38,12 +43,14 @@ namespace StreamingZeiger.Services
                 Description = movieDetails.Overview,
                 DurationMinutes = movieDetails.Runtime ?? 0,
                 Year = movieDetails.ReleaseDate?.Year ?? 0,
-                PosterFile = $"https://image.tmdb.org/t/p/w500{movieDetails.PosterPath}",
-                TrailerUrl = movieDetails.Videos.Results.FirstOrDefault()?.Key is string key && !string.IsNullOrEmpty(key)
-                            ? $"https://www.youtube.com/embed/{key}"
-                            : string.Empty,
-                Cast = movieDetails.Credits.Cast.Select(c => c.Name).ToList(),
-                Director = movieDetails.Credits.Crew.FirstOrDefault(c => c.Job == "Director")?.Name ?? string.Empty,
+                PosterFile = movieDetails.PosterPath != null
+                           ? $"https://image.tmdb.org/t/p/w500{movieDetails.PosterPath}"
+                           : string.Empty,
+                Cast = movieDetails.Credits?.Cast?.Select(c => c.Name).ToList() ?? new List<string>(),
+                Director = movieDetails.Credits?.Crew?.FirstOrDefault(c => c.Job == "Director")?.Name ?? string.Empty,
+                TrailerUrl = movieDetails.Videos?.Results?.FirstOrDefault()?.Key is string key && !string.IsNullOrEmpty(key)
+                           ? $"https://www.youtube.com/embed/{key}"
+                           : string.Empty,
                 AvailabilityByService = new Dictionary<string, bool>()
             };
 
@@ -104,9 +111,11 @@ namespace StreamingZeiger.Services
                 StartYear = seriesDetails.FirstAirDate?.Year ?? 0,
                 EndYear = seriesDetails.LastAirDate?.Year,
                 Description = seriesDetails.Overview ?? "",
-                PosterFile = "https://image.tmdb.org/t/p/w500" + (seriesDetails.PosterPath ?? ""),
-                Cast = seriesDetails.Credits.Cast.Select(c => c.Name).ToList(),
-                Director = seriesDetails.CreatedBy.FirstOrDefault()?.Name ?? "",
+                PosterFile = !string.IsNullOrEmpty(seriesDetails.PosterPath)
+                             ? "https://image.tmdb.org/t/p/w500" + seriesDetails.PosterPath
+                             : "",
+                Cast = seriesDetails.Credits?.Cast?.Select(c => c.Name).ToList() ?? new List<string>(),
+                Director = seriesDetails.CreatedBy?.FirstOrDefault()?.Name ?? "",
                 AvailabilityByService = new Dictionary<string, bool>()
             };
 

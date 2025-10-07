@@ -38,4 +38,18 @@
             </li>
         }
     </ul>
+
+    <form asp-action="ImportMultiple" method="post">
+        <label>TMDb IDs (kommagetrennt):</label>
+        <input type="text" name="tmdbIds" placeholder="123,456,789" />
+
+        <label>Typ:</label>
+        <select name="type">
+            <option value="movie">Film</option>
+            <option value="series">Serie</option>
+        </select>
+
+        <button type="submit">Importieren</button>
+    </form>
+
 </div>

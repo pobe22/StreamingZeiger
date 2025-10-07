@@ -45,7 +45,12 @@ namespace StreamingZeiger.Data
                 await context.SaveChangesAsync();
             }
 
-            var genres = await context.Genres.ToDictionaryAsync(g => g.Name, g => g);
+            var genresList = await context.Genres.ToListAsync();
+            var genres = genresList
+                .GroupBy(g => g.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.First())
+                .ToDictionary(g => g.Name, g => g, StringComparer.OrdinalIgnoreCase);
+
 
             // --- Serien ---
             if (!await context.Series.AnyAsync())

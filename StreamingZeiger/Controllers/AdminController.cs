@@ -388,5 +388,83 @@ namespace StreamingZeiger.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ImportMultiple(string tmdbIds, string type, string region = "DE")
+        {
+            if (string.IsNullOrWhiteSpace(tmdbIds))
+            {
+                TempData["Message"] = "Keine IDs angegeben.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // IDs in Liste umwandeln
+            var ids = tmdbIds
+                 .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                 .Select(s => int.TryParse(s.Trim(), out var id) ? id : -1)
+                 .Where(id => id > 0)
+                 .ToList();
+
+            if (!ids.Any())
+            {
+                TempData["Message"] = "Keine gültigen IDs gefunden.";
+                return RedirectToAction(nameof(Index));
+            }
+
+
+            var tmdbService = new TmdbService();
+
+            foreach (var tmdbId in ids) 
+                try
+                {
+                    if (string.Equals(type, "movie", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var movie = await tmdbService.GetMovieByIdAsync(tmdbId, region);
+                        if (movie == null)
+                        {
+                            TempData["Message"] += $"Film-ID {tmdbId} nicht gefunden.\n";
+                            continue;
+                        }
+                        await HandleMediaItemBaseAsync(movie, string.Join(", ", movie.Cast),
+                                movie.AvailabilityByService.Keys.ToList(),
+                                string.Join(", ", movie.MediaGenres.Select(mg => mg.Genre.Name)), null);
+
+                        _context.Movies.Add(movie);
+                    }
+                    else if (string.Equals(type, "series", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var series = await tmdbService.GetSeriesByIdAsync(tmdbId, region);
+                        if (series != null)
+                        {
+                            await HandleMediaItemBaseAsync(series, string.Join(", ", series.Cast),
+                                series.AvailabilityByService.Keys.ToList(),
+                                string.Join(", ", series.MediaGenres.Select(mg => mg.Genre.Name)), null);
+
+                            if (series.Seasons != null)
+                            {
+                                foreach (var season in series.Seasons)
+                                {
+                                    season.Series = series;
+                                    if (season.Episodes != null)
+                                        foreach (var ep in season.Episodes)
+                                            ep.Season = season;
+                                }
+                            }
+
+                            _context.Series.Add(series);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    TempData["Message"] += $"Fehler bei ID {tmdbId}: {ex.Message}\n";
+                }
+
+            await _context.SaveChangesAsync();
+            TempData["Message"] += "Multi-Import abgeschlossen.";
+            return RedirectToAction(nameof(Index));
+        }
+
     }
 }

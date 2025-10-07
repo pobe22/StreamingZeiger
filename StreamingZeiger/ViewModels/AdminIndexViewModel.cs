@@ -7,6 +7,9 @@ namespace StreamingZeiger.ViewModels
     {
         public List<Movie> Movies { get; set; } = new();
         public List<Series> Series { get; set; } = new();
+
+        public List<int> ImportTmdbIds { get; set; } = new();
+        public string ImportType { get; set; } = "movie";
     }
 
 }
