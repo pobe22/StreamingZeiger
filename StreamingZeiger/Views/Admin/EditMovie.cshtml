@@ -8,7 +8,8 @@
 
 <div class="container mt-4">
     <h2>Film bearbeiten</h2>
-    <form asp-action="Edit" method="post" enctype="multipart/form-data" class="row g-3">
+    <form asp-action="EditMovie" method="post" enctype="multipart/form-data" class="row g-3">
+        @Html.AntiForgeryToken()
         <input type="hidden" asp-for="Id" />
         <div class="col-md-6">
             <label asp-for="Title" class="form-label"></label>
