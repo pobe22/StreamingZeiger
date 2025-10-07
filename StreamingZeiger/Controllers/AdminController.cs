@@ -232,6 +232,23 @@ namespace StreamingZeiger.Controllers
         public async Task<IActionResult> EditSeries(int id, Series series, string castCsv, List<string> services, string genreCsv)
         {
             if (id != series.Id) return NotFound();
+
+            // Entferne verschachtelte ModelState-Fehler
+            if (series.Seasons != null)
+            {
+                var seasons = series.Seasons.ToList();
+                for (int i = 0; i < seasons.Count; i++)
+                {
+                    ModelState.Remove($"Seasons[{i}].Series");
+
+                    var episodes = seasons[i].Episodes?.ToList() ?? new List<Episode>();
+                    for (int j = 0; j < episodes.Count; j++)
+                    {
+                        ModelState.Remove($"Seasons[{i}].Episodes[{j}].Season");
+                    }
+                }
+            }
+
             if (!ModelState.IsValid) return View(series);
 
             var existing = await _context.Series
@@ -244,57 +261,34 @@ namespace StreamingZeiger.Controllers
             // Basis-Eigenschaften aktualisieren
             _context.Entry(existing).CurrentValues.SetValues(series);
             existing.MediaGenres.Clear();
+
             await HandleMediaItemBaseAsync(existing, castCsv, services, genreCsv, null);
 
             // Seasons & Episodes synchronisieren
             if (series.Seasons != null)
             {
-                // Entferne alte Seasons/Episodes, die nicht mehr existieren
-                var seasonsToRemove = existing.Seasons.Where(se => !series.Seasons.Any(s => s.SeasonNumber == se.SeasonNumber)).ToList();
-                _context.Seasons.RemoveRange(seasonsToRemove);
+                // Alte Seasons und deren Episodes löschen
+                foreach (var existingSeason in existing.Seasons.ToList())
+                {
+                    _context.Episodes.RemoveRange(existingSeason.Episodes);
+                    _context.Seasons.Remove(existingSeason);
+                }
+                await _context.SaveChangesAsync(); // Wichtig: Änderungen sofort speichern
 
+                // Neue Seasons & Episodes hinzufügen
                 foreach (var season in series.Seasons)
                 {
-                    var existingSeason = existing.Seasons.FirstOrDefault(se => se.SeasonNumber == season.SeasonNumber);
-                    if (existingSeason == null)
-                    {
-                        // Neue Season
-                        season.Series = existing;
-                        if (season.Episodes != null)
-                        {
-                            foreach (var ep in season.Episodes)
-                                ep.Season = season;
-                        }
-                        existing.Seasons.Add(season);
-                    }
-                    else
-                    {
-                        // Bestehende Season aktualisieren
-                        _context.Entry(existingSeason).CurrentValues.SetValues(season);
+                    season.Series = existing;
 
-                        if (season.Episodes != null)
+                    if (season.Episodes != null)
+                    {
+                        foreach (var ep in season.Episodes)
                         {
-                            // Entferne alte Episodes
-                            var episodesToRemove = existingSeason.Episodes
-                                .Where(e => !season.Episodes.Any(sep => sep.EpisodeNumber == e.EpisodeNumber))
-                                .ToList();
-                            _context.Episodes.RemoveRange(episodesToRemove);
-
-                            foreach (var ep in season.Episodes)
-                            {
-                                var existingEp = existingSeason.Episodes.FirstOrDefault(e => e.EpisodeNumber == ep.EpisodeNumber);
-                                if (existingEp == null)
-                                {
-                                    ep.Season = existingSeason;
-                                    existingSeason.Episodes.Add(ep);
-                                }
-                                else
-                                {
-                                    _context.Entry(existingEp).CurrentValues.SetValues(ep);
-                                }
-                            }
+                            ep.Season = season;
                         }
                     }
+
+                    _context.Seasons.Add(season);
                 }
             }
 
