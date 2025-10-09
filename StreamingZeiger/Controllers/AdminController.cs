@@ -8,21 +8,24 @@ using StreamingZeiger.ViewModels;
 
 namespace StreamingZeiger.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin, Redakteur")]
     public class AdminController : Controller
     {
         private readonly AppDbContext _context;
         private readonly IWebHostEnvironment _env;
+        private readonly DynamicDbContextFactory _contextFactory;
 
-        public AdminController(AppDbContext context, IWebHostEnvironment env)
+        public AdminController(AppDbContext context, IWebHostEnvironment env, DynamicDbContextFactory contextFactory)
         {
             _context = context;
             _env = env;
+            _contextFactory = contextFactory;
         }
 
         // Übersicht
         public async Task<IActionResult> Index()
         {
+            using var context = await _contextFactory.CreateDbContextAsync();
             var vm = new AdminIndexViewModel
             {
                 Movies = await _context.Movies

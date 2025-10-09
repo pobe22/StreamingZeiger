@@ -19,6 +19,16 @@ namespace StreamingZeiger.Data
                 await roleManager.CreateAsync(new IdentityRole("Admin"));
             }
 
+            if (!await roleManager.RoleExistsAsync("Redakteur"))
+            {
+                await roleManager.CreateAsync(new IdentityRole("Redakteur"));
+            }
+
+            if (!await roleManager.RoleExistsAsync("Webuser"))
+            {
+                await roleManager.CreateAsync(new IdentityRole("Webuser"));
+            }
+
             var adminUser = await userManager.FindByEmailAsync("admin@streamingzeiger.at");
             if (adminUser == null)
             {
@@ -30,6 +40,32 @@ namespace StreamingZeiger.Data
                 };
                 await userManager.CreateAsync(adminUser, "Admin123!");
                 await userManager.AddToRoleAsync(adminUser, "Admin");
+            }
+
+            var redakteur = await userManager.FindByEmailAsync("redakteur@streamingzeiger.at");
+            if (redakteur == null)
+            {
+                redakteur = new ApplicationUser
+                { 
+                    UserName = "redakteur@streamingzeiger.at", 
+                    Email = "redakteur@streamingzeiger.at",
+                    EmailConfirmed = true
+                };
+                await userManager.CreateAsync(redakteur, "Redakteur123!");
+                await userManager.AddToRoleAsync(redakteur, "Redakteur");
+            }
+
+            var webuser = await userManager.FindByEmailAsync("webuser@streamingzeiger.at");
+            if (webuser == null)
+            {
+                webuser = new ApplicationUser 
+                { 
+                    UserName = "webuser@streamingzeiger.at", 
+                    Email = "webuser@streamingzeiger.at",
+                    EmailConfirmed = true
+                };
+                await userManager.CreateAsync(webuser, "Webuser123!");
+                await userManager.AddToRoleAsync(webuser, "Webuser");
             }
 
             // --- Genres vorbereiten ---

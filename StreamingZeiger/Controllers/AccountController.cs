@@ -45,7 +45,26 @@ namespace StreamingZeiger.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                ModelState.AddModelError("", "Benutzer nicht gefunden.");
+                return View(model);
+            }
+
             var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
+            if (!result.Succeeded)
+            {
+                if (result.IsLockedOut)
+                    ModelState.AddModelError("", "Konto gesperrt");
+                else if (result.IsNotAllowed)
+                    ModelState.AddModelError("", "E-Mail muss bestätigt werden");
+                else if (result.RequiresTwoFactor)
+                    ModelState.AddModelError("", "2FA erforderlich");
+                else
+                    ModelState.AddModelError("", "Ungültige Anmeldeinformationen");
+            }
+
             if (result.Succeeded) return RedirectToAction("Index", "Movies");
 
             ModelState.AddModelError("", "Ungültige Anmeldung");

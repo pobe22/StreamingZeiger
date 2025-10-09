@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using StreamingZeiger.Data;
-using StreamingZeiger.Services;
-using StreamingZeiger.Models;
 using Microsoft.Extensions.Configuration;
+using StreamingZeiger;
+using StreamingZeiger.Data;
+using StreamingZeiger.Models;
+using StreamingZeiger.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +30,10 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<IStaticMovieRepository, StaticMovieRepository>();
 
 builder.Services.AddSession();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<DynamicDbContextFactory>();
+
 
 var app = builder.Build();
 
