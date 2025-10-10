@@ -14,26 +14,32 @@ namespace StreamingZeiger.Controllers
         private readonly AppDbContext _context;
         private readonly IWebHostEnvironment _env;
         private readonly DynamicDbContextFactory _contextFactory;
+        private readonly ITmdbService _tmdbService;
 
-        public AdminController(AppDbContext context, IWebHostEnvironment env, DynamicDbContextFactory contextFactory)
+        public AdminController(AppDbContext context, IWebHostEnvironment env,
+                          DynamicDbContextFactory contextFactory, ITmdbService tmdb)
         {
             _context = context;
             _env = env;
             _contextFactory = contextFactory;
+            _tmdbService = tmdb;
         }
 
         // Übersicht
         public async Task<IActionResult> Index()
         {
-            using var context = await _contextFactory.CreateDbContextAsync();
+            var context = _contextFactory != null
+                ? await _contextFactory.CreateDbContextAsync()
+                : _context;
+
             var vm = new AdminIndexViewModel
             {
-                Movies = await _context.Movies
+                Movies = await context.Movies
                     .Include(m => m.MediaGenres)
                         .ThenInclude(mg => mg.Genre)
                     .ToListAsync(),
 
-                Series = await _context.Series
+                Series = await context.Series
                     .Include(s => s.MediaGenres)
                         .ThenInclude(mg => mg.Genre)
                     .ToListAsync()
@@ -41,7 +47,6 @@ namespace StreamingZeiger.Controllers
 
             return View(vm);
         }
-
 
         // ---------- Gemeinsamer Create-Helper ----------
         private async Task HandleMediaItemBaseAsync(MediaItem item, string castCsv, List<string> services, string genreCsv, IFormFile? posterUpload)
@@ -320,11 +325,10 @@ namespace StreamingZeiger.Controllers
         {
             try
             {
-                var tmdbService = new TmdbService();
 
                 if (string.Equals(type, "movie", StringComparison.OrdinalIgnoreCase))
                 {
-                    var movie = await tmdbService.GetMovieByIdAsync(tmdbId, region);
+                    var movie = await _tmdbService.GetMovieByIdAsync(tmdbId, region);
                     if (movie == null)
                         return NotFound(new { message = "Film nicht gefunden" });
 
@@ -348,7 +352,7 @@ namespace StreamingZeiger.Controllers
                 }
                 else if (string.Equals(type, "series", StringComparison.OrdinalIgnoreCase))
                 {
-                    var series = await tmdbService.GetSeriesByIdAsync(tmdbId, region);
+                    var series = await _tmdbService.GetSeriesByIdAsync(tmdbId, region);
                     if (series == null)
                         return NotFound(new { message = "Serie nicht gefunden" });
 

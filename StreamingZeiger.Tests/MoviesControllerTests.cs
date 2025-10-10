@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Moq;
 using StreamingZeiger.Controllers;
 using StreamingZeiger.Data;
@@ -8,7 +10,7 @@ using StreamingZeiger.Models;
 using StreamingZeiger.Services;
 using StreamingZeiger.ViewModels;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
+using TMDbLib.Objects.Authentication;
 
 namespace StreamingZeiger.Tests
 {
@@ -18,9 +20,13 @@ namespace StreamingZeiger.Tests
         private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
         private readonly Mock<IStaticMovieRepository> _repoMock;
         private readonly MoviesController _controller;
+        private readonly IMemoryCache _cache;
+
 
         public MoviesControllerTests()
         {
+                _cache = new MemoryCache(new MemoryCacheOptions());
+
             // InMemory DB
             var options = new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
@@ -41,19 +47,30 @@ namespace StreamingZeiger.Tests
                 userStoreMock.Object, null, null, null, null, null, null, null, null
             );
 
+            _userManagerMock.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+                            .ReturnsAsync(new ApplicationUser { Id = "test-user" });
+
+
             // Mock Repository
             _repoMock = new Mock<IStaticMovieRepository>();
 
-            // Controller
-            _controller = new MoviesController(_repoMock.Object, _context, _userManagerMock.Object);
+            _controller = new MoviesController(_repoMock.Object, _context, _userManagerMock.Object, _cache);
+
+            // Session einrichten
+            var httpContext = new DefaultHttpContext();
+            httpContext.Session = new TestSession();
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = httpContext
+            };
         }
 
         [Fact]
-        public void Index_ReturnsViewResult_WithMovies()
+        public async Task Index_ReturnsViewResult_WithMovies()
         {
             var filter = new MovieFilterViewModel { Page = 1, PageSize = 10 };
 
-            var result = _controller.Index(filter) as ViewResult;
+            var result = await _controller.Index(filter) as ViewResult;
 
             Assert.NotNull(result);
 
@@ -114,6 +131,22 @@ namespace StreamingZeiger.Tests
             Assert.NotNull(result);
             Assert.Equal("Details", result.ActionName);
             Assert.Equal(1, result.RouteValues["id"]);
+        }
+
+        public class TestSession : ISession
+        {
+            private readonly Dictionary<string, byte[]> _sessionStorage = new();
+
+            public IEnumerable<string> Keys => _sessionStorage.Keys;
+            public string Id => Guid.NewGuid().ToString();
+            public bool IsAvailable => true;
+
+            public void Clear() => _sessionStorage.Clear();
+            public Task CommitAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+            public Task LoadAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+            public void Remove(string key) => _sessionStorage.Remove(key);
+            public void Set(string key, byte[] value) => _sessionStorage[key] = value;
+            public bool TryGetValue(string key, out byte[] value) => _sessionStorage.TryGetValue(key, out value);
         }
     }
 }

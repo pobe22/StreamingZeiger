@@ -1,12 +1,16 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Moq;
 using StreamingZeiger.Controllers;
 using StreamingZeiger.Data;
 using StreamingZeiger.Models;
+using StreamingZeiger.Services;
 using StreamingZeiger.ViewModels;
 
 namespace StreamingZeiger.Tests
@@ -57,6 +61,7 @@ namespace StreamingZeiger.Tests
                     Title = "Test Serie",
                     StartYear = 2020,
                     Seasons = new List<Season> { season },
+                    MediaGenres = new List<MediaGenre>(),
                     Director = "Regisseur",
                     Description = "Beschreibung",
                     Cast = new List<string> { "Schauspieler A" }
@@ -69,10 +74,55 @@ namespace StreamingZeiger.Tests
             _env.Setup(e => e.WebRootPath).Returns(Directory.GetCurrentDirectory());
         }
 
+        private static Mock<UserManager<ApplicationUser>> GetMockUserManager()
+        {
+            var store = new Mock<IUserStore<ApplicationUser>>();
+            var mgr = new Mock<UserManager<ApplicationUser>>(
+                store.Object,
+                null, 
+                null,
+                new List<IUserValidator<ApplicationUser>>(),
+                new List<IPasswordValidator<ApplicationUser>>(),
+                null,
+                new IdentityErrorDescriber(),
+                null,
+                new Mock<ILogger<UserManager<ApplicationUser>>>().Object
+            );
+
+            return mgr;
+        }
+
+        private class FakeTmdbService : ITmdbService
+        {
+            public Task<Movie> GetMovieByIdAsync(int id, string region)
+                => Task.FromResult(new Movie { Title = "MockMovie" });
+
+            public Task<Series> GetSeriesByIdAsync(int id, string region)
+                => Task.FromResult(new Series
+                {
+                    Title = "MockSeries",
+                    Seasons = new List<Season>
+                    {
+                new Season
+                {
+                    SeasonNumber = 1,
+                    Episodes = new List<Episode>
+                    {
+                        new Episode { EpisodeNumber = 1, Title = "Pilot", DurationMinutes = 45 }
+                    }
+                }
+                    }
+                });
+        }
         private AdminController GetController()
         {
-            var controller = new AdminController(_context, _env.Object);
+            var mockUserManager = GetMockUserManager();
+
+            var tmdb = new FakeTmdbService();
+
+            var controller = new AdminController(_context, _env.Object, null!, tmdb);
             controller.TempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
+
             return controller;
         }
 

@@ -9,7 +9,7 @@ using TMDbLib.Objects.TvShows;
 
 namespace StreamingZeiger.Services
 {
-    public class TmdbService
+    public class TmdbService: ITmdbService
     {
         private readonly string _apiKey;
         private readonly TMDbClient _client;
@@ -26,7 +26,7 @@ namespace StreamingZeiger.Services
         }
 
         // Einzelnen Film importieren
-        public async Task<Models.Movie> GetMovieByIdAsync(int tmdbId, string region)
+        public virtual async Task<Models.Movie> GetMovieByIdAsync(int tmdbId, string region)
         {
             int tmdbIdLocal = tmdbId;
             var movieDetails = await _client.GetMovieAsync(tmdbIdLocal, MovieMethods.Credits | MovieMethods.Videos);
