@@ -26,7 +26,7 @@ namespace StreamingZeiger.Controllers
             _cache = cache;
         }
 
-        [OutputCache(Duration = 60, VaryByQueryKeys = new[] { "Query", "Genre", "Service", "MinRating", "YearFrom", "YearTo", "Page", "PageSize" })]
+        //[OutputCache(Duration = 60, VaryByQueryKeys = new[] { "Query", "Genre", "Service", "MinRating", "YearFrom", "YearTo", "Page", "PageSize" })]
         public async Task<IActionResult> Index([FromQuery] MovieFilterViewModel filter)
         {
             var user = await _userManager.GetUserAsync(User);
@@ -46,12 +46,21 @@ namespace StreamingZeiger.Controllers
                 {
                     filter = savedFilter;
                 }
+                if (savedFilter == null)
+                {
+                    filter = new MovieFilterViewModel();
+                }
             }
-            else
+            else if (!string.IsNullOrEmpty(filter.Query) ||
+                     !string.IsNullOrEmpty(filter.Genre) ||
+                     !string.IsNullOrEmpty(filter.Service) ||
+                     filter.MinRating.HasValue ||
+                     filter.YearFrom.HasValue ||
+                     filter.YearTo.HasValue)
             {
-                // Aufgabe 4: Mehrere Formulare gleichzeitig unterstützen
                 HttpContext.Session.SetObjectAsJson("MovieFilter", filter);
             }
+
             var cacheKey = $"movies_{filter.Query}_{filter.Genre}_{filter.Service}_{filter.MinRating}_{filter.YearFrom}_{filter.YearTo}_{filter.Page}_{filter.PageSize}";
 
             List<Movie> movies = new List<Movie>();
@@ -62,7 +71,7 @@ namespace StreamingZeiger.Controllers
                 .Include(m => m.MediaGenres).ThenInclude(mg => mg.Genre)
                 .AsNoTracking();
 
-                 movies = moviesQuery.ToList();
+                movies = moviesQuery.ToList();
 
                 if (!string.IsNullOrWhiteSpace(filter.Genre))
                     movies = movies.Where(m => m.MediaGenres.Any(mg => mg.Genre.Name == filter.Genre)).ToList();
@@ -88,10 +97,7 @@ namespace StreamingZeiger.Controllers
                 if (filter.YearTo.HasValue)
                     movies = movies.Where(m => m.Year <= filter.YearTo.Value).ToList();
 
-                _cache.Set(cacheKey, vm, TimeSpan.FromMinutes(5));
-            }
-
-            var pagedMovies = movies.Skip((filter.Page - 1) * filter.PageSize).Take(filter.PageSize).ToList();
+                var pagedMovies = movies.Skip((filter.Page - 1) * filter.PageSize).Take(filter.PageSize).ToList();
 
                 // Watchlist-Status pro Film
                 var moviesVm = pagedMovies.Select(m => new MovieIndexItemViewModel
@@ -114,10 +120,36 @@ namespace StreamingZeiger.Controllers
                     Query = filter.Query
                 };
 
-                var services = movies.SelectMany(m => m.AvailabilityByService.Keys).Distinct().OrderBy(s => s).ToList();
-                ViewBag.Services = new SelectList(services, filter.Service);
-                var genres = _context.Genres.OrderBy(g => g.Name).ToList();
-                ViewBag.Genres = new SelectList(genres, "Name", "Name", filter.Genre);
+
+
+                _cache.Set(cacheKey, vm, TimeSpan.FromMinutes(5));
+            }
+            else
+            {
+                // Wenn Cache-Hit → Daten aus Cache verwenden
+                movies = vm.Movies.Select(m => m.Movie).ToList();
+            }
+
+            var services = _context.Movies
+                .AsNoTracking()
+                .Where(m => m.AvailabilityByService != null)
+                .AsEnumerable()
+                .SelectMany(m => m.AvailabilityByService.Keys)
+                .Distinct()
+                .OrderBy(s => s)
+                .ToList();
+
+            ViewBag.Services = new SelectList(services, filter.Service);
+
+            var genres = _context.Genres
+                .AsNoTracking()
+                .OrderBy(g => g.Name)
+                .AsEnumerable()                   
+                .GroupBy(g => g.Name)             
+                .Select(g => g.First())           
+                .ToList();
+
+            ViewBag.Genres = new SelectList(genres, "Name", "Name", filter.Genre);
 
             return View(vm);
         }
