@@ -9,7 +9,7 @@ using StreamingZeiger.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 DotNetEnv.Env.Load();
-builder.Services.AddSingleton<TmdbService>();
+builder.Services.AddScoped<ITmdbService, TmdbService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))
