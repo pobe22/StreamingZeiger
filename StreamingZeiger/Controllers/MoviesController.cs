@@ -193,6 +193,32 @@ namespace StreamingZeiger.Controllers
             return View(movie);
         }
 
+        // A6. Detaildaten einblenden
+        public async Task<IActionResult> DetailsPartial(int id)
+        {
+            var movie = await _context.Movies
+                .Include(m => m.MediaGenres).ThenInclude(mg => mg.Genre)
+                .Include(m => m.Ratings)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (movie == null) return NotFound();
+
+            bool inWatchlist = false;
+            if (User.Identity.IsAuthenticated)
+            {
+                var user = await _userManager.GetUserAsync(User);
+                if (user != null)
+                {
+                    inWatchlist = await _context.WatchlistItems
+                        .AnyAsync(w => w.UserId == user.Id && w.MediaItemId == id);
+                }
+            }
+            ViewBag.InWatchlist = inWatchlist;
+
+            return PartialView("_MovieDetailsPartial", movie);
+        }
+
+
         [HttpPost]
         public IActionResult Search(MovieFilterViewModel filter)
         {

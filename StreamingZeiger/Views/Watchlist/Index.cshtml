@@ -28,6 +28,9 @@
                     </span>
                 }
 
+                <button onclick="showDetails(@item.MediaItem.Id)" class="btn btn-outline-primary btn-sm">Details anzeigen</button>
+                <div id="details-@item.MediaItem.Id"></div>
+
                 <a asp-controller="Watchlist"
                    asp-action="Remove"
                    asp-route-mediaItemId="@item.MediaItem.Id"
@@ -60,6 +63,9 @@
                     </span>
                 }
 
+                <button onclick="showDetails(@item.MediaItem.Id)" class="btn btn-outline-primary btn-sm">Details anzeigen</button>
+                <div id="details-@item.MediaItem.Id"></div>
+
                 <a asp-controller="Watchlist"
                    asp-action="Remove"
                    asp-route-mediaItemId="@item.MediaItem.Id"
@@ -69,4 +75,8 @@
             </li>
         }
     </ul>
+}
+
+@section Scripts {
+    <script src="~/js/watchlist.js"></script>
 }

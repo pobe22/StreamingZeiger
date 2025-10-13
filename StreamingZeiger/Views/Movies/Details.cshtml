@@ -74,16 +74,15 @@
                 </span>
                 <span class="ms-2">(@Model.Rating.ToString("0.0") / 10)</span>
             </div>
-            <!-- Durchschnitt aller Bewertungen -->
-            <div class="my-3">
-                <strong>Community Bewertung:</strong>
-                @if (Model.Ratings != null && Model.Ratings.Any())
-                {
-                    var avg = Model.Ratings.Average(r => r.Score);
-                    <span class="text-warning">
+            <!-- Zusatz: User-Bewertung (Ajax) -->
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <div class="my-3">
+                    <strong>Deine Bewertung:</strong>
+                    <span id="userStars" class="text-warning">
                         @for (int i = 1; i <= 5; i++)
                         {
-                            if (i <= avg)
+                            if (i <= userRating.GetValueOrDefault())
                             {
                                 <i class="bi bi-star-fill"></i>
                             }
@@ -93,25 +92,33 @@
                             }
                         }
                     </span>
-                    <span class="ms-2">(@avg.ToString("0.0") / 5 · @Model.Ratings.Count Stimmen)</span>
-                }
-                else
-                {
-                    <span>Noch keine User-Bewertungen</span>
-                }
-            </div>
+                    <span id="userScore" class="ms-2">
+                        @(userRating.HasValue ? $"{userRating.Value} / 5" : "Noch nicht bewertet")
+                    </span>
+                </div>
 
-            <!-- Bewertung des aktuellen Users -->
-            @if (SignInManager.IsSignedIn(User))
-            {
+                <h5>Bewertung abgeben</h5>
+                <div class="d-flex align-items-center mb-3">
+                    <select id="ratingSelect" class="form-select w-auto me-2">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            var isSelected = userRating == i;
+                            <option value="@i" selected="@(isSelected ? "selected" : null)">@i</option>
+                        }
+                    </select>
+                    <button id="ratingBtn" class="btn btn-primary btn-sm" data-media-id="@Model.Id">Speichern</button>
+                </div>
+
+                <!-- Community Bewertung -->
                 <div class="my-3">
-                    <strong>Deine Bewertung:</strong>
-                    @if (userRating.HasValue)
-                    {
-                        <span class="text-warning">
-                            @for (int i = 1; i <= 5; i++)
+                    <strong>Community Bewertung:</strong>
+                    <span id="averageStars" class="text-warning">
+                        @if (Model.Ratings != null && Model.Ratings.Any())
+                        {
+                            var avg = Model.Ratings.Average(r => r.Score);
+                            for (int i = 1; i <= 5; i++)
                             {
-                                if (i <= userRating.Value)
+                                if (i <= avg)
                                 {
                                     <i class="bi bi-star-fill"></i>
                                 }
@@ -120,29 +127,16 @@
                                     <i class="bi bi-star"></i>
                                 }
                             }
-                        </span>
-                        <span class="ms-2">(@userRating.Value / 5)</span>
-                    }
-                    else
-                    {
-                        <span>Du hast diesen Film noch nicht bewertet.</span>
-                    }
-                </div>
-
-                <!-- Formular zur Abgabe/Aktualisierung -->
-                <h5>Bewertung abgeben</h5>
-                <form asp-controller="Rating" asp-action="Add" method="post" class="mb-3">
-                    <input type="hidden" name="mediaItemId" value="@Model.Id" />
-                    <input type="hidden" name="returnUrl" value="@currentUrl" />
-                    <select name="score" class="form-select w-auto d-inline">
-                        @for (int i = 1; i <= 5; i++)
-                        {
-                            var isSelected = userRating == i;
-                            <option value="@i" selected="@(isSelected ? "selected" : null)">@i</option>
                         }
-                    </select>
-                    <button type="submit" class="btn btn-primary btn-sm">Speichern</button>
-                </form>
+                        else
+                        {
+                            <span>Noch keine Bewertungen</span>
+                        }
+                    </span>
+                    <span id="voteCount" class="ms-2">
+                        @(Model.Ratings?.Count ?? 0) Stimmen
+                    </span>
+                </div>
 
                 @if (!inWatchlist)
                 {
@@ -253,3 +247,7 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/ratingajax.js"></script>
+}

@@ -1,0 +1,48 @@
+﻿@model StreamingZeiger.Models.Movie
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+
+<div class="modal-header bg-dark text-light border-0">
+    <h5 class="modal-title">@Model.Title (@Model.Year)</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+</div>
+
+<div class="modal-body bg-dark text-light">
+    <div class="row">
+        <!-- Poster -->
+        <div class="col-md-4 mb-3 mb-md-0">
+            <img src="@Url.Content(Model.PosterFile)" alt="@Model.Title Poster" class="img-fluid rounded shadow" />
+        </div>
+
+        <!-- Infos -->
+        <div class="col-md-8 d-flex flex-column gap-2">
+            <p class="text-light">@Model.Description</p>
+
+            <p>
+                <strong>Genres:</strong>
+                @foreach (var g in Model.MediaGenres.Select(mg => mg.Genre.Name))
+                {
+                    <span class="badge me-1" style="background-color:#00bcd4; color:#000">@g</span>
+                }
+            </p>
+
+            <p><strong>Dauer:</strong> @Model.DurationMinutes Min.</p>
+            <p><strong>Regie:</strong> @Model.Director</p>
+            <p><strong>Cast:</strong> @string.Join(", ", Model.Cast)</p>
+
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <a class="btn @(ViewBag.InWatchlist ? "btn-danger" : "btn-success") btn-sm watchlist-toggle mt-2"
+                   data-media-id="@Model.Id">
+                    <i class="bi @(ViewBag.InWatchlist ? "bi-bookmark-heart-fill" : "bi-bookmark-heart") me-1"></i>
+                    @(ViewBag.InWatchlist ? "Aus Watchlist entfernen" : "Zur Watchlist hinzufügen")
+                </a>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal-footer bg-dark border-0">
+    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Schließen</button>
+</div>

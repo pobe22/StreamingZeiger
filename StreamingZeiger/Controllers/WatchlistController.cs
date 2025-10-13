@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace StreamingZeiger.Controllers
 {
+    //A1. Zugriff nur für angemeldete Benutzer
     [Authorize]
     public class WatchlistController : Controller
     {
@@ -21,6 +22,7 @@ namespace StreamingZeiger.Controllers
             _userManager = userManager;
         }
 
+        //A7. Watchlist anzeigen
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -87,5 +89,48 @@ namespace StreamingZeiger.Controllers
 
             return Redirect(returnUrl ?? "/");
         }
+
+        //A2. AJAX
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> Toggle([FromBody] WatchlistToggleRequest request)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return Json(new { success = false, message = "Nicht eingeloggt" });
+
+            var mediaItemId = request.MediaItemId;
+
+            //A4. Backend-Logik
+            var existing = await _context.WatchlistItems
+                .FirstOrDefaultAsync(w => w.UserId == user.Id && w.MediaItemId == mediaItemId);
+
+            bool added;
+
+            if (existing == null)
+            {
+                _context.WatchlistItems.Add(new WatchlistItem
+                {
+                    UserId = user.Id,
+                    MediaItemId = mediaItemId
+                });
+                added = true;
+            }
+            else
+            {
+                _context.WatchlistItems.Remove(existing);
+                added = false;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, added });
+        }
+
+        public class WatchlistToggleRequest
+        {
+            public int MediaItemId { get; set; }
+        }
+
     }
 }

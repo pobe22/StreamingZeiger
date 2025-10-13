@@ -8,6 +8,7 @@
 }
 
 <div class="card h-100 shadow-sm">
+    @Html.AntiForgeryToken()
     <img src="@Url.Content(Model.Movie.PosterFile)" class="card-img-top" alt="@Model.Movie.Title" />
     <div class="card-body d-flex flex-column">
         <h5 class="card-title text-truncate">@Model.Movie.Title (@Model.Movie.Year)</h5>
@@ -40,23 +41,16 @@
         <p class="mb-3 text-truncate">@Model.Movie.Description</p>
 
         <!-- Watchlist Button -->
+        <!-- A5. Frontend Integration -->
         @if (SignInManager.IsSignedIn(User))
         {
             <div class="mb-3">
-                @if (!Model.InWatchlist)
-                {
-                    <a asp-controller="Watchlist" asp-action="Add" asp-route-mediaItemId="@Model.Movie.Id" asp-route-returnUrl="@currentUrl"
-                       class="btn btn-success btn-sm d-flex align-items-center gap-1">
-                        <i class="bi bi-bookmark-heart fs-5"></i> Hinzufügen
-                    </a>
-                }
-                else
-                {
-                    <a asp-controller="Watchlist" asp-action="Remove" asp-route-mediaItemId="@Model.Movie.Id" asp-route-returnUrl="@currentUrl"
-                       class="btn btn-danger btn-sm d-flex align-items-center gap-1">
-                        <i class="bi bi-bookmark-heart-fill fs-5"></i> Entfernen
-                    </a>
-                }
+                <button class="btn @(Model.InWatchlist ? "btn-danger" : "btn-success") btn-sm d-flex align-items-center gap-1 watchlist-toggle"
+                        data-media-id="@Model.Movie.Id"
+                        data-in-watchlist="@(Model.InWatchlist.ToString().ToLower())">
+                    <i class="bi @(Model.InWatchlist ? "bi-bookmark-heart-fill" : "bi-bookmark-heart") fs-5"></i>
+                    <span>@(Model.InWatchlist ? "Aus Watchlist entfernen" : "Zur Watchlist hinzufügen")</span>
+                </button>
             </div>
         }
 
@@ -73,6 +67,9 @@
             <a class="btn btn-outline-primary btn-sm" href="@Url.Action("Details", "Movies", new { id = Model.Movie.Id })">
                 Details
             </a>
+            <button class="btn btn-outline-primary btn-sm movie-details-btn" data-id="@Model.Movie.Id">
+                Preview
+            </button>
         </div>
     </div>
 </div>
