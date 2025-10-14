@@ -504,6 +504,96 @@ namespace StreamingZeiger.Controllers
             TempData["Message"] += "Multi-Import abgeschlossen.";
             return RedirectToAction(nameof(Index));
         }
+        [HttpPost]
+        public async Task<IActionResult> ImportMultipleAjax([FromForm] string tmdbIds, [FromForm] IFormFile csvFile, [FromForm] string type)
+        {
+            Response.ContentType = "text/plain";
+
+            var tmdbService = new TmdbService();
+            var ids = new List<int>();
+            var titles = new List<string>();
+
+            // CSV-Datei auslesen
+            if (csvFile != null)
+            {
+                using var reader = new StreamReader(csvFile.OpenReadStream());
+                bool firstLine = true;
+                while (!reader.EndOfStream)
+                {
+                    var line = await reader.ReadLineAsync();
+                    if (firstLine) { firstLine = false; continue; } // Header überspringen
+
+                    var columns = line.Split(',');
+                    if (columns.Length < 2) continue;
+
+                    var title = columns[1].Trim('"');
+                    titles.Add(title);
+                }
+            }
+
+            // IDs aus Textfeld hinzufügen
+            if (!string.IsNullOrWhiteSpace(tmdbIds))
+            {
+                ids.AddRange(tmdbIds.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                            .Select(s => int.TryParse(s.Trim(), out var id) ? id : -1)
+                            .Where(id => id > 0));
+            }
+
+            int total = titles.Count + ids.Count;
+            int processed = 0;
+
+            // Titel zu IDs auflösen
+            foreach (var title in titles)
+            {
+                try
+                {
+                    int? foundId = type == "movie"
+                        ? await tmdbService.SearchMovieIdByTitleAsync(title, "DE")
+                        : await tmdbService.SearchSeriesIdByTitleAsync(title, "DE");
+
+                    if (foundId.HasValue) ids.Add(foundId.Value);
+                    else await Response.WriteAsync($"Nicht gefunden: {title}\n");
+                }
+                catch (Exception ex)
+                {
+                    await Response.WriteAsync($"Fehler bei '{title}': {ex.Message}\n");
+                }
+
+                processed++;
+                await Response.WriteAsync($"PROGRESS:{processed * 100 / total}\n");
+                await Response.Body.FlushAsync();
+            }
+
+            // Importiere alle IDs
+            foreach (var id in ids)
+            {
+                try
+                {
+                    if (type == "movie")
+                    {
+                        var movie = await tmdbService.GetMovieByIdAsync(id, "DE");
+                        if (movie != null) _context.Movies.Add(movie);
+                    }
+                    else if (type == "series")
+                    {
+                        var series = await tmdbService.GetSeriesByIdAsync(id, "DE");
+                        if (series != null) _context.Series.Add(series);
+                    }
+                    await _context.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    await Response.WriteAsync($"Fehler bei ID {id}: {ex.Message}\n");
+                }
+
+                processed++;
+                await Response.WriteAsync($"PROGRESS:{processed * 100 / total}\n");
+                await Response.Body.FlushAsync();
+            }
+
+            return new EmptyResult();
+        }
+
         private string[] ParseCsvLine(string line)
         {
             var result = new List<string>();

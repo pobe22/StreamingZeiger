@@ -44,7 +44,7 @@
         <label>TMDb IDs (kommagetrennt, optional):</label>
         <input type="text" name="tmdbIds" placeholder="123,456,789" class="form-control mb-2" />
 
-        <label>CSV-Datei mit Filmtiteln (optional):</label>
+        <label>CSV-Datei aus Letterboxd mit Filmtiteln (optional):</label>
         <input type="file" name="csvFile" accept=".csv" class="form-control mb-2" />
 
         <label>Typ:</label>
@@ -56,5 +56,13 @@
         <button type="submit" class="btn btn-primary mt-2">Importieren</button>
     </form>
 
+    <div class="progress mt-2" style="height: 25px; display:none;">
+        <div class="progress-bar" role="progressbar" style="width: 0%;">0%</div>
+    </div>
+    <div id="importResult" class="mt-2"></div>
 
 </div>
+
+@section Scripts {
+    <script src="~/js/importprogress.js"></script>
+}
