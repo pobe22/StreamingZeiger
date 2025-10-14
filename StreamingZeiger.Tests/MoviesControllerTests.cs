@@ -68,15 +68,15 @@ namespace StreamingZeiger.Tests
         [Fact]
         public async Task Index_ReturnsViewResult_WithMovies()
         {
-            var filter = new MovieFilterViewModel { Page = 1, PageSize = 10 };
+            var filter = new MediaFilterViewModel { Page = 1, PageSize = 10 };
 
             var result = await _controller.Index(filter) as ViewResult;
 
             Assert.NotNull(result);
 
-            var model = Assert.IsType<MovieIndexViewModel>(result.Model);
-            Assert.NotNull(model.Movies);
-            Assert.Equal(3, model.Movies.Count());
+            var model = Assert.IsType<MediaIndexViewModel>(result.Model);
+            Assert.NotNull(model.Items);
+            Assert.Equal(3, model.Items.Count());
         }
 
         [Fact]

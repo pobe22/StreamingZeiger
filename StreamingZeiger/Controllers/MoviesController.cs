@@ -27,7 +27,7 @@ namespace StreamingZeiger.Controllers
         }
 
         //[OutputCache(Duration = 60, VaryByQueryKeys = new[] { "Query", "Genre", "Service", "MinRating", "YearFrom", "YearTo", "Page", "PageSize" })]
-        public async Task<IActionResult> Index([FromQuery] MovieFilterViewModel filter)
+        public async Task<IActionResult> Index([FromQuery] MediaFilterViewModel filter)
         {
             var user = await _userManager.GetUserAsync(User);
             var userId = user?.Id;
@@ -41,14 +41,14 @@ namespace StreamingZeiger.Controllers
                 !filter.YearTo.HasValue)
             {
                 // Aufgabe 2: Formulardaten persistent halten
-                var savedFilter = HttpContext.Session.GetObjectFromJson<MovieFilterViewModel>("MovieFilter");
+                var savedFilter = HttpContext.Session.GetObjectFromJson<MediaFilterViewModel>("MovieFilter");
                 if (savedFilter != null)
                 {
                     filter = savedFilter;
                 }
                 if (savedFilter == null)
                 {
-                    filter = new MovieFilterViewModel();
+                    filter = new MediaFilterViewModel();
                 }
             }
             else if (!string.IsNullOrEmpty(filter.Query) ||
@@ -65,7 +65,7 @@ namespace StreamingZeiger.Controllers
 
             List<Movie> movies = new List<Movie>();
 
-            if (!_cache.TryGetValue(cacheKey, out MovieIndexViewModel? vm))
+            if (!_cache.TryGetValue(cacheKey, out MediaIndexViewModel? vm))
             {
                 var moviesQuery = _context.Movies
                 .Include(m => m.MediaGenres).ThenInclude(mg => mg.Genre)
@@ -100,15 +100,15 @@ namespace StreamingZeiger.Controllers
                 var pagedMovies = movies.Skip((filter.Page - 1) * filter.PageSize).Take(filter.PageSize).ToList();
 
                 // Watchlist-Status pro Film
-                var moviesVm = pagedMovies.Select(m => new MovieIndexItemViewModel
+                var moviesVm = pagedMovies.Select(m => new MediaItemViewModel
                 {
                     Movie = m,
                     InWatchlist = userId != null && _context.WatchlistItems.Any(w => w.UserId == userId && w.MediaItemId == m.Id)
                 }).ToList();
 
-                vm = new MovieIndexViewModel
+                vm = new MediaIndexViewModel
                 {
-                    Movies = moviesVm,
+                    Items = moviesVm,
                     Page = filter.Page,
                     PageSize = filter.PageSize,
                     Total = movies.Count,
@@ -127,7 +127,7 @@ namespace StreamingZeiger.Controllers
             else
             {
                 // Wenn Cache-Hit → Daten aus Cache verwenden
-                movies = vm.Movies.Select(m => m.Movie).ToList();
+                movies = vm.Items.Select(m => m.Movie).ToList();
             }
 
             var services = _context.Movies
@@ -193,7 +193,7 @@ namespace StreamingZeiger.Controllers
             return View(movie);
         }
 
-        // A6. Detaildaten einblenden
+        // Aufgabe 6. Detaildaten einblenden
         public async Task<IActionResult> DetailsPartial(int id)
         {
             var movie = await _context.Movies
@@ -220,7 +220,7 @@ namespace StreamingZeiger.Controllers
 
 
         [HttpPost]
-        public IActionResult Search(MovieFilterViewModel filter)
+        public IActionResult Search(MediaFilterViewModel filter)
         {
             HttpContext.Session.SetObjectAsJson("MovieFilter", filter);
 

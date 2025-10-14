@@ -1,6 +1,7 @@
-﻿@model StreamingZeiger.ViewModels.MovieIndexViewModel
+﻿@model StreamingZeiger.ViewModels.MediaIndexViewModel
 
 @{
+    ViewData["Title"] = "Serien";
     var total = Model.Total;
     var page = Model.Page;
     var pageSize = Model.PageSize;
@@ -56,7 +57,7 @@
 
     <!-- Film-Grid -->
     <div id="movieList" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-        @foreach (var movie in Model.Movies)
+        @foreach (var movie in Model.Items)
         {
             <div class="col movie" data-title="@movie.Title">
                 @await Html.PartialAsync("_MovieCard", movie)

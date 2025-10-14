@@ -4,19 +4,19 @@
 @inject SignInManager<ApplicationUser> SignInManager
 
 @{
-    var currentUrl = Context.Request.Path + Context.Request.QueryString;
+	var currentUrl = Context.Request.Path + Context.Request.QueryString;
 }
 
 <div class="card h-100 shadow-sm">
     @Html.AntiForgeryToken()
-    <img src="@Url.Content(Model.Movie.PosterFile)" class="card-img-top" alt="@Model.Movie.Title" />
+    <img src="@Url.Content(Model.Series.PosterFile)" class="card-img-top" alt="@Model.Series.Title" />
     <div class="card-body d-flex flex-column">
-        <h5 class="card-title text-truncate">@Model.Movie.Title (@Model.Movie.Year)</h5>
+        <h5 class="card-title text-truncate">@Model.Series.Title (@Model.Series.StartYear - @Model.Series.EndYear)</h5>
 
         <!-- Genres -->
-        @if (Model.Movie.Genres.Any())
+        @if (Model.Series.Genres.Any())
         {
-            <p class="mb-1 text-truncate"><strong>Genres:</strong> @string.Join(", ", Model.Movie.Genres.Select(g => g.Name))</p>
+            <p class="mb-1 text-truncate"><strong>Genres:</strong> @string.Join(", ", Model.Series.Genres.Select(g => g.Name))</p>
         }
 
         <!-- Bewertung -->
@@ -24,7 +24,7 @@
             <span class="text-warning">
                 @for (int i = 1; i <= 5; i++)
                 {
-                    if (i <= Math.Round(Model.Movie.Rating / 2))
+                    if (i <= Math.Round(Model.Series.Rating / 2))
                     {
                         <i class="bi bi-star-fill"></i>
                     }
@@ -34,11 +34,11 @@
                     }
                 }
             </span>
-            <span class="ms-2">(@Model.Movie.Rating.ToString("0.0")/10)</span>
+            <span class="ms-2">(@Model.Series.Rating.ToString("0.0")/10)</span>
         </div>
 
         <!-- Beschreibung -->
-        <p class="mb-3 text-truncate">@Model.Movie.Description</p>
+        <p class="mb-3 text-truncate">@Model.Series.Description</p>
 
         <!-- Watchlist Button -->
         <!-- Aufgabe 5. Frontend Integration -->
@@ -46,17 +46,17 @@
         {
             <div class="mb-3">
                 <button class="btn @(Model.InWatchlist ? "btn-danger" : "btn-success") btn-sm d-flex align-items-center gap-1 watchlist-toggle"
-                        data-media-id="@Model.Movie.Id"
+                        data-media-id="@Model.Series.Id"
                         data-in-watchlist="@(Model.InWatchlist.ToString().ToLower())">
                     <i class="bi @(Model.InWatchlist ? "bi-bookmark-heart-fill" : "bi-bookmark-heart") fs-5"></i>
                     <span>@(Model.InWatchlist ? "Aus Watchlist entfernen" : "Zur Watchlist hinzufügen")</span>
                 </button>
             </div>
         }
-
+        
         <!-- Streaming-Dienste -->
         <div class="mb-2">
-            @foreach (var s in Model.Movie.AvailabilityByService.Where(x => x.Value))
+            @foreach (var s in Model.Series.AvailabilityByService.Where(x => x.Value))
             {
                 <span class="badge bg-primary me-1 mb-1">@s.Key</span>
             }
@@ -64,10 +64,10 @@
 
         <!-- Details Button -->
         <div class="d-flex flex-wrap gap-2 mt-auto">
-            <a class="btn btn-outline-primary btn-sm" href="@Url.Action("Details", "Movies", new { id = Model.Movie.Id })">
+            <a class="btn btn-outline-primary btn-sm" href="@Url.Action("Details", "Series", new { id = Model.Series.Id })">
                 Details
             </a>
-            <button class="btn btn-outline-primary btn-sm movie-details-btn" data-id="@Model.Movie.Id">
+            <button class="btn btn-outline-primary btn-sm movie-details-btn" data-id="@Model.Series.Id">
                 Preview
             </button>
         </div>

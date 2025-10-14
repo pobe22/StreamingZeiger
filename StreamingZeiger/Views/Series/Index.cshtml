@@ -1,4 +1,4 @@
-﻿@model IEnumerable<StreamingZeiger.Models.Series>
+﻿@model StreamingZeiger.ViewModels.MediaIndexViewModel
 
 @{
 	ViewData["Title"] = "Serien";
@@ -67,22 +67,10 @@
 
 	<!-- Serien-Grid -->
 	<div id="seriesList" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-		@foreach (var s in Model)
+		@foreach (var series in Model.Items)
 		{
-			<div class="col series" data-title="@s.Title">
-				<div class="card h-100">
-					<img src="@s.PosterFile" class="card-img-top" alt="@s.Title" />
-					<div class="card-body d-flex flex-column">
-						<h5 class="card-title">@s.Title</h5>
-						<p class="card-text">
-							@foreach (var mg in s.MediaGenres)
-							{
-								<span class="badge bg-secondary me-1">@mg.Genre.Name</span>
-							}
-						</p>
-						<a href="@Url.Action("Details", "Series", new { id = s.Id })" class="btn btn-primary mt-auto">Details</a>
-					</div>
-				</div>
+			<div class="col series" data-title="@series.Title">
+				@await Html.PartialAsync("_SeriesCard", series)
 			</div>
 		}
 	</div>

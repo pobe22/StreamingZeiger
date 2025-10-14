@@ -1,12 +1,15 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Moq;
 using StreamingZeiger.Controllers;
 using StreamingZeiger.Data;
 using StreamingZeiger.Models;
+using StreamingZeiger.ViewModels;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
+using static StreamingZeiger.Tests.MoviesControllerTests;
 
 namespace StreamingZeiger.Tests
 {
@@ -15,6 +18,7 @@ namespace StreamingZeiger.Tests
         private readonly AppDbContext _context;
         private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
         private readonly SeriesController _controller;
+        private readonly IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
 
         public SeriesControllerTests()
         {
@@ -24,7 +28,6 @@ namespace StreamingZeiger.Tests
                 .Options;
             _context = new AppDbContext(options);
 
-            // Beispiel-Daten
             var genre = new Genre { Id = 1, Name = "Drama" };
             var series1 = new Series
             {
@@ -64,19 +67,36 @@ namespace StreamingZeiger.Tests
             _userManagerMock = new Mock<UserManager<ApplicationUser>>(
                 userStoreMock.Object, null, null, null, null, null, null, null, null
             );
+            // MemoryCache
+            var memoryCache = new MemoryCache(new MemoryCacheOptions());
 
             // Controller
-            _controller = new SeriesController(_context, _userManagerMock.Object);
+            _controller = new SeriesController(_context, _userManagerMock.Object, _cache);
+
+            // Fake HttpContext mit Session
+            var httpContext = new DefaultHttpContext();
+            var session = new TestSession(); // siehe Klasse unten
+            httpContext.Session = session;
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = httpContext
+            };
         }
 
         [Fact]
         public async Task Index_ReturnsViewResult_WithSeries()
         {
-            var result = await _controller.Index() as ViewResult;
+            var filter = new MediaFilterViewModel { Page = 1, PageSize = 10 };
+
+            var result = await _controller.Index(filter) as ViewResult;
 
             Assert.NotNull(result);
-            var model = Assert.IsAssignableFrom<IEnumerable<Series>>(result.Model);
-            Assert.Equal(2, model.Count());
+
+            var model = Assert.IsAssignableFrom<MediaIndexViewModel>(result.Model);
+            Assert.NotNull(model.Items);
+            Assert.Equal(2, model.Items.Count());
+            Assert.All(model.Items, i => Assert.NotNull(i.Series));
         }
 
         [Fact]

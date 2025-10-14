@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace StreamingZeiger.Controllers
 {
-    //A1. Zugriff nur für angemeldete Benutzer
+    //Aufgabe 1. Zugriff nur für angemeldete Benutzer
     [Authorize]
     public class WatchlistController : Controller
     {
@@ -22,7 +22,7 @@ namespace StreamingZeiger.Controllers
             _userManager = userManager;
         }
 
-        //A7. Watchlist anzeigen
+        //Aufgabe 7. Watchlist anzeigen
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -90,7 +90,7 @@ namespace StreamingZeiger.Controllers
             return Redirect(returnUrl ?? "/");
         }
 
-        //A2. AJAX
+        //Aufgabe 2. AJAX
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> Toggle([FromBody] WatchlistToggleRequest request)
@@ -101,7 +101,7 @@ namespace StreamingZeiger.Controllers
 
             var mediaItemId = request.MediaItemId;
 
-            //A4. Backend-Logik
+            //Aufgabe 4. Backend-Logik
             var existing = await _context.WatchlistItems
                 .FirstOrDefaultAsync(w => w.UserId == user.Id && w.MediaItemId == mediaItemId);
 
