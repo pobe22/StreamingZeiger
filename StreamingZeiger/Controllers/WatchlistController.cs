@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using StreamingZeiger.Data;
 using StreamingZeiger.Models;
 using StreamingZeiger.ViewModels;
@@ -15,11 +16,13 @@ namespace StreamingZeiger.Controllers
     {
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IMemoryCache _cache;
 
-        public WatchlistController(AppDbContext context, UserManager<ApplicationUser> userManager)
+        public WatchlistController(AppDbContext context, UserManager<ApplicationUser> userManager, IMemoryCache cache)
         {
             _context = context;
             _userManager = userManager;
+            _cache = cache;
         }
 
         //Aufgabe 7. Watchlist anzeigen

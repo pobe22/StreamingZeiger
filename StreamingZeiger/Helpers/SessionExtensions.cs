@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.Text.Json;
 
-//Aufgabe 3: Wiederverwendbarer Session-Helper
 public static class SessionHelper
 {
     public static void SetObjectAsJson(this ISession session, string key, object value)

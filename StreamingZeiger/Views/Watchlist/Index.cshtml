@@ -28,7 +28,6 @@
                     </span>
                 }
 
-                <button onclick="showDetails(@item.MediaItem.Id)" class="btn btn-outline-primary btn-sm">Details anzeigen</button>
                 <div id="details-@item.MediaItem.Id"></div>
 
                 <a asp-controller="Watchlist"
@@ -75,8 +74,4 @@
             </li>
         }
     </ul>
-}
-
-@section Scripts {
-    <script src="~/js/watchlist.js"></script>
 }

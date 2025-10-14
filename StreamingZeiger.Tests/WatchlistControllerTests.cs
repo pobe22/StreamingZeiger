@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Moq;
 using StreamingZeiger.Controllers;
 using StreamingZeiger.Data;
@@ -46,7 +47,8 @@ namespace StreamingZeiger.Tests
             var user = new ApplicationUser { Id = "user1" };
             userManager.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
 
-            var controller = new WatchlistController(context, userManager.Object)
+            var cache = new MemoryCache(new MemoryCacheOptions());
+            var controller = new WatchlistController(context, userManager.Object, cache)
             {
                 ControllerContext = new ControllerContext
                 {
@@ -74,8 +76,9 @@ namespace StreamingZeiger.Tests
             var userManager = GetUserManagerMock();
             var user = new ApplicationUser { Id = "user1" };
             userManager.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            var cache = new MemoryCache(new MemoryCacheOptions());
 
-            var controller = new WatchlistController(context, userManager.Object)
+            var controller = new WatchlistController(context, userManager.Object, cache)
             {
                 ControllerContext = new ControllerContext
                 {
@@ -104,7 +107,9 @@ namespace StreamingZeiger.Tests
             var user = new ApplicationUser { Id = "user1" };
             userManager.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
 
-            var controller = new WatchlistController(context, userManager.Object)
+            var cache = new MemoryCache(new MemoryCacheOptions());
+
+            var controller = new WatchlistController(context, userManager.Object, cache)
             {
                 ControllerContext = new ControllerContext
                 {
@@ -133,8 +138,9 @@ namespace StreamingZeiger.Tests
             var userManager = GetUserManagerMock();
             var user = new ApplicationUser { Id = "user1" };
             userManager.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            var cache = new MemoryCache(new MemoryCacheOptions());
 
-            var controller = new WatchlistController(context, userManager.Object)
+            var controller = new WatchlistController(context, userManager.Object, cache)
             {
                 ControllerContext = new ControllerContext
                 {

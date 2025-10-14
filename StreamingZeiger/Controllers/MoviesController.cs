@@ -61,11 +61,16 @@ namespace StreamingZeiger.Controllers
                 HttpContext.Session.SetObjectAsJson("MovieFilter", filter);
             }
 
-            var cacheKey = $"movies_{filter.Query}_{filter.Genre}_{filter.Service}_{filter.MinRating}_{filter.YearFrom}_{filter.YearTo}_{filter.Page}_{filter.PageSize}";
+            var cacheKey = $"movies_{userId}_{filter.Query}_{filter.Genre}_{filter.Service}_{filter.MinRating}_{filter.YearFrom}_{filter.YearTo}_{filter.Page}_{filter.PageSize}";
 
             List<Movie> movies = new List<Movie>();
 
-            if (!_cache.TryGetValue(cacheKey, out MediaIndexViewModel? vm))
+            MediaIndexViewModel? vm = null;
+            if (userId == null && _cache.TryGetValue(cacheKey, out vm))
+            {
+                movies = vm.Items.Select(m => m.Movie).ToList();
+            }
+            else
             {
                 var moviesQuery = _context.Movies
                 .Include(m => m.MediaGenres).ThenInclude(mg => mg.Genre)
@@ -123,11 +128,6 @@ namespace StreamingZeiger.Controllers
 
 
                 _cache.Set(cacheKey, vm, TimeSpan.FromMinutes(5));
-            }
-            else
-            {
-                // Wenn Cache-Hit → Daten aus Cache verwenden
-                movies = vm.Items.Select(m => m.Movie).ToList();
             }
 
             var services = _context.Movies
