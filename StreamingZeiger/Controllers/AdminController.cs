@@ -398,20 +398,59 @@ namespace StreamingZeiger.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ImportMultiple(string tmdbIds, string type, string region = "DE")
+        public async Task<IActionResult> ImportMultiple(string tmdbIds, string type, IFormFile? csvFile, string region = "DE")
         {
-            if (string.IsNullOrWhiteSpace(tmdbIds))
+            var tmdbService = new TmdbService();
+            var ids = new List<int>();
+
+            // IDs aus Textfeld
+            if (!string.IsNullOrWhiteSpace(tmdbIds))
             {
-                TempData["Message"] = "Keine IDs angegeben.";
-                return RedirectToAction(nameof(Index));
+                ids.AddRange(tmdbIds
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => int.TryParse(s.Trim(), out var id) ? id : -1)
+                    .Where(id => id > 0));
             }
 
-            // IDs in Liste umwandeln
-            var ids = tmdbIds
-                 .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                 .Select(s => int.TryParse(s.Trim(), out var id) ? id : -1)
-                 .Where(id => id > 0)
-                 .ToList();
+            // IDs über CSV-Datei suchen
+            if (csvFile != null && csvFile.Length > 0)
+            {
+                using var reader = new StreamReader(csvFile.OpenReadStream());
+                bool firstLine = true;
+                while (!reader.EndOfStream)
+                {
+                    var line = await reader.ReadLineAsync();
+                    if (firstLine)
+                    {
+                        firstLine = false; // Header überspringen
+                        continue;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+
+                    // CSV spaltenweise trennen (hier Komma, Anführungszeichen beachten)
+                    var columns = ParseCsvLine(line);
+                    if (columns.Length < 2) continue; // Mindestens Name-Spalte
+
+                    var title = columns[1].Trim('"'); // 2. Spalte = Name
+                    if (string.IsNullOrEmpty(title)) continue;
+
+                    int? foundId = null;
+                    if (string.Equals(type, "movie", StringComparison.OrdinalIgnoreCase))
+                    {
+                        foundId = await tmdbService.SearchMovieIdByTitleAsync(title, region);
+                    }
+                    else if (string.Equals(type, "series", StringComparison.OrdinalIgnoreCase))
+                    {
+                        foundId = await tmdbService.SearchSeriesIdByTitleAsync(title, region);
+                    }
+
+                    if (foundId.HasValue)
+                        ids.Add(foundId.Value);
+                    else
+                        TempData["Message"] += $"Titel '{title}' nicht gefunden.\n";
+                }
+            }
 
             if (!ids.Any())
             {
@@ -419,10 +458,9 @@ namespace StreamingZeiger.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-
-            var tmdbService = new TmdbService();
-
-            foreach (var tmdbId in ids) 
+            //  Wie bisher: Schleife über IDs, Import
+            foreach (var tmdbId in ids.Distinct()) // Duplikate vermeiden
+            {
                 try
                 {
                     if (string.Equals(type, "movie", StringComparison.OrdinalIgnoreCase))
@@ -434,12 +472,11 @@ namespace StreamingZeiger.Controllers
                             continue;
                         }
                         await HandleMediaItemBaseAsync(movie, string.Join(", ", movie.Cast),
-                                movie.AvailabilityByService.Keys.ToList(),
-                                string.Join(", ", movie.MediaGenres.Select(mg => mg.Genre.Name)), null);
-
+                            movie.AvailabilityByService.Keys.ToList(),
+                            string.Join(", ", movie.MediaGenres.Select(mg => mg.Genre.Name)), null);
                         _context.Movies.Add(movie);
                     }
-                    else if (string.Equals(type, "series", StringComparison.OrdinalIgnoreCase))
+                    else
                     {
                         var series = await tmdbService.GetSeriesByIdAsync(tmdbId, region);
                         if (series != null)
@@ -449,15 +486,9 @@ namespace StreamingZeiger.Controllers
                                 string.Join(", ", series.MediaGenres.Select(mg => mg.Genre.Name)), null);
 
                             if (series.Seasons != null)
-                            {
                                 foreach (var season in series.Seasons)
-                                {
-                                    season.Series = series;
-                                    if (season.Episodes != null)
-                                        foreach (var ep in season.Episodes)
-                                            ep.Season = season;
-                                }
-                            }
+                                    foreach (var ep in season.Episodes ?? new List<Episode>())
+                                        ep.Season = season;
 
                             _context.Series.Add(series);
                         }
@@ -467,11 +498,38 @@ namespace StreamingZeiger.Controllers
                 {
                     TempData["Message"] += $"Fehler bei ID {tmdbId}: {ex.Message}\n";
                 }
+            }
 
             await _context.SaveChangesAsync();
             TempData["Message"] += "Multi-Import abgeschlossen.";
             return RedirectToAction(nameof(Index));
         }
+        private string[] ParseCsvLine(string line)
+        {
+            var result = new List<string>();
+            bool inQuotes = false;
+            var value = "";
+
+            foreach (var c in line)
+            {
+                if (c == '"')
+                {
+                    inQuotes = !inQuotes;
+                }
+                else if (c == ',' && !inQuotes)
+                {
+                    result.Add(value);
+                    value = "";
+                }
+                else
+                {
+                    value += c;
+                }
+            }
+            result.Add(value);
+            return result.ToArray();
+        }
+
 
     }
 }

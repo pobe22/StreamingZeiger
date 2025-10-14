@@ -39,17 +39,22 @@
         }
     </ul>
 
-    <form asp-action="ImportMultiple" method="post">
-        <label>TMDb IDs (kommagetrennt):</label>
-        <input type="text" name="tmdbIds" placeholder="123,456,789" />
+    <h2>Multi-Imports</h2>
+    <form asp-action="ImportMultiple" method="post" enctype="multipart/form-data">
+        <label>TMDb IDs (kommagetrennt, optional):</label>
+        <input type="text" name="tmdbIds" placeholder="123,456,789" class="form-control mb-2" />
+
+        <label>CSV-Datei mit Filmtiteln (optional):</label>
+        <input type="file" name="csvFile" accept=".csv" class="form-control mb-2" />
 
         <label>Typ:</label>
-        <select name="type">
+        <select name="type" class="form-control mb-2">
             <option value="movie">Film</option>
             <option value="series">Serie</option>
         </select>
 
-        <button type="submit">Importieren</button>
+        <button type="submit" class="btn btn-primary mt-2">Importieren</button>
     </form>
+
 
 </div>

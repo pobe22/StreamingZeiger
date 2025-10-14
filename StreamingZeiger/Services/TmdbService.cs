@@ -199,5 +199,17 @@ namespace StreamingZeiger.Services
                 }
             }
         }
+        public async Task<int?> SearchMovieIdByTitleAsync(string title, string region)
+        {
+            var results = await _client.SearchMovieAsync(title, 1, includeAdult: false, region: region);
+            return results?.Results?.FirstOrDefault()?.Id;
+        }
+
+        public async Task<int?> SearchSeriesIdByTitleAsync(string title, string region)
+        {
+            var results = await _client.SearchTvShowAsync(title, 1, includeAdult: false);
+            return results?.Results?.FirstOrDefault()?.Id;
+        }
+
     }
 }
