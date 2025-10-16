@@ -72,5 +72,41 @@ namespace StreamingZeiger.Data
                 .HasForeignKey(w => w.MediaItemId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
+        public async Task UpdateAverageRatingAsync(int? movieId = null)
+        {
+            if (movieId == null)
+            {
+                // Alle Filme aktualisieren
+                var averages = await Ratings
+                    .GroupBy(r => r.MediaItemId)
+                    .Select(g => new { MediaItemId = g.Key, Avg = g.Average(r => r.Score) })
+                    .ToListAsync();
+
+                foreach (var avg in averages)
+                {
+                    var movie = await Movies.FirstOrDefaultAsync(m => m.Id == avg.MediaItemId);
+                    if (movie != null)
+                    {
+                        movie.Rating = avg.Avg;
+                    }
+                }
+            }
+            else
+            {
+                // Nur ein Film
+                var avg = await Ratings
+                    .Where(r => r.MediaItemId == movieId)
+                    .AverageAsync(r => (double?)r.Score) ?? 0;
+
+                var movie = await Movies.FirstOrDefaultAsync(m => m.Id == movieId);
+                if (movie != null)
+                {
+                    movie.Rating = avg;
+                }
+            }
+
+            await SaveChangesAsync();
+        }
+
     }
 }

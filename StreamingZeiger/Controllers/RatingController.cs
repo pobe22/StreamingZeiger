@@ -43,6 +43,8 @@ public class RatingController : Controller
 
         await _context.SaveChangesAsync();
 
+        await _context.UpdateAverageRatingAsync(mediaItemId);
+
         if (!string.IsNullOrEmpty(returnUrl))
             return Redirect(returnUrl);
 
@@ -66,9 +68,11 @@ public class RatingController : Controller
         {
             rating.Score = dto.Score;
             _context.Ratings.Update(rating);
-        }
+        }    
 
         await _context.SaveChangesAsync();
+
+        await _context.UpdateAverageRatingAsync(dto.MediaItemId);
 
         var ratings = await _context.Ratings.Where(r => r.MediaItemId == dto.MediaItemId).ToListAsync();
         var avg = ratings.Average(r => r.Score);
