@@ -39,12 +39,9 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t streamingzeiger:latest .
-        
-      - name: Push Docker image to Render
-        uses: renderinc/deploy@v1
-        with:
-          apiKey: ${{ secrets.RENDER_API_KEY }}
-          serviceId: ${{ secrets.RENDER_SERVICE_ID }}
-          image: streamingzeiger:latest
 
-
+      # Deployment zu Render auskommentiert, später wieder aktivierbar
+      # - name: Trigger Render Deployment
+      #   run: |
+      #     curl -X POST https://api.render.com/deploy/srv-xxxxxxxxxx \
+      #       -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
