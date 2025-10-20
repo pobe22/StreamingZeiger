@@ -12,6 +12,7 @@ using StreamingZeiger.Data;
 using StreamingZeiger.Models;
 using StreamingZeiger.Services;
 using StreamingZeiger.ViewModels;
+using Xunit;
 
 namespace StreamingZeiger.Tests
 {
@@ -19,6 +20,7 @@ namespace StreamingZeiger.Tests
     {
         private readonly AppDbContext _context;
         private readonly Mock<IWebHostEnvironment> _env;
+
 
         public AdminControllerTests()
         {
@@ -94,15 +96,34 @@ namespace StreamingZeiger.Tests
 
         private class FakeTmdbService : ITmdbService
         {
-            public Task<Movie> GetMovieByIdAsync(int id, string region)
-                => Task.FromResult(new Movie { Title = "MockMovie" });
+            public Task<Movie?> GetMovieByIdAsync(int id, string region)
+            {
+                // IDs > 500000 oder explizit bekannte "ungültige" IDs simulieren Fehler
+                if (id > 500000 || id == 12345678 || id == 87654321 || id == 9999)
+                    return Task.FromResult<Movie?>(null);
 
-            public Task<Series> GetSeriesByIdAsync(int id, string region)
-                => Task.FromResult(new Series
+                return Task.FromResult<Movie?>(new Movie
                 {
-                    Title = "MockSeries",
+                    Title = $"MockMovie {id}",
+                    TmdbId = id,
+                    MediaGenres = new List<MediaGenre>(),
+                    Cast = new List<string> { "Actor A" }
+                });
+            }
+
+            public Task<Series?> GetSeriesByIdAsync(int id, string region)
+            {
+                if (id > 500000 || id == 12345678 || id == 87654321 || id == 9999)
+                    return Task.FromResult<Series?>(null);
+
+                return Task.FromResult<Series?>(new Series
+                {
+                    Title = $"MockSeries {id}",
+                    TmdbId = id,
+                    MediaGenres = new List<MediaGenre>(),
+                    Cast = new List<string> { "Actor A" },
                     Seasons = new List<Season>
-                    {
+            {
                 new Season
                 {
                     SeasonNumber = 1,
@@ -111,16 +132,25 @@ namespace StreamingZeiger.Tests
                         new Episode { EpisodeNumber = 1, Title = "Pilot", DurationMinutes = 45 }
                     }
                 }
-                    }
+            }
                 });
+            }
+
+            public Task<int?> SearchMovieIdByTitleAsync(string title, string region)
+                => Task.FromResult<int?>(1);
+
+            public Task<int?> SearchSeriesIdByTitleAsync(string title, string region)
+                => Task.FromResult<int?>(1);
         }
+
         private AdminController GetController()
         {
             var mockUserManager = GetMockUserManager();
 
             var tmdb = new FakeTmdbService();
+            var loggingService = new LoggingService(_context);
 
-            var controller = new AdminController(_context, _env.Object, null!, tmdb);
+            var controller = new AdminController(_context, _env.Object, null!, tmdb, loggingService);
             controller.TempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
 
             return controller;
@@ -294,18 +324,87 @@ namespace StreamingZeiger.Tests
 
         // ---------------- Import ----------------
         [Fact]
-        public async Task ImportFromTmdb_ReturnsJsonResult()
+        public async Task ImportMultiple_Post_ValidIds_ImportsMoviesAndSeries()
         {
             var controller = GetController();
 
-            var resultMovie = await controller.ImportFromTmdb(550, "movie") as JsonResult;
-            Assert.NotNull(resultMovie);
-            Assert.NotNull(resultMovie.Value);
+            // IDs vorbereiten
+            var tmdbIds = "101,202";
+            var typeMovie = "movie";
+            var typeSeries = "series";
 
-            var resultSeries = await controller.ImportFromTmdb(12345, "series") as JsonResult;
-            Assert.NotNull(resultSeries);
-            Assert.NotNull(resultSeries.Value);
+            // Movie Import
+            var resultMovie = await controller.ImportMultiple(tmdbIds, typeMovie, null) as RedirectToActionResult;
+            Assert.Equal("Index", resultMovie.ActionName);
+            Assert.Contains(_context.Movies, m => m.TmdbId == 101 || m.TmdbId == 202);
+
+            // Series Import
+            var resultSeries = await controller.ImportMultiple(tmdbIds, typeSeries, null) as RedirectToActionResult;
+            Assert.Equal("Index", resultSeries.ActionName);
+            Assert.Contains(_context.Series, s => s.TmdbId == 101 || s.TmdbId == 202);
+
+            Assert.NotNull(controller.TempData["Message"]);
         }
+
+        [Fact]
+        public async Task ImportMultipleAjax_Post_ValidIds_ImportsMoviesAndWritesProgress()
+        {
+            var controller = GetController();
+
+            var tmdbIds = "101,202";
+            var typeMovie = "movie";
+
+            var httpContext = new DefaultHttpContext();
+            var stream = new MemoryStream();
+            httpContext.Response.Body = stream;
+            controller.ControllerContext.HttpContext = httpContext;
+
+            await controller.ImportMultipleAjax(tmdbIds, null, typeMovie);
+
+            stream.Position = 0;
+            using var reader = new StreamReader(stream);
+            var output = await reader.ReadToEndAsync();
+
+            Assert.Contains("PROGRESS:1/2", output);
+            Assert.Contains("PROGRESS:2/2", output);
+
+            Assert.Contains(_context.Movies, m => m.TmdbId == 101);
+            Assert.Contains(_context.Movies, m => m.TmdbId == 202);
+        }
+
+        [Fact]
+        public async Task ImportMultiple_Post_InvalidIds_SetsTempDataMessage()
+        {
+            var controller = GetController();
+
+            var tmdbIds = "12345678,87654321"; 
+            var result = await controller.ImportMultiple(tmdbIds, "movie", null) as RedirectToActionResult;
+
+            Assert.Equal("Index", result.ActionName);
+            Assert.Equal("Keine gültigen TMDB-IDs gefunden.", controller.TempData["Message"]);
+        }
+
+        [Fact]
+        public async Task ImportMultipleAjax_Post_InvalidIds_WritesNotFound()
+        {
+            var controller = GetController();
+
+            var tmdbIds = "994356499"; // Nicht existierende ID
+            var httpContext = new DefaultHttpContext();
+            var stream = new MemoryStream();
+            httpContext.Response.Body = stream;
+            controller.ControllerContext.HttpContext = httpContext;
+
+            await controller.ImportMultipleAjax(tmdbIds, null, "movie");
+
+            stream.Position = 0;
+            using var reader = new StreamReader(stream);
+            var output = await reader.ReadToEndAsync();
+
+            Assert.DoesNotContain("/", output); 
+            Assert.Equal("", output.Trim());
+        }
+
 
         // ---------------- ModelState ----------------
         [Fact]

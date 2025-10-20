@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using StreamingZeiger.Data;
 using StreamingZeiger.Models;
 using StreamingZeiger.Services;
 using StreamingZeiger.ViewModels;
+using TMDbLib.Objects.Movies;
 
 namespace StreamingZeiger.Controllers
 {
@@ -15,14 +17,16 @@ namespace StreamingZeiger.Controllers
         private readonly IWebHostEnvironment _env;
         private readonly DynamicDbContextFactory _contextFactory;
         private readonly ITmdbService _tmdbService;
+        private readonly LoggingService _loggingService;
 
         public AdminController(AppDbContext context, IWebHostEnvironment env,
-                          DynamicDbContextFactory contextFactory, ITmdbService tmdb)
+                          DynamicDbContextFactory contextFactory, ITmdbService tmdb, LoggingService loggingService)
         {
             _context = context;
             _env = env;
             _contextFactory = contextFactory;
             _tmdbService = tmdb;
+            _loggingService = loggingService;
         }
 
         // Übersicht
@@ -113,7 +117,7 @@ namespace StreamingZeiger.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateMovie(Movie movie, string castCsv, List<string> services, string genreCsv, IFormFile? posterUpload)
+        public async Task<IActionResult> CreateMovie(Models.Movie movie, string castCsv, List<string> services, string genreCsv, IFormFile? posterUpload)
         {
             if (!ModelState.IsValid) return View("CreateMovie", movie);
 
@@ -142,7 +146,7 @@ namespace StreamingZeiger.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditMovie(int id, Movie movie, string castCsv, List<string> services, string genreCsv, IFormFile? posterUpload)
+        public async Task<IActionResult> EditMovie(int id, Models.Movie movie, string castCsv, List<string> services, string genreCsv, IFormFile? posterUpload)
         {
             if (id != movie.Id) return NotFound();
             if (!ModelState.IsValid) return View(movie);
@@ -320,201 +324,74 @@ namespace StreamingZeiger.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [HttpGet]
-        public async Task<IActionResult> ImportFromTmdb(int tmdbId, string type, string region = "DE")
-        {
-            try
-            {
-
-                if (string.Equals(type, "movie", StringComparison.OrdinalIgnoreCase))
-                {
-                    var movie = await _tmdbService.GetMovieByIdAsync(tmdbId, region);
-                    if (movie == null)
-                        return NotFound(new { message = "Film nicht gefunden" });
-
-                    return Json(new
-                    {
-                        title = movie.Title,
-                        originalTitle = movie.OriginalTitle,
-                        year = movie.Year,
-                        durationMinutes = movie.DurationMinutes,
-                        description = movie.Description,
-                        director = movie.Director,
-                        posterFile = movie.PosterFile,
-                        trailerUrl = movie.TrailerUrl,
-                        cast = movie.Cast,
-                        genres = movie.MediaGenres?.Select(mg => mg.Genre.Name).ToList(),
-                        services = movie.AvailabilityByService
-                                   .Where(kv => kv.Value)
-                                   .Select(kv => kv.Key)
-                                   .ToList()
-                    });
-                }
-                else if (string.Equals(type, "series", StringComparison.OrdinalIgnoreCase))
-                {
-                    var series = await _tmdbService.GetSeriesByIdAsync(tmdbId, region);
-                    if (series == null)
-                        return NotFound(new { message = "Serie nicht gefunden" });
-
-                    return Json(new
-                    {
-                        title = series.Title,
-                        originalTitle = series.OriginalTitle,
-                        startYear = series.StartYear,
-                        endYear = series.EndYear,
-                        seasons = series.Seasons?.Select(s => new
-                        {
-                            seasonNumber = s.SeasonNumber,
-                            episodes = s.Episodes.Select(e => new
-                            {
-                                episodeNumber = e.EpisodeNumber,
-                                title = e.Title,
-                                description = e.Description,
-                                durationMinutes = e.DurationMinutes
-                            }).ToList()
-                        }).ToList(),
-                        description = series.Description,
-                        director = series.Director,
-                        posterFile = series.PosterFile,
-                        trailerUrl = series.TrailerUrl,
-                        cast = series.Cast,
-                        genres = series.MediaGenres?.Select(mg => mg.Genre.Name).ToList(),
-                        services = series.AvailabilityByService
-                                   .Where(kv => kv.Value)
-                                   .Select(kv => kv.Key)
-                                   .ToList()
-                    });
-                }
-                else
-                {
-                    return BadRequest(new { message = "Ungültiger Typ. 'movie' oder 'series' erwartet." });
-                }
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ImportMultiple(string tmdbIds, string type, IFormFile? csvFile, string region = "DE")
         {
-            var tmdbService = new TmdbService();
+            var ids = await ResolveIdsAsync(tmdbIds, csvFile, type, region);
+            if (!ids.Any())
+            {
+                TempData["Message"] = "Keine gültigen TMDB-IDs gefunden.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            int successCount = 0;
+
+            foreach (var tmdbId in ids)
+            {
+                bool success = await ImportSingleAsync(tmdbId, type, region);
+                if (success)
+                    successCount++;
+            }
+
+            if (successCount == 0)
+                TempData["Message"] = "Keine gültigen TMDB-IDs gefunden.";
+            else
+                TempData["Message"] = $"Multi-Import abgeschlossen ({successCount} erfolgreich).";
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ImportMultipleAjax([FromForm] string tmdbIds, [FromForm] IFormFile? csvFile, [FromForm] string type, [FromForm] string region = "DE")
+        {
+            Response.ContentType = "text/plain";
+            var ids = await ResolveIdsAsync(tmdbIds, csvFile, type, region);
+
+            int total = ids.Count;
+            int processed = 0;
+
+            foreach (var tmdbId in ids)
+            {
+                bool success = await ImportSingleAsync(tmdbId, type, region);
+
+                if (success)
+                {
+                    processed++;
+                    await Response.WriteAsync($"PROGRESS:{processed}/{total}\n");
+                    await Response.Body.FlushAsync();
+                }
+            }
+
+            return new EmptyResult();
+        }
+
+        // --- private Hilfsmethoden ---
+
+        private async Task<List<int>> ResolveIdsAsync(string tmdbIds, IFormFile? csvFile, string type, string region)
+        {
             var ids = new List<int>();
 
             // IDs aus Textfeld
             if (!string.IsNullOrWhiteSpace(tmdbIds))
             {
-                ids.AddRange(tmdbIds
-                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(s => int.TryParse(s.Trim(), out var id) ? id : -1)
-                    .Where(id => id > 0));
+                ids.AddRange(tmdbIds.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                            .Select(s => int.TryParse(s.Trim(), out var id) ? id : -1)
+                            .Where(id => id > 0));
             }
 
-            // IDs über CSV-Datei suchen
+            // IDs aus CSV-Datei
             if (csvFile != null && csvFile.Length > 0)
-            {
-                using var reader = new StreamReader(csvFile.OpenReadStream());
-                bool firstLine = true;
-                while (!reader.EndOfStream)
-                {
-                    var line = await reader.ReadLineAsync();
-                    if (firstLine)
-                    {
-                        firstLine = false; // Header überspringen
-                        continue;
-                    }
-
-                    if (string.IsNullOrWhiteSpace(line)) continue;
-
-                    // CSV spaltenweise trennen (hier Komma, Anführungszeichen beachten)
-                    var columns = ParseCsvLine(line);
-                    if (columns.Length < 2) continue; // Mindestens Name-Spalte
-
-                    var title = columns[1].Trim('"'); // 2. Spalte = Name
-                    if (string.IsNullOrEmpty(title)) continue;
-
-                    int? foundId = null;
-                    if (string.Equals(type, "movie", StringComparison.OrdinalIgnoreCase))
-                    {
-                        foundId = await tmdbService.SearchMovieIdByTitleAsync(title, region);
-                    }
-                    else if (string.Equals(type, "series", StringComparison.OrdinalIgnoreCase))
-                    {
-                        foundId = await tmdbService.SearchSeriesIdByTitleAsync(title, region);
-                    }
-
-                    if (foundId.HasValue)
-                        ids.Add(foundId.Value);
-                    else
-                        TempData["Message"] += $"Titel '{title}' nicht gefunden.\n";
-                }
-            }
-
-            if (!ids.Any())
-            {
-                TempData["Message"] = "Keine gültigen IDs gefunden.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            //  Wie bisher: Schleife über IDs, Import
-            foreach (var tmdbId in ids.Distinct()) // Duplikate vermeiden
-            {
-                try
-                {
-                    if (string.Equals(type, "movie", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var movie = await tmdbService.GetMovieByIdAsync(tmdbId, region);
-                        if (movie == null)
-                        {
-                            TempData["Message"] += $"Film-ID {tmdbId} nicht gefunden.\n";
-                            continue;
-                        }
-                        await HandleMediaItemBaseAsync(movie, string.Join(", ", movie.Cast),
-                            movie.AvailabilityByService.Keys.ToList(),
-                            string.Join(", ", movie.MediaGenres.Select(mg => mg.Genre.Name)), null);
-                        _context.Movies.Add(movie);
-                    }
-                    else
-                    {
-                        var series = await tmdbService.GetSeriesByIdAsync(tmdbId, region);
-                        if (series != null)
-                        {
-                            await HandleMediaItemBaseAsync(series, string.Join(", ", series.Cast),
-                                series.AvailabilityByService.Keys.ToList(),
-                                string.Join(", ", series.MediaGenres.Select(mg => mg.Genre.Name)), null);
-
-                            if (series.Seasons != null)
-                                foreach (var season in series.Seasons)
-                                    foreach (var ep in season.Episodes ?? new List<Episode>())
-                                        ep.Season = season;
-
-                            _context.Series.Add(series);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    TempData["Message"] += $"Fehler bei ID {tmdbId}: {ex.Message}\n";
-                }
-            }
-
-            await _context.SaveChangesAsync();
-            TempData["Message"] += "Multi-Import abgeschlossen.";
-            return RedirectToAction(nameof(Index));
-        }
-        [HttpPost]
-        public async Task<IActionResult> ImportMultipleAjax([FromForm] string tmdbIds, [FromForm] IFormFile csvFile, [FromForm] string type)
-        {
-            Response.ContentType = "text/plain";
-
-            var tmdbService = new TmdbService();
-            var ids = new List<int>();
-            var titles = new List<string>();
-
-            // CSV-Datei auslesen
-            if (csvFile != null)
             {
                 using var reader = new StreamReader(csvFile.OpenReadStream());
                 bool firstLine = true;
@@ -523,76 +400,119 @@ namespace StreamingZeiger.Controllers
                     var line = await reader.ReadLineAsync();
                     if (firstLine) { firstLine = false; continue; } // Header überspringen
 
-                    var columns = line.Split(',');
+                    var columns = ParseCsvLine(line);
                     if (columns.Length < 2) continue;
 
                     var title = columns[1].Trim('"');
-                    titles.Add(title);
+                    if (string.IsNullOrEmpty(title)) continue;
+
+                    int? foundId = null;
+                    if (string.Equals(type, "movie", StringComparison.OrdinalIgnoreCase))
+                        foundId = await _tmdbService.SearchMovieIdByTitleAsync(title, region);
+                    else if (string.Equals(type, "series", StringComparison.OrdinalIgnoreCase))
+                        foundId = await _tmdbService.SearchSeriesIdByTitleAsync(title, region);
+
+                    if (foundId.HasValue)
+                        ids.Add(foundId.Value);
+                    else
+                        await _loggingService.LogAsync("TMDB-Suche", $"Titel '{title}' nicht gefunden.");
                 }
             }
 
-            // IDs aus Textfeld hinzufügen
-            if (!string.IsNullOrWhiteSpace(tmdbIds))
-            {
-                ids.AddRange(tmdbIds.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                            .Select(s => int.TryParse(s.Trim(), out var id) ? id : -1)
-                            .Where(id => id > 0));
-            }
-
-            int total = titles.Count + ids.Count;
-            int processed = 0;
-
-            // Titel zu IDs auflösen
-            foreach (var title in titles)
-            {
-                try
-                {
-                    int? foundId = type == "movie"
-                        ? await tmdbService.SearchMovieIdByTitleAsync(title, "DE")
-                        : await tmdbService.SearchSeriesIdByTitleAsync(title, "DE");
-
-                    if (foundId.HasValue) ids.Add(foundId.Value);
-                    else await Response.WriteAsync($"Nicht gefunden: {title}\n");
-                }
-                catch (Exception ex)
-                {
-                    await Response.WriteAsync($"Fehler bei '{title}': {ex.Message}\n");
-                }
-
-                processed++;
-                await Response.WriteAsync($"PROGRESS:{processed * 100 / total}\n");
-                await Response.Body.FlushAsync();
-            }
-
-            // Importiere alle IDs
-            foreach (var id in ids)
-            {
-                try
-                {
-                    if (type == "movie")
-                    {
-                        var movie = await tmdbService.GetMovieByIdAsync(id, "DE");
-                        if (movie != null) _context.Movies.Add(movie);
-                    }
-                    else if (type == "series")
-                    {
-                        var series = await tmdbService.GetSeriesByIdAsync(id, "DE");
-                        if (series != null) _context.Series.Add(series);
-                    }
-                    await _context.SaveChangesAsync();
-                }
-                catch (Exception ex)
-                {
-                    await Response.WriteAsync($"Fehler bei ID {id}: {ex.Message}\n");
-                }
-
-                processed++;
-                await Response.WriteAsync($"PROGRESS:{processed * 100 / total}\n");
-                await Response.Body.FlushAsync();
-            }
-
-            return new EmptyResult();
+            return ids.Distinct().ToList();
         }
+
+        private async Task<bool> ImportSingleAsync(int tmdbId, string type, string region)
+        {
+            bool success = false;
+
+            await ExecuteInTransactionAsync(async () =>
+            {
+                if (string.Equals(type, "movie", StringComparison.OrdinalIgnoreCase))
+                {
+                    var exists = await _context.Movies.AnyAsync(m => m.TmdbId == tmdbId);
+                    if (exists)
+                    {
+                        await _loggingService.LogAsync("TMDB-Import übersprungen", $"Film mit TMDB-ID {tmdbId} existiert bereits.");
+                        return;
+                    }
+                    var movie = await _tmdbService.GetMovieByIdAsync(tmdbId, region);
+                    if (movie == null)
+                    {
+                        await _loggingService.LogAsync("TMDB-Importfehler", $"Film mit TMDB-ID {tmdbId} nicht gefunden.");
+                        return;
+                    }
+
+                    await HandleMediaItemBaseAsync(
+                        movie,
+                        string.Join(", ", movie.Cast),
+                        movie.AvailabilityByService?.Keys?.ToList() ?? new List<string>(),
+                        string.Join(", ", movie.MediaGenres.Select(mg => mg.Genre.Name)),
+                        null
+                    );
+
+                    movie.TmdbId = tmdbId;
+                    _context.Movies.Add(movie);
+                    await _context.SaveChangesAsync();
+
+                    await _loggingService.LogAsync("TMDB-Import erfolgreich", $"Film '{movie.Title}' (TMDB-ID {tmdbId}) importiert.");
+                    success = true;
+                }
+                else if (string.Equals(type, "series", StringComparison.OrdinalIgnoreCase))
+                {
+                    var exists = await _context.Series.AnyAsync(s => s.TmdbId == tmdbId);
+                    if (exists)
+                    {
+                        await _loggingService.LogAsync("TMDB-Import übersprungen", $"Serie mit TMDB-ID {tmdbId} existiert bereits.");
+                        return;
+                    }
+                    var series = await _tmdbService.GetSeriesByIdAsync(tmdbId, region);
+                    if (series == null)
+                    {
+                        await _loggingService.LogAsync("TMDB-Importfehler", $"Serie mit TMDB-ID {tmdbId} nicht gefunden.");
+                        return;
+                    }
+
+                    await HandleMediaItemBaseAsync(
+                        series,
+                        string.Join(", ", series.Cast),
+                        series.AvailabilityByService?.Keys?.ToList() ?? new List<string>(),
+                        string.Join(", ", series.MediaGenres.Select(mg => mg.Genre.Name)),
+                        null
+                    );
+
+                    if (series.Seasons != null)
+                    {
+                        foreach (var season in series.Seasons)
+                            foreach (var episode in season.Episodes ?? new List<Episode>())
+                                episode.Season = season;
+                    }
+
+                    series.TmdbId = tmdbId;
+                    _context.Series.Add(series);
+                    await _context.SaveChangesAsync();
+
+                    await _loggingService.LogAsync("TMDB-Import erfolgreich", $"Serie '{series.Title}' (TMDB-ID {tmdbId}) importiert.");
+                    success = true;
+                }
+            });
+
+            return success;
+        }
+
+        private async Task ExecuteInTransactionAsync(Func<Task> action)
+        {
+            if (_context.Database.IsInMemory())
+            {
+                await action();
+                return;
+            }
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            await action();
+            await transaction.CommitAsync();
+        }
+
 
         private string[] ParseCsvLine(string line)
         {

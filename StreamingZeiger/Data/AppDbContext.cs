@@ -24,6 +24,7 @@ namespace StreamingZeiger.Data
         // User-bezogene Entitäten
         public DbSet<Rating> Ratings { get; set; }
         public DbSet<WatchlistItem> WatchlistItems { get; set; }
+        public DbSet<LogEntry> LogEntries { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -71,6 +72,10 @@ namespace StreamingZeiger.Data
                 .WithMany(mi => mi.WatchlistItems)
                 .HasForeignKey(w => w.MediaItemId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<MediaItem>()
+               .HasIndex(m => m.TmdbId)
+               .IsUnique();
         }
         public async Task UpdateAverageRatingAsync(int? movieId = null)
         {

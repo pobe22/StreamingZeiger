@@ -66,3 +66,6 @@ nunit-*.xml
 /StreamingZeiger/streamingzeiger.db
 /StreamingZeiger/streamingzeiger.db-shm
 /StreamingZeiger/streamingzeiger.db-wal
+/StreamingZeiger/StreamingZeiger.csproj.user
+/StreamingZeiger/Properties/PublishProfiles
+/StreamingZeiger/StreamingZeiger.csproj.user

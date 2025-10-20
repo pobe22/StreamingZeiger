@@ -10,6 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 DotNetEnv.Env.Load();
 builder.Services.AddScoped<ITmdbService, TmdbService>();
+builder.Services.AddScoped<LoggingService>();
+
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))

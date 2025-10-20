@@ -39,8 +39,9 @@
         }
     </ul>
 
+    <br><br>
     <h2>Multi-Imports</h2>
-    <form asp-action="ImportMultiple" method="post" enctype="multipart/form-data">
+    <form id="importForm" asp-action="ImportMultiple" method="post" enctype="multipart/form-data">
         <label>TMDb IDs (kommagetrennt, optional):</label>
         <input type="text" name="tmdbIds" placeholder="123,456,789" class="form-control mb-2" />
 
@@ -60,7 +61,6 @@
         <div class="progress-bar" role="progressbar" style="width: 0%;">0%</div>
     </div>
     <div id="importResult" class="mt-2"></div>
-
 </div>
 
 @section Scripts {
