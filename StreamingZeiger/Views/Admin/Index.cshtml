@@ -45,7 +45,10 @@
         <label>TMDb IDs (kommagetrennt, optional):</label>
         <input type="text" name="tmdbIds" placeholder="123,456,789" class="form-control mb-2" />
 
-        <label>CSV-Datei aus Letterboxd mit Filmtiteln (optional):</label>
+        <label>Filmtitel / Serientitel (optional, Komma oder neue Zeile):</label>
+        <textarea name="titles" class="form-control mb-2" placeholder="Titel1, Titel2 oder eine pro Zeile"></textarea>
+
+        <label>CSV-Datei aus Letterboxd (optional):</label>
         <input type="file" name="csvFile" accept=".csv" class="form-control mb-2" />
 
         <label>Typ:</label>
@@ -53,6 +56,11 @@
             <option value="movie">Film</option>
             <option value="series">Serie</option>
         </select>
+
+        <div class="form-check mb-2">
+            <input type="checkbox" name="importTop25" value="true" class="form-check-input" id="importTop25">
+            <label class="form-check-label" for="importTop25">Top 25 Filme/Serien importieren</label>
+        </div>
 
         <button type="submit" class="btn btn-primary mt-2">Importieren</button>
     </form>

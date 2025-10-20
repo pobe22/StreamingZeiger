@@ -2,6 +2,7 @@
 using StreamingZeiger.Models;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using TMDbLib.Client;
 using TMDbLib.Objects.Movies;
@@ -210,6 +211,20 @@ namespace StreamingZeiger.Services
             var results = await _client.SearchTvShowAsync(title, 1, includeAdult: false);
             return results?.Results?.FirstOrDefault()?.Id;
         }
+
+        public async Task<List<int>> GetTopMoviesAsync(string region)
+        {
+            var topMovies = await _client.GetMovieTopRatedListAsync(region, 1);
+            return topMovies.Results.Take(25).Select(m => m.Id).ToList();
+        }
+
+        public async Task<List<int>> GetTopSeriesAsync(string region)
+        {
+            var topSeries = await _client.GetTvShowTopRatedAsync(1, region); 
+            return topSeries.Results.Take(25).Select(s => s.Id).ToList();
+        }
+
+
 
     }
 }

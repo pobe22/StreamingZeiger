@@ -326,29 +326,58 @@ namespace StreamingZeiger.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ImportMultiple(string tmdbIds, string type, IFormFile? csvFile, string region = "DE")
+        public async Task<IActionResult> ImportMultiple(
+    string? tmdbIds,
+    string type,
+    IFormFile? csvFile,
+    string? titles,
+    bool importTop25 = false,
+    string region = "DE")
         {
-            var ids = await ResolveIdsAsync(tmdbIds, csvFile, type, region);
+            List<int> ids = new List<int>();
+
+            if (importTop25)
+            {
+                if (string.Equals(type, "movie", StringComparison.OrdinalIgnoreCase))
+                    ids = await _tmdbService.GetTopMoviesAsync(region);
+                else if (string.Equals(type, "series", StringComparison.OrdinalIgnoreCase))
+                    ids = await _tmdbService.GetTopSeriesAsync(region);
+            }
+            else
+            {
+                // IDs aus Textfeld oder CSV-Datei auflösen
+                ids = await ResolveIdsAsync(tmdbIds, csvFile, type, region);
+
+                // IDs aus Titel-Textfeld auflösen
+                if (!string.IsNullOrWhiteSpace(titles))
+                {
+                    var titleList = titles.Split(new[] { '\n', ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                          .Select(t => t.Trim())
+                                          .ToList();
+                    foreach (var title in titleList)
+                    {
+                        int? resolvedId = type.ToLower() == "movie"
+                            ? await _tmdbService.SearchMovieIdByTitleAsync(title, region)
+                            : await _tmdbService.SearchSeriesIdByTitleAsync(title, region);
+
+                        if (resolvedId.HasValue)
+                            ids.Add(resolvedId.Value);
+                    }
+                }
+            }
+
             if (!ids.Any())
             {
-                TempData["Message"] = "Keine gültigen TMDB-IDs gefunden.";
+                TempData["Message"] = "Keine gültigen TMDB-IDs oder Titel gefunden.";
                 return RedirectToAction(nameof(Index));
             }
 
-            int successCount = 0;
-
             foreach (var tmdbId in ids)
             {
-                bool success = await ImportSingleAsync(tmdbId, type, region);
-                if (success)
-                    successCount++;
+                await ImportSingleAsync(tmdbId, type, region);
             }
 
-            if (successCount == 0)
-                TempData["Message"] = "Keine gültigen TMDB-IDs gefunden.";
-            else
-                TempData["Message"] = $"Multi-Import abgeschlossen ({successCount} erfolgreich).";
-
+            TempData["Message"] = "Multi-Import abgeschlossen.";
             return RedirectToAction(nameof(Index));
         }
 

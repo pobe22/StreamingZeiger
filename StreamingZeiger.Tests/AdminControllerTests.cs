@@ -141,6 +141,19 @@ namespace StreamingZeiger.Tests
 
             public Task<int?> SearchSeriesIdByTitleAsync(string title, string region)
                 => Task.FromResult<int?>(1);
+
+            public Task<List<int>> GetTopMoviesAsync(string region)
+            {
+                // Simuliere Top-IDs
+                var topIds = Enumerable.Range(1, 25).ToList();
+                return Task.FromResult(topIds);
+            }
+
+            public Task<List<int>> GetTopSeriesAsync(string region)
+            {
+                var topIds = Enumerable.Range(101, 25).ToList();
+                return Task.FromResult(topIds);
+            }
         }
 
         private AdminController GetController()
@@ -334,12 +347,12 @@ namespace StreamingZeiger.Tests
             var typeSeries = "series";
 
             // Movie Import
-            var resultMovie = await controller.ImportMultiple(tmdbIds, typeMovie, null) as RedirectToActionResult;
+            var resultMovie = await controller.ImportMultiple(tmdbIds, typeMovie, null, null, false, "US") as RedirectToActionResult;
             Assert.Equal("Index", resultMovie.ActionName);
             Assert.Contains(_context.Movies, m => m.TmdbId == 101 || m.TmdbId == 202);
 
             // Series Import
-            var resultSeries = await controller.ImportMultiple(tmdbIds, typeSeries, null) as RedirectToActionResult;
+            var resultSeries = await controller.ImportMultiple(tmdbIds, typeSeries, null, null, false, "US") as RedirectToActionResult;
             Assert.Equal("Index", resultSeries.ActionName);
             Assert.Contains(_context.Series, s => s.TmdbId == 101 || s.TmdbId == 202);
 
@@ -377,11 +390,11 @@ namespace StreamingZeiger.Tests
         {
             var controller = GetController();
 
-            var tmdbIds = "12345678,87654321"; 
-            var result = await controller.ImportMultiple(tmdbIds, "movie", null) as RedirectToActionResult;
+            var tmdbIds = "12345645578,876543456321"; 
+            var result = await controller.ImportMultiple(tmdbIds, "movie", null, null, false, "US") as RedirectToActionResult;
 
             Assert.Equal("Index", result.ActionName);
-            Assert.Equal("Keine gültigen TMDB-IDs gefunden.", controller.TempData["Message"]);
+            Assert.Equal("Keine gültigen TMDB-IDs oder Titel gefunden.", controller.TempData["Message"]);
         }
 
         [Fact]

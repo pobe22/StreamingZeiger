@@ -9,5 +9,8 @@ namespace StreamingZeiger.Services
 
         Task<int?> SearchMovieIdByTitleAsync(string title, string region);
         Task<int?> SearchSeriesIdByTitleAsync(string title, string region);
+
+        Task<List<int>> GetTopMoviesAsync(string region);
+        Task<List<int>> GetTopSeriesAsync(string region);
     }
 }
