@@ -39,10 +39,12 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t streamingzeiger:latest .
-
+        
       - name: Push Docker image to Render
-        uses: render-examples/docker-deploy@v1
+        uses: renderinc/deploy@v1
         with:
           apiKey: ${{ secrets.RENDER_API_KEY }}
           serviceId: ${{ secrets.RENDER_SERVICE_ID }}
-          imageName: streamingzeiger:latest
+          image: streamingzeiger:latest
+
+
