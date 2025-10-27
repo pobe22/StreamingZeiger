@@ -200,7 +200,6 @@ namespace StreamingZeiger.Controllers
             return View(movie);
         }
 
-        // Aufgabe 6. Detaildaten einblenden
         public async Task<IActionResult> DetailsPartial(int id)
         {
             var movie = await _context.Movies

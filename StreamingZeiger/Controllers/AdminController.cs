@@ -87,8 +87,7 @@ namespace StreamingZeiger.Controllers
                     .Distinct(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var name in genreNames)
-                {
-                    // Prüfen, ob Genre schon existiert
+                {       
                     var genre = await _context.Genres
                         .FirstOrDefaultAsync(g => g.Name.ToLower() == name.ToLower());
 

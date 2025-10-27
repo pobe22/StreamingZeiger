@@ -1,5 +1,4 @@
-﻿//Aufgabe 6. Detaildaten einblenden
-document.addEventListener("DOMContentLoaded", function () {
+﻿document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".movie-details-btn").forEach(btn => {
         btn.addEventListener("click", async function () {
             const movieId = this.dataset.id;
