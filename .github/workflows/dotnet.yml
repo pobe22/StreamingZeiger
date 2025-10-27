@@ -1,46 +1,50 @@
 name: .NET CI/CD
 
 on:
-  workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master" ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '8.0.x'
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore dependencies
         run: dotnet restore
+
+      - name: Run code format
+        run: dotnet format
+        
+      - name: Run code format check
+        run: dotnet format --verify-no-changes
 
       - name: Build
         run: dotnet build --no-restore --configuration Release
 
-      - name: Test
-        run: dotnet test ./StreamingZeiger.Tests/StreamingZeiger.Tests.csproj --verbosity normal
+      - name: Test with coverage
+        run: dotnet test ./StreamingZeiger.Tests/StreamingZeiger.Tests.csproj --configuration Release --collect:"XPlat Code Coverage"
 
-      - name: Publish
-        run: dotnet publish -c Release -o ./publish
+      - name: Build Docker image
+        run: docker build -t streamingzeiger:latest .
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: StreamingZeigerApp
-          path: ./publish
-          
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: StreamingZeigerApp
-          path: ./app
-
+      # Deployment zu Render auskommentiert, später wieder aktivierbar
+      # - name: Trigger Render Deployment
+      #   run: |
+      #     curl -X POST https://api.render.com/deploy/srv-xxxxxxxxxx \
+      #       -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
