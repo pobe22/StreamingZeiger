@@ -183,33 +183,22 @@ namespace StreamingZeiger.Controllers
         }
 
         // ======================
-        // SEASONS
-        // ======================
-
-        public async Task<IActionResult> SeasonDetails(int id)
-        {
-            var season = await _context.Seasons
-                .Include(se => se.Episodes)
-                .Include(se => se.Series)
-                .FirstOrDefaultAsync(se => se.Id == id);
-
-            if (season == null) return NotFound();
-            return View(season);
-        }
-
-        // ======================
         // EPISODES
         // ======================
 
         public async Task<IActionResult> EpisodeDetails(int id)
         {
             var episode = await _context.Episodes
-                .Include(e => e.Season).ThenInclude(s => s.Series)
+                .Include(e => e.Season)
+                    .ThenInclude(s => s.Series)
+                .Include(e => e.Season) // Damit wir die Episodes der Season laden
+                    .ThenInclude(s => s.Episodes)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
             if (episode == null) return NotFound();
             return View(episode);
         }
+
 
     }
 }
