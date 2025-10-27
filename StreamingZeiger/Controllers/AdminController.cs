@@ -55,16 +55,28 @@ namespace StreamingZeiger.Controllers
         // ---------- Gemeinsamer Create-Helper ----------
         private async Task HandleMediaItemBaseAsync(MediaItem item, string castCsv, List<string> services, string genreCsv, IFormFile? posterUpload)
         {
-            // Cast
+            // --- Cast ---
             if (!string.IsNullOrWhiteSpace(castCsv))
                 item.Cast = castCsv.Split(',', StringSplitOptions.RemoveEmptyEntries)
                                    .Select(c => c.Trim())
+                                   .Distinct()
                                    .ToList();
 
-            // Dienste
-            item.AvailabilityByService = services?.ToDictionary(s => s, s => true) ?? new();
+            // --- Dienste ---
+            item.AvailabilityByService = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+            if (services != null)
+            {
+                foreach (var s in services)
+                {
+                    var key = s?.Trim();
+                    if (!string.IsNullOrEmpty(key) && !item.AvailabilityByService.ContainsKey(key))
+                    {
+                        item.AvailabilityByService[key] = true;
+                    }
+                }
+            }
 
-            // Poster
+            // --- Poster ---
             if (posterUpload != null && posterUpload.Length > 0)
             {
                 var extension = Path.GetExtension(posterUpload.FileName);
@@ -78,27 +90,38 @@ namespace StreamingZeiger.Controllers
                 item.PosterFile = "/images/posters/" + uniqueFileName;
             }
 
-            // Genres
+            // --- Genres ---
+            // --- Genres ---
             if (!string.IsNullOrWhiteSpace(genreCsv))
             {
                 var genreNames = genreCsv
                     .Split(',', StringSplitOptions.RemoveEmptyEntries)
                     .Select(g => g.Trim())
-                    .Distinct(StringComparer.OrdinalIgnoreCase);
+                    .Where(g => !string.IsNullOrEmpty(g))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                var existingGenres = await _context.Genres
+                    .ToListAsync();
+
+                var genreDict = existingGenres
+                    .GroupBy(g => g.Name.Trim().ToLowerInvariant())
+                    .ToDictionary(g => g.Key, g => g.First());
 
                 foreach (var name in genreNames)
-                {       
-                    var genre = await _context.Genres
-                        .FirstOrDefaultAsync(g => g.Name.ToLower() == name.ToLower());
+                {
+                    var normalizedName = name.Trim().ToLowerInvariant();
 
-                    if (genre == null)
+                    if (!genreDict.TryGetValue(normalizedName, out var genre))
                     {
-                        genre = new Genre { Name = name };
+                        // Genre nur dem Kontext hinzufügen, SaveChanges später
+                        genre = new Genre { Name = name.Trim() };
                         _context.Genres.Add(genre);
+                        genreDict[normalizedName] = genre;
                     }
 
-                    // MediaGenre korrekt hinzufügen
-                    if (!item.MediaGenres.Any(mg => mg.Genre.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+                    // MediaGenre hinzufügen
+                    if (!item.MediaGenres.Any(mg => mg.Genre == genre))
                     {
                         item.MediaGenres.Add(new MediaGenre
                         {
@@ -108,7 +131,6 @@ namespace StreamingZeiger.Controllers
                     }
                 }
             }
-
         }
 
         // ---------- Movies ----------
@@ -464,6 +486,7 @@ namespace StreamingZeiger.Controllers
                         await _loggingService.LogAsync("TMDB-Import übersprungen", $"Film mit TMDB-ID {tmdbId} existiert bereits.");
                         return;
                     }
+
                     var movie = await _tmdbService.GetMovieByIdAsync(tmdbId, region);
                     if (movie == null)
                     {
@@ -471,13 +494,23 @@ namespace StreamingZeiger.Controllers
                         return;
                     }
 
-                    await HandleMediaItemBaseAsync(
-                        movie,
-                        string.Join(", ", movie.Cast),
-                        movie.AvailabilityByService?.Keys?.ToList() ?? new List<string>(),
-                        string.Join(", ", movie.MediaGenres.Select(mg => mg.Genre.Name)),
-                        null
-                    );
+                    // --- Movie vorbereiten ---
+                    try
+                    {
+                        await HandleMediaItemBaseAsync(
+                            movie,
+                            string.Join(", ", movie.Cast),
+                            movie.AvailabilityByService?.Keys?.ToList() ?? new List<string>(),
+                            movie.MediaGenres != null ? string.Join(", ", movie.MediaGenres.Select(mg => mg.Genre.Name)) : "",
+                            null
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Fehler beim HandleMediaItemBaseAsync: " + ex);
+                        throw;
+                    }
+
 
                     movie.TmdbId = tmdbId;
                     _context.Movies.Add(movie);
@@ -494,6 +527,7 @@ namespace StreamingZeiger.Controllers
                         await _loggingService.LogAsync("TMDB-Import übersprungen", $"Serie mit TMDB-ID {tmdbId} existiert bereits.");
                         return;
                     }
+
                     var series = await _tmdbService.GetSeriesByIdAsync(tmdbId, region);
                     if (series == null)
                     {
@@ -501,19 +535,25 @@ namespace StreamingZeiger.Controllers
                         return;
                     }
 
+                    // --- Series vorbereiten ---
                     await HandleMediaItemBaseAsync(
                         series,
-                        string.Join(", ", series.Cast),
+                        string.Join(", ", series.Cast ?? new List<string>()),
                         series.AvailabilityByService?.Keys?.ToList() ?? new List<string>(),
-                        string.Join(", ", series.MediaGenres.Select(mg => mg.Genre.Name)),
+                        series.MediaGenres != null ? string.Join(", ", series.MediaGenres.Select(mg => mg.Genre.Name)) : "",
                         null
                     );
 
+                    // Seasons & Episodes: FK korrekt setzen
                     if (series.Seasons != null)
                     {
                         foreach (var season in series.Seasons)
-                            foreach (var episode in season.Episodes ?? new List<Episode>())
-                                episode.Season = season;
+                        {
+                            season.Series = series;
+                            if (season.Episodes != null)
+                                foreach (var ep in season.Episodes)
+                                    ep.Season = season;
+                        }
                     }
 
                     series.TmdbId = tmdbId;
