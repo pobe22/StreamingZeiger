@@ -1,127 +1,158 @@
-﻿@model List<StreamingZeiger.Models.Movie>
+﻿@model StreamingZeiger.ViewModels.AdminIndexViewModel
 
 <!-- Intro Text -->
 <section class="container mb-5 text-center">
-    <h1 class="mb-3">Willkommen bei StreamingZeiger</h1>
-    <p class="lead">
-        Entdecke die besten Filme, finde Bewertungen, filtere nach Genres oder Streamingdiensten und behalte
-        deine Lieblingsfilme im Blick. Unser Adminbereich ermöglicht das einfache Verwalten der Filmdaten.
-    </p>
+	<h1 class="mb-3">Willkommen bei StreamingZeiger</h1>
+	<p class="lead">
+		Entdecke die besten Filme, finde Bewertungen, filtere nach Genres oder Streamingdiensten und behalte
+		deine Lieblingsfilme im Blick. Unser Adminbereich ermöglicht das einfache Verwalten der Filmdaten.
+	</p>
 </section>
 
-<!-- Carousel -->
-<div id="movieCarousel" class="carousel slide mb-5" data-bs-ride="carousel">
-    <div class="carousel-inner">
-        @for (int i = 0; i < Model.Count; i++)
-        {
-            var movie = Model[i];
-            <div class="carousel-item @(i == 0 ? "active" : "")" data-bs-interval="2000">
-                <img src="@Url.Content(movie.PosterFile)"
-                     class="d-block rounded shadow"
-                     alt="@movie.Title">
-                <div class="carousel-caption d-none d-md-block">
-                    <h3>@movie.Title</h3>
-                    <a href="@Url.Action("Details", "Movies", new { id = movie.Id })"
-                       class="btn btn-primary">Details ansehen</a>
-                </div>
-            </div>
-        }
-    </div>
-    <button class="carousel-control-prev" type="button" data-bs-target="#movieCarousel" data-bs-slide="prev">
-        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-    </button>
-    <button class="carousel-control-next" type="button" data-bs-target="#movieCarousel" data-bs-slide="next">
-        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-    </button>
-</div>
+<!-- Movie Carousel -->
+@if (Model.Movies.Any())
+{
+	<div id="movieCarousel" class="carousel slide mb-5" data-bs-ride="carousel">
+		<div class="carousel-inner">
+			@for (int i = 0; i < Model.Movies.Count; i++)
+			{
+				var movie = Model.Movies[i];
+				<div class="carousel-item @(i == 0 ? "active" : "")" data-bs-interval="3000">
+					<img src="@Url.Content(movie.PosterFile)" class="d-block w-100 rounded shadow" alt="@movie.Title" />
+					<div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-2">
+						<h3>@movie.Title (@movie.Year)</h3>
+						<p>@string.Join(", ", movie.Genres.Select(g => g.Name))</p>
+						<a href="@Url.Action("Details", "Movies", new { id = movie.Id })" class="btn btn-primary btn-sm">Details ansehen</a>
+					</div>
+				</div>
+			}
+		</div>
+		<button class="carousel-control-prev" type="button" data-bs-target="#movieCarousel" data-bs-slide="prev">
+			<span class="carousel-control-prev-icon" aria-hidden="true"></span>
+		</button>
+		<button class="carousel-control-next" type="button" data-bs-target="#movieCarousel" data-bs-slide="next">
+			<span class="carousel-control-next-icon" aria-hidden="true"></span>
+		</button>
+	</div>
+}
 
 <!-- Search Bar -->
 <form asp-controller="Movies" asp-action="Index" method="get" class="d-flex mb-4">
-    <input type="text" id="searchBox" name="Query" class="form-control me-2" placeholder="Film suchen..." autocomplete="off" />
-    <button type="submit" class="btn btn-primary">Suchen</button>
+	<input type="text" id="searchBox" name="Query" class="form-control me-2" placeholder="Film suchen..." autocomplete="off" />
+	<button type="submit" class="btn btn-primary">Suchen</button>
 </form>
 
 <ul id="autocompleteList" class="list-group position-absolute" style="z-index: 1000;"></ul>
 
-
 <!-- Features Section -->
 <section class="container mb-5">
-    <div class="row text-center">
-        <div class="col-md-4 mb-4">
-            <i class="bi bi-film" style="font-size: 2rem;"></i>
-            <h4 class="mt-2">Filme entdecken</h4>
-            <p>
-                Durchstöbere unsere Datenbank nach Genre, Bewertung oder Streamingdienst.<br />
-                <a href="@Url.Action("Index", "Movies")" class="btn btn-link p-0">Zu den Filmen</a>
-            </p>
-        </div>
-        <div class="col-md-4 mb-4">
-            <i class="bi bi-star" style="font-size: 2rem;"></i>
-            <h4 class="mt-2">Bewertungen</h4>
-            <p>Finde die besten Filme dank Nutzerbewertungen und Empfehlungen.</p>
-        </div>
-        <div class="col-md-4 mb-4">
-            <i class="bi bi-gear" style="font-size: 2rem;"></i>
-            <h4 class="mt-2">Adminbereich</h4>
-            <p>
-                Erstelle, bearbeite und lösche Filme bequem über das Admin-Panel.<br />
-                <a href="@Url.Action("Index", "Admin")" class="btn btn-link p-0">Zum Adminbereich</a>
-            </p>
-        </div>
-    </div>
+	<div class="row text-center">
+		<div class="col-md-4 mb-4">
+			<i class="bi bi-film" style="font-size: 2rem;"></i>
+			<h4 class="mt-2">Filme und Serien entdecken</h4>
+			<p>
+				Durchstöbere unsere Datenbank nach Genre, Bewertung oder Streamingdienst.<br />
+				<a href="@Url.Action("Index", "Movies")" class="btn btn-link p-0">Zu den Filmen | </a>
+				<a href="@Url.Action("Index", "Series")" class="btn btn-link p-0">Zu den Serien</a>
+			</p>
+		</div>
+		<div class="col-md-4 mb-4">
+			<i class="bi bi-star" style="font-size: 2rem;"></i>
+			<h4 class="mt-2">Bewertungen</h4>
+			<p>Finde die besten Filme dank Nutzerbewertungen und Empfehlungen.</p>
+		</div>
+		<div class="col-md-4 mb-4">
+			<i class="bi bi-gear" style="font-size: 2rem;"></i>
+			<h4 class="mt-2">Adminbereich</h4>
+			<p>
+				Erstelle, bearbeite und lösche Filme bequem über das Admin-Panel.<br />
+				<a href="@Url.Action("Index", "Admin")" class="btn btn-link p-0">Zum Adminbereich</a>
+			</p>
+		</div>
+		<div class="col-md-4 mb-4 mx-auto text-center">
+			<i class="bi bi-bookmark-heart" style="font-size: 2rem;"></i>
+			<h4 class="mt-2">Watchlist</h4>
+			<p>
+				Behalte deine Lieblingsfilme und -serien im Blick mit deiner persönlichen Watchlist.
+				<br />
+				<a href="@Url.Action("Index", "Watchlist")" class="btn btn-link p-0">Zur Watchlist</a>
+			</p>
+		</div>
+	</div>
 </section>
 
-<!-- Poster Gallery Section -->
+<!-- Combined Media Section -->
 <section class="container mb-5">
-    <h2 class="mb-4 text-center">Unsere Filme</h2>
-    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
-        @foreach (var movie in Model)
-        {
-            <div class="col fade-in">
-                <div class="card h-100 shadow-sm">
-                    <img src="@Url.Content(movie.PosterFile)"
-                         class="card-img-top img-fluid"
-                         alt="@movie.Title">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">@movie.Title</h5>
-                        <a href="@Url.Action("Details", "Movies", new { id = movie.Id })"
-                           class="btn btn-primary btn-sm">Details</a>
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
+	<h2 class="mb-4 text-center">Unsere Medien</h2>
+
+	<!-- Movies Carousel -->
+	@if (Model.Movies.Any())
+	{
+		<h3 class="mb-3">Filme</h3>
+		<div id="moviesCarousel" class="carousel slide mb-5" data-bs-ride="carousel">
+			<div class="carousel-inner">
+				@for (int i = 0; i < Model.Movies.Count; i += 3)
+				{
+					<div class="carousel-item @(i == 0 ? "active" : "")">
+						<div class="d-flex justify-content-center gap-3">
+							@for (int j = i; j < i + 3 && j < Model.Movies.Count; j++)
+							{
+								var movie = Model.Movies[j];
+								<div style="width: 200px;">
+									@await Html.PartialAsync("_MovieCard", new StreamingZeiger.ViewModels.MediaItemViewModel
+									{
+										Movie = movie,
+												InWatchlist = false
+												})
+					</div>
+										}
+				</div>
+			</div>
+						}
+		</div>
+		<button class="carousel-control-prev" type="button" data-bs-target="#moviesCarousel" data-bs-slide="prev">
+			<span class="carousel-control-prev-icon" aria-hidden="true"></span>
+		</button>
+		<button class="carousel-control-next" type="button" data-bs-target="#moviesCarousel" data-bs-slide="next">
+			<span class="carousel-control-next-icon" aria-hidden="true"></span>
+		</button>
+	</div>
+		}
+
+	<!-- Series Carousel -->
+	@if (Model.Series.Any())
+	{
+		<h3 class="mb-3">Serien</h3>
+		<div id="seriesCarousel" class="carousel slide mb-5" data-bs-ride="carousel">
+			<div class="carousel-inner">
+				@for (int i = 0; i < Model.Series.Count; i += 3)
+				{
+					<div class="carousel-item @(i == 0 ? "active" : "")">
+						<div class="d-flex justify-content-center gap-3">
+							@for (int j = i; j < i + 3 && j < Model.Series.Count; j++)
+							{
+								var series = Model.Series[j];
+								<div style="width: 200px;">
+									@await Html.PartialAsync("_SeriesCard", new StreamingZeiger.ViewModels.MediaItemViewModel
+									{
+										Series = series,
+												InWatchlist = false
+												})
+					</div>
+										}
+				</div>
+			</div>
+						}
+		</div>
+		<button class="carousel-control-prev" type="button" data-bs-target="#seriesCarousel" data-bs-slide="prev">
+			<span class="carousel-control-prev-icon" aria-hidden="true"></span>
+		</button>
+		<button class="carousel-control-next" type="button" data-bs-target="#seriesCarousel" data-bs-slide="next">
+			<span class="carousel-control-next-icon" aria-hidden="true"></span>
+		</button>
+	</div>
+		}
 </section>
 
-<script>
-    const fadeElements = document.querySelectorAll('.fade-in');
-    const observer = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-            }
-        });
-    }, { threshold: 0.1 });
-    fadeElements.forEach(el => observer.observe(el));
-
-    const carousel = document.getElementById('movieCarousel');
-    const carouselItems = carousel.querySelectorAll('.carousel-item img');
-
-    function animateCarousel() {
-        carouselItems.forEach((img, idx) => {
-            if (img.closest('.carousel-item').classList.contains('active')) {
-                img.style.opacity = 1;
-                img.style.transform = 'scale(1)';
-            } else {
-                img.style.opacity = 0;
-                img.style.transform = 'scale(0.95)';
-            }
-        });
-    }
-
-    animateCarousel();
-
-    carousel.addEventListener('slid.bs.carousel', animateCarousel);
-</script>
+<script src="~/js/carousel.js"></script>
 <script src="~/js/autocomplete.js"></script>
-

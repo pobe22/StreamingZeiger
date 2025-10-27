@@ -18,7 +18,7 @@ html, body {
 }
 
 .text {
-    color: #e0e0e0
+    color: #e0e0e0;
 }
 
 /* ---------- Typografie & Links ---------- */
@@ -101,7 +101,6 @@ a {
         border-color: #218838;
     }
 
-
 .badge {
     background-color: #00bcd4;
     color: #000;
@@ -150,26 +149,52 @@ a {
         }
 
 /* ---------- Home / Carousel ---------- */
-#movieCarousel .carousel-item img {
-    max-height: 300px;
-    object-fit: contain;
-    margin: 0 auto;
-    opacity: 0;
-    transform: scale(0.95);
-    transition: transform 1s ease, opacity 1s ease;
+#movieCarousel {
+    background-color: #1e1e1e;
+    border-radius: 0.5rem;
+    overflow: hidden;
 }
 
-#movieCarousel .carousel-caption {
-    bottom: 10%;
-    background-color: rgba(0, 0, 0, 0.5);
-    padding: 0.5rem 1rem;
-    border-radius: 0.3rem;
-}
-
-    #movieCarousel .carousel-caption h3 {
-        font-size: 1.2rem;
-        margin-bottom: 0.3rem;
+    #movieCarousel .carousel-item img {
+        max-height: 300px;
+        object-fit: contain;
+        margin: 0 auto;
+        opacity: 0;
+        transform: scale(0.95);
+        transition: transform 1s ease, opacity 1s ease;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.6);
     }
+
+    #movieCarousel .carousel-caption {
+        bottom: 10%;
+        background-color: rgba(0, 0, 0, 0.6);
+        padding: 0.5rem 1rem;
+        border-radius: 0.3rem;
+    }
+
+        #movieCarousel .carousel-caption h3 {
+            font-size: 1.2rem;
+            color: #ffcc00;
+            margin-bottom: 0.3rem;
+        }
+
+        #movieCarousel .carousel-caption .btn-primary {
+            background-color: #8e7e02;
+            border-color: #ffcc00;
+            color: #000;
+        }
+
+            #movieCarousel .carousel-caption .btn-primary:hover {
+                background-color: #e6b800;
+                border-color: #e6b800;
+            }
+
+/* Carousel Controls invertieren */
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    filter: invert(100%);
+}
 
 #recommendCarousel .carousel-item img {
     height: 200px;
@@ -236,3 +261,160 @@ a {
     font-size: 0.9rem;
 }
 
+/* ---------- Multi-Import Form ---------- */
+#importForm {
+    background-color: #2a2a2a;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #3a3a3a;
+}
+
+    #importForm label {
+        font-weight: 600;
+        margin-top: 0.5rem;
+        display: block;
+        color: #f5d900;
+    }
+
+    #importForm input[type="text"],
+    #importForm input[type="file"],
+    #importForm textarea,
+    #importForm select {
+        background-color: #1e1e1e;
+        border: 1px solid #3a3a3a;
+        color: #e0e0e0;
+        border-radius: 0.3rem;
+        padding: 0.4rem 0.6rem;
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 0.5rem;
+    }
+
+        #importForm input:focus,
+        #importForm textarea:focus,
+        #importForm select:focus {
+            outline: none;
+            border-color: #ffcc00;
+            box-shadow: 0 0 5px rgba(255, 204, 0, 0.5);
+        }
+
+    #importForm .form-check-label {
+        color: #f5d900;
+    }
+
+    #importForm button {
+        width: 100%;
+    }
+
+/* ---------- Progress Bar ---------- */
+.progress {
+    background-color: #1e1e1e;
+    border: 1px solid #3a3a3a;
+    border-radius: 0.3rem;
+}
+
+.progress-bar {
+    background-color: #8e7e02;
+    color: #000;
+    font-weight: bold;
+}
+
+/* ---------- Import Result ---------- */
+#importResult {
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    padding: 0.5rem;
+    border-radius: 0.3rem;
+    color: #e0e0e0;
+}
+
+/* ---------- Intro / Text Section ---------- */
+section.text-center h1 {
+    color: #ffcc00;
+}
+
+section.text-center p.lead {
+    color: #e0e0e0;
+}
+
+/* ---------- Search Bar ---------- */
+form.d-flex input.form-control {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    border: 1px solid #3a3a3a;
+}
+
+    form.d-flex input.form-control:focus {
+        outline: none;
+        border-color: #ffcc00;
+        box-shadow: 0 0 5px rgba(255, 204, 0, 0.5);
+    }
+
+form.d-flex .btn-primary {
+    background-color: #8e7e02;
+    border-color: #ffcc00;
+    color: #000;
+}
+
+    form.d-flex .btn-primary:hover {
+        background-color: #e6b800;
+        border-color: #e6b800;
+    }
+
+/* ---------- Autocomplete List ---------- */
+#autocompleteList {
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 0.3rem;
+    color: #e0e0e0;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* ---------- Features Section ---------- */
+section.container .row .col-md-4 h4 {
+    color: #ffcc00;
+}
+
+section.container .row .col-md-4 p,
+section.container .row .col-md-4 i {
+    color: #e0e0e0;
+}
+
+section.container .row .col-md-4 a.btn-link {
+    color: #8e7e02;
+    text-decoration: none;
+}
+
+    section.container .row .col-md-4 a.btn-link:hover {
+        color: #e6b800;
+        text-decoration: underline;
+    }
+
+/* ---------- Poster Gallery ---------- */
+section.container .card {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    border-radius: 0.5rem;
+    transition: transform 0.3s ease-in-out;
+}
+
+    section.container .card:hover {
+        transform: scale(1.05);
+        z-index: 2;
+    }
+
+    section.container .card .card-title {
+        color: #ffcc00;
+    }
+
+    section.container .card .btn-primary {
+        background-color: #8e7e02;
+        border-color: #ffcc00;
+        color: #000;
+    }
+
+        section.container .card .btn-primary:hover {
+            background-color: #e6b800;
+            border-color: #e6b800;
+        }

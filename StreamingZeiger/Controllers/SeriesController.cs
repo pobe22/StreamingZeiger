@@ -35,61 +35,71 @@ namespace StreamingZeiger.Controllers
             var userId = user?.Id;
 
             // Filter aus Session laden/speichern
-            if (string.IsNullOrEmpty(filter.Query) &&
+            var savedFilter = HttpContext.Session.GetObjectFromJson<MediaFilterViewModel>("SeriesFilter");
+            if (savedFilter != null &&
+                string.IsNullOrEmpty(filter.Query) &&
                 string.IsNullOrEmpty(filter.Genre) &&
                 string.IsNullOrEmpty(filter.Service) &&
                 !filter.MinRating.HasValue &&
                 !filter.YearFrom.HasValue &&
                 !filter.YearTo.HasValue)
             {
-                var savedFilter = HttpContext.Session.GetObjectFromJson<MediaFilterViewModel>("SeriesFilter");
-                if (savedFilter != null)
-                    filter = savedFilter;
-                else
-                    filter = new MediaFilterViewModel();
+                var tempPage = filter.Page;
+                filter = savedFilter;
+                filter.Page = tempPage <= 0 ? 1 : tempPage;
             }
-            else
+
+            // Filter aus Formular speichern, falls gesetzt
+            if (!string.IsNullOrEmpty(filter.Query) ||
+                !string.IsNullOrEmpty(filter.Genre) ||
+                !string.IsNullOrEmpty(filter.Service) ||
+                filter.MinRating.HasValue ||
+                filter.YearFrom.HasValue ||
+                filter.YearTo.HasValue)
             {
                 HttpContext.Session.SetObjectAsJson("SeriesFilter", filter);
             }
 
-            var cacheKey = $"series_{filter.Query}_{filter.Genre}_{filter.Service}_{filter.MinRating}_{filter.YearFrom}_{filter.YearTo}_{filter.Page}_{filter.PageSize}";
+            if (filter.Page <= 0) filter.Page = 1;
+            if (filter.PageSize <= 0) filter.PageSize = 20;
 
-            List<Series> series = new List<Series>();
+            var cacheKey = $"series_{filter.Query}_{filter.Genre}_{filter.Service}_{filter.MinRating}_{filter.YearFrom}_{filter.YearTo}_{filter.Page}_{filter.PageSize}";
 
             if (!_cache.TryGetValue(cacheKey, out MediaIndexViewModel? vm))
             {
                 var seriesQuery = _context.Series
                     .Include(s => s.MediaGenres).ThenInclude(mg => mg.Genre)
-                    .AsNoTracking();
-
-                series = seriesQuery.ToList();
+                    .AsNoTracking()
+                    .AsQueryable();
 
                 if (!string.IsNullOrWhiteSpace(filter.Genre))
-                    series = series.Where(s => s.MediaGenres.Any(mg => mg.Genre.Name == filter.Genre)).ToList();
+                    seriesQuery = seriesQuery.Where(s => s.MediaGenres.Any(mg => mg.Genre.Name == filter.Genre));
 
                 if (!string.IsNullOrWhiteSpace(filter.Service))
-                    series = series.Where(s => s.AvailabilityByService != null &&
+                    seriesQuery = seriesQuery.Where(s => s.AvailabilityByService != null &&
                                                s.AvailabilityByService.ContainsKey(filter.Service) &&
-                                               s.AvailabilityByService[filter.Service]).ToList();
+                                               s.AvailabilityByService[filter.Service]);
 
                 if (filter.MinRating.HasValue)
-                    series = series.Where(s => s.Rating >= filter.MinRating.Value).ToList();
+                    seriesQuery = seriesQuery.Where(s => s.Rating >= filter.MinRating.Value);
 
                 if (!string.IsNullOrWhiteSpace(filter.Query))
-                    series = series.Where(s =>
-                        (s.Title?.Contains(filter.Query, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                        (s.OriginalTitle?.Contains(filter.Query, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                        (s.Cast?.Any(c => c.Contains(filter.Query, StringComparison.OrdinalIgnoreCase)) ?? false))
-                        .ToList();
+                    seriesQuery = seriesQuery.Where(s =>
+                        (s.Title != null && s.Title.Contains(filter.Query, StringComparison.OrdinalIgnoreCase)) ||
+                        (s.OriginalTitle != null && s.OriginalTitle.Contains(filter.Query, StringComparison.OrdinalIgnoreCase)) ||
+                        (s.Cast != null && s.Cast.Any(c => c != null && c.Contains(filter.Query, StringComparison.OrdinalIgnoreCase)))
+                    );
 
                 if (filter.YearFrom.HasValue)
-                    series = series.Where(s => s.StartYear >= filter.YearFrom.Value).ToList();
+                    seriesQuery = seriesQuery.Where(s => s.StartYear >= filter.YearFrom.Value);
 
                 if (filter.YearTo.HasValue)
-                    series = series.Where(s => s.EndYear <= filter.YearTo.Value).ToList();
+                    seriesQuery = seriesQuery.Where(s => s.EndYear <= filter.YearTo.Value);
 
-                var pagedSeries = series.Skip((filter.Page - 1) * filter.PageSize).Take(filter.PageSize).ToList();
+                var pagedSeries = await seriesQuery
+                    .Skip((filter.Page - 1) * filter.PageSize)
+                    .Take(filter.PageSize)
+                    .ToListAsync();
 
                 var seriesVm = pagedSeries.Select(s => new MediaItemViewModel
                 {
@@ -103,7 +113,7 @@ namespace StreamingZeiger.Controllers
                     Items = seriesVm,
                     Page = filter.Page,
                     PageSize = filter.PageSize,
-                    Total = series.Count,
+                    Total = await seriesQuery.CountAsync(),
                     Genre = filter.Genre,
                     Service = filter.Service,
                     MinRating = filter.MinRating.HasValue ? (int?)filter.MinRating.Value : null,
@@ -113,10 +123,6 @@ namespace StreamingZeiger.Controllers
                 };
 
                 _cache.Set(cacheKey, vm, TimeSpan.FromMinutes(5));
-            }
-            else
-            {
-                series = vm.Items.Select(s => s.Series).ToList();
             }
 
             var services = _context.Series

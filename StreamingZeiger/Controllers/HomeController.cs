@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using StreamingZeiger.Models;
 using System.Diagnostics;
 using StreamingZeiger.Data;
+using StreamingZeiger.ViewModels;
 
 namespace StreamingZeiger.Controllers
 {
@@ -20,12 +21,28 @@ namespace StreamingZeiger.Controllers
         public async Task<IActionResult> Index()
         {
             var featuredMovies = await _context.Movies
+                .Include(m => m.MediaGenres)
+                    .ThenInclude(mg => mg.Genre)
                 .OrderByDescending(m => m.Rating)
                 .Take(3)
                 .ToListAsync();
 
-            return View(featuredMovies);
+            var seriesList = await _context.Series
+                .Include(s => s.MediaGenres)
+                    .ThenInclude(mg => mg.Genre)
+                .Include(s => s.Seasons)
+                    .ThenInclude(season => season.Episodes)
+                .ToListAsync();
+
+            var viewModel = new AdminIndexViewModel
+            {
+                Movies = featuredMovies,
+                Series = seriesList
+            };
+
+            return View(viewModel);
         }
+
 
         public IActionResult Privacy()
         {

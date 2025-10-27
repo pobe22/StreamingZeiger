@@ -175,14 +175,15 @@ namespace StreamingZeiger.Controllers
             var genreIds = movie.MediaGenres.Select(mg => mg.Genre.Id).ToList();
 
             var recommended = await _context.Movies
-                .Include(m => (m as MediaItem).MediaGenres)
+                .Include(m => m.MediaGenres)
                     .ThenInclude(mg => mg.Genre)
-                .Where(m => m.Id != id && m.MediaGenres.Any(mg => genreIds.Contains(mg.Genre.Id)))
+                .Where(m => m.Id != id && m.MediaGenres.Any(mg => movie.MediaGenres.Select(x => x.GenreId).Contains(mg.GenreId)))
                 .OrderByDescending(m => m.Rating)
                 .Take(8)
                 .ToListAsync();
 
             ViewBag.RecommendedMovies = recommended;
+
 
             bool inWatchlist = false;
 

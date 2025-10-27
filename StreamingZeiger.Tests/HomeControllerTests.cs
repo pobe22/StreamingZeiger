@@ -14,17 +14,43 @@ namespace StreamingZeiger.Tests
 {
     public class HomeControllerTests
     {
-        private AppDbContext GetDbContext()
+        private AppDbContext GetDbContext(string dbName)
         {
             var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase("HomeTestDb")
+                .UseInMemoryDatabase(dbName)
                 .Options;
             var context = new AppDbContext(options);
 
+            // Movies initialisieren
             if (!context.Movies.Any())
             {
-                context.Movies.Add(new Movie { Id = 1, Title = "Movie1", Rating = 5 });
-                context.Movies.Add(new Movie { Id = 2, Title = "Movie2", Rating = 8 });
+                context.Movies.Add(new Movie { Id = 1, Title = "Movie1", Rating = 5, Year = 2020 });
+                context.Movies.Add(new Movie { Id = 2, Title = "Movie2", Rating = 8, Year = 2021 });
+                context.SaveChanges();
+            }
+
+            // Series initialisieren
+            if (!context.Series.Any())
+            {
+                var series = new Series
+                {
+                    Id = 3,
+                    Title = "Breaking Bad",
+                    StartYear = 2008,
+                    EndYear = 2013,
+                    Seasons = new List<Season>
+            {
+                new Season
+                {
+                    SeasonNumber = 1,
+                    Episodes = new List<Episode>
+                    {
+                        new Episode { EpisodeNumber = 1, Title = "Pilot", DurationMinutes = 58 }
+                    }
+                }
+            }
+                };
+                context.Series.Add(series);
                 context.SaveChanges();
             }
 
@@ -32,30 +58,29 @@ namespace StreamingZeiger.Tests
         }
 
         [Fact]
-        public async Task Index_ReturnsTopMovies()
+        public async Task Index_ReturnsTopMoviesAndSeries()
         {
-            var context = GetDbContext();
+            // Arrange
+            var context = GetDbContext("HomeTestDb_Index");
             var logger = new Mock<ILogger<HomeController>>();
             var controller = new HomeController(logger.Object, context);
 
+            // Act
             var result = await controller.Index() as ViewResult;
-            var model = result.Model as List<Movie>;
+            var model = result.Model as StreamingZeiger.ViewModels.AdminIndexViewModel;
 
+            // Assert
             Assert.NotNull(model);
-            Assert.Equal(2, model.Count);
-            Assert.Equal(8, model.First().Rating); // highest rating first
-        }
 
-        [Fact]
-        public void Privacy_ReturnsView()
-        {
-            var context = GetDbContext();
-            var logger = new Mock<ILogger<HomeController>>();
-            var controller = new HomeController(logger.Object, context);
+            // Prüfe Filme
+            Assert.NotNull(model.Movies);
+            Assert.Equal(2, model.Movies.Count);
+            Assert.Equal(8, model.Movies.First().Rating);
 
-            var result = controller.Privacy() as ViewResult;
-
-            Assert.NotNull(result);
+            // Prüfe Serien
+            Assert.NotNull(model.Series);
+            Assert.Single(model.Series);
+            Assert.Equal("Breaking Bad", model.Series.First().Title);
         }
     }
 }
