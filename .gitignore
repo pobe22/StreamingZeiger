@@ -69,3 +69,5 @@ nunit-*.xml
 /StreamingZeiger/StreamingZeiger.csproj.user
 /StreamingZeiger/Properties/PublishProfiles
 /StreamingZeiger/StreamingZeiger.csproj.user
+/StreamingZeiger/back12.txt
+/StreamingZeiger/dump12.sqlite

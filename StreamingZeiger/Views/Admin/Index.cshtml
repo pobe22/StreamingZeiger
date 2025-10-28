@@ -1,76 +1,88 @@
 ﻿@model StreamingZeiger.ViewModels.AdminIndexViewModel
 
 <div class="container mt-4">
-    <h2>Filme verwalten</h2>
-    <a asp-action="CreateMovie" class="btn btn-success mb-3">Neuen Film hinzufügen</a>
+	@if (TempData["Message"] != null)
+	{
+		<div class="alert alert-success">@TempData["Message"]</div>
+	}
 
-    <ul class="list-group mb-5">
-        @foreach (var movie in Model.Movies)
-        {
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                    <strong>@movie.Title</strong>
-                    <span class="text-muted">(@movie.Year) – @movie.Director</span>
-                </div>
-                <div>
-                    <a asp-action="EditMovie" asp-route-id="@movie.Id" class="btn btn-primary btn-sm me-2">Bearbeiten</a>
-                    <a asp-action="DeleteMovie" asp-route-id="@movie.Id" class="btn btn-danger btn-sm">Löschen</a>
-                </div>
-            </li>
-        }
-    </ul>
+	<h2>Filme verwalten</h2>
+	<a asp-action="CreateMovie" class="btn btn-success mb-3">Neuen Film hinzufügen</a>
 
-    <h2>Serien verwalten</h2>
-    <a asp-action="CreateSeries" class="btn btn-success mb-3">Neue Serie hinzufügen</a>
+	<ul class="list-group mb-5">
+		@foreach (var movie in Model.Movies)
+		{
+			<li class="list-group-item d-flex justify-content-between align-items-center">
+				<div>
+					<strong>@movie.Title</strong>
+					<span class="text-muted">(@movie.Year) – @movie.Director</span>
+				</div>
+				<div>
+					<a asp-action="EditMovie" asp-route-id="@movie.Id" class="btn btn-primary btn-sm me-2">Bearbeiten</a>
+					<a asp-action="DeleteMovie" asp-route-id="@movie.Id" class="btn btn-danger btn-sm">Löschen</a>
+				</div>
+			</li>
+		}
+	</ul>
+	<div class="d-flex justify-content-between align-items-center mb-3">
+		<form asp-action="Backup" method="post" onsubmit="return confirm('Datenbank jetzt sichern?');">
+			<button type="submit" class="btn btn-warning">
+				<i class="bi bi-hdd-stack"></i> Backup erstellen
+			</button>
+		</form>
+	</div>
 
-    <ul class="list-group">
-        @foreach (var series in Model.Series)
-        {
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                    <strong>@series.Title</strong>
-                    <span class="text-muted">(@series.StartYear - @(series.EndYear?.ToString() ?? "heute"))</span>
-                </div>
-                <div>
-                    <a asp-action="EditSeries" asp-route-id="@series.Id" class="btn btn-primary btn-sm me-2">Bearbeiten</a>
-                    <a asp-action="DeleteSeries" asp-route-id="@series.Id" class="btn btn-danger btn-sm">Löschen</a>
-                </div>
-            </li>
-        }
-    </ul>
+	<h2>Serien verwalten</h2>
+	<a asp-action="CreateSeries" class="btn btn-success mb-3">Neue Serie hinzufügen</a>
 
-    <br><br>
-    <h2>Multi-Imports</h2>
-    <form id="importForm" asp-action="ImportMultiple" method="post" enctype="multipart/form-data">
-        <label>TMDb IDs (kommagetrennt, optional):</label>
-        <input type="text" name="tmdbIds" placeholder="123,456,789" class="form-control mb-2" />
+	<ul class="list-group">
+		@foreach (var series in Model.Series)
+		{
+			<li class="list-group-item d-flex justify-content-between align-items-center">
+				<div>
+					<strong>@series.Title</strong>
+					<span class="text-muted">(@series.StartYear - @(series.EndYear?.ToString() ?? "heute"))</span>
+				</div>
+				<div>
+					<a asp-action="EditSeries" asp-route-id="@series.Id" class="btn btn-primary btn-sm me-2">Bearbeiten</a>
+					<a asp-action="DeleteSeries" asp-route-id="@series.Id" class="btn btn-danger btn-sm">Löschen</a>
+				</div>
+			</li>
+		}
+	</ul>
 
-        <label>Filmtitel / Serientitel (optional, Komma oder neue Zeile):</label>
-        <textarea name="titles" class="form-control mb-2" placeholder="Titel1, Titel2 oder eine pro Zeile"></textarea>
+	<br><br>
+	<h2>Multi-Imports</h2>
+	<form id="importForm" asp-action="ImportMultiple" method="post" enctype="multipart/form-data">
+		<label>TMDb IDs (kommagetrennt, optional):</label>
+		<input type="text" name="tmdbIds" placeholder="123,456,789" class="form-control mb-2" />
 
-        <label>CSV-Datei aus Letterboxd (optional):</label>
-        <input type="file" name="csvFile" accept=".csv" class="form-control mb-2" />
+		<label>Filmtitel / Serientitel (optional, Komma oder neue Zeile):</label>
+		<textarea name="titles" class="form-control mb-2" placeholder="Titel1, Titel2 oder eine pro Zeile"></textarea>
 
-        <label>Typ:</label>
-        <select name="type" class="form-control mb-2">
-            <option value="movie">Film</option>
-            <option value="series">Serie</option>
-        </select>
+		<label>CSV-Datei aus Letterboxd (optional):</label>
+		<input type="file" name="csvFile" accept=".csv" class="form-control mb-2" />
 
-        <div class="form-check mb-2">
-            <input type="checkbox" name="importTop25" value="true" class="form-check-input" id="importTop25">
-            <label class="form-check-label" for="importTop25">Top 25 Filme/Serien importieren</label>
-        </div>
+		<label>Typ:</label>
+		<select name="type" class="form-control mb-2">
+			<option value="movie">Film</option>
+			<option value="series">Serie</option>
+		</select>
 
-        <button type="submit" class="btn btn-primary mt-2">Importieren</button>
-    </form>
+		<div class="form-check mb-2">
+			<input type="checkbox" name="importTop25" value="true" class="form-check-input" id="importTop25">
+			<label class="form-check-label" for="importTop25">Top 25 Filme/Serien importieren</label>
+		</div>
 
-    <div class="progress mt-2" style="height: 25px; display:none;">
-        <div class="progress-bar" role="progressbar" style="width: 0%;">0%</div>
-    </div>
-    <div id="importResult" class="mt-2"></div>
+		<button type="submit" class="btn btn-primary mt-2">Importieren</button>
+	</form>
+
+	<div class="progress mt-2" style="height: 25px; display:none;">
+		<div class="progress-bar" role="progressbar" style="width: 0%;">0%</div>
+	</div>
+	<div id="importResult" class="mt-2"></div>
 </div>
 
 @section Scripts {
-    <script src="~/js/importprogress.js"></script>
+	<script src="~/js/importprogress.js"></script>
 }

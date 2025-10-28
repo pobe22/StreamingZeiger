@@ -11,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 DotNetEnv.Env.Load();
 builder.Services.AddScoped<ITmdbService, TmdbService>();
 builder.Services.AddScoped<LoggingService>();
+builder.Services.AddScoped<DatabaseBackupService>();
 
 
 builder.Services.AddDbContext<AppDbContext>(options =>

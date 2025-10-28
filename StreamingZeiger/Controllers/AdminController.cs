@@ -18,15 +18,17 @@ namespace StreamingZeiger.Controllers
         private readonly DynamicDbContextFactory _contextFactory;
         private readonly ITmdbService _tmdbService;
         private readonly LoggingService _loggingService;
+        private readonly DatabaseBackupService _backupService;
 
         public AdminController(AppDbContext context, IWebHostEnvironment env,
-                          DynamicDbContextFactory contextFactory, ITmdbService tmdb, LoggingService loggingService)
+                          DynamicDbContextFactory contextFactory, ITmdbService tmdb, LoggingService loggingService, DatabaseBackupService backupService)
         {
             _context = context;
             _env = env;
             _contextFactory = contextFactory;
             _tmdbService = tmdb;
             _loggingService = loggingService;
+            _backupService = backupService;
         }
 
         // Übersicht
@@ -579,6 +581,15 @@ namespace StreamingZeiger.Controllers
             await using var transaction = await _context.Database.BeginTransactionAsync();
             await action();
             await transaction.CommitAsync();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Backup()
+        {
+            await _backupService.PerformBackupAsync();
+            TempData["Message"] = "Backup erfolgreich erstellt!";
+            return RedirectToAction(nameof(Index));
         }
 
 
