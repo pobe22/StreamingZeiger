@@ -9,8 +9,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
@@ -26,18 +28,18 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore ./StreamingZeiger.sln
 
       - name: Run code format
-        run: dotnet format
-        
-      - name: Run code format check
-        run: dotnet format --verify-no-changes
+        run: dotnet format ./StreamingZeiger.sln
 
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
+      - name: Verify no formatting changes
+        run: dotnet format ./StreamingZeiger.sln --verify-no-changes
 
-      - name: Test with coverage
+      - name: Build solution
+        run: dotnet build ./StreamingZeiger.sln --no-restore --configuration Release
+
+      - name: Run tests with coverage
         run: dotnet test ./StreamingZeiger.Tests/StreamingZeiger.Tests.csproj --configuration Release --collect:"XPlat Code Coverage"
 
       - name: Build Docker image
