@@ -26,4 +26,4 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/publish .
 EXPOSE 80
-ENTRYPOINT ["dotnet", "StreamingZeiger.API.dll"]
+ENTRYPOINT ["dotnet", "StreamingZeiger.dll"]
