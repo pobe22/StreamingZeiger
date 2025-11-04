@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Streamingzeiger.Api\Streamingzeiger.Api.csproj" />
+    <ProjectReference Include="..\Streamingzeiger.Api\StreamingZeiger.Api.csproj" />
   </ItemGroup>
 
 </Project>
