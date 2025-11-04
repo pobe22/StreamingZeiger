@@ -19,6 +19,7 @@ namespace StreamingZeiger.Tests
     public class AdminControllerTests
     {
         private readonly AppDbContext _context;
+        private readonly ILogger<DatabaseBackupService> _logger;
         private readonly Mock<IWebHostEnvironment> _env;
 
 
@@ -29,6 +30,7 @@ namespace StreamingZeiger.Tests
                 .Options;
 
             _context = new AppDbContext(options);
+            _logger = Mock.Of<ILogger<DatabaseBackupService>>();
 
             if (!_context.Movies.Any())
             {
@@ -162,8 +164,9 @@ namespace StreamingZeiger.Tests
 
             var tmdb = new FakeTmdbService();
             var loggingService = new LoggingService(_context);
+            var backupService = new DatabaseBackupService(_context, _logger);
 
-            var controller = new AdminController(_context, _env.Object, null!, tmdb, loggingService);
+            var controller = new AdminController(_context, _env.Object, null!, tmdb, loggingService, backupService);
             controller.TempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
 
             return controller;

@@ -1,11 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.0.11012.119 d18.0
+VisualStudioVersion = 18.0.11012.119
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamingZeiger", "StreamingZeiger\StreamingZeiger.csproj", "{F026F9B4-702C-4558-793C-6E200A7A425A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamingZeiger.Tests", "StreamingZeiger.Tests\StreamingZeiger.Tests.csproj", "{02A547A2-A694-CCC4-8396-C2FB266A9C35}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Streamingzeiger.Api", "Streamingzeiger.Api\Streamingzeiger.Api.csproj", "{B0BF78E2-B1FC-EB93-6D3C-BE4DFD2560E4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamingZeiger.AppHost", "StreamingZeiger.AppHost\StreamingZeiger.AppHost.csproj", "{D72E5985-AF37-4A50-B78A-A9400AB49BB2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamingZeiger.ServiceDefaults", "StreamingZeiger.ServiceDefaults\StreamingZeiger.ServiceDefaults.csproj", "{44142B72-D573-8E2F-BC1A-E462EB3F25C6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +27,18 @@ Global
 		{02A547A2-A694-CCC4-8396-C2FB266A9C35}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{02A547A2-A694-CCC4-8396-C2FB266A9C35}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{02A547A2-A694-CCC4-8396-C2FB266A9C35}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0BF78E2-B1FC-EB93-6D3C-BE4DFD2560E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0BF78E2-B1FC-EB93-6D3C-BE4DFD2560E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0BF78E2-B1FC-EB93-6D3C-BE4DFD2560E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0BF78E2-B1FC-EB93-6D3C-BE4DFD2560E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D72E5985-AF37-4A50-B78A-A9400AB49BB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D72E5985-AF37-4A50-B78A-A9400AB49BB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D72E5985-AF37-4A50-B78A-A9400AB49BB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D72E5985-AF37-4A50-B78A-A9400AB49BB2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44142B72-D573-8E2F-BC1A-E462EB3F25C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44142B72-D573-8E2F-BC1A-E462EB3F25C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44142B72-D573-8E2F-BC1A-E462EB3F25C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44142B72-D573-8E2F-BC1A-E462EB3F25C6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
