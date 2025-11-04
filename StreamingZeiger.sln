@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamingZeiger", "Streamin
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamingZeiger.Tests", "StreamingZeiger.Tests\StreamingZeiger.Tests.csproj", "{02A547A2-A694-CCC4-8396-C2FB266A9C35}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamingZeiger.Api", "Streamingzeiger.Api\StreamingZeiger.Api.csproj", "{B0BF78E2-B1FC-EB93-6D3C-BE4DFD2560E4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamingZeiger.Api", "StreamingZeiger.Api\StreamingZeiger.Api.csproj", "{B0BF78E2-B1FC-EB93-6D3C-BE4DFD2560E4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamingZeiger.AppHost", "StreamingZeiger.AppHost\StreamingZeiger.AppHost.csproj", "{D72E5985-AF37-4A50-B78A-A9400AB49BB2}"
 EndProject
