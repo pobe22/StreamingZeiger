@@ -59,7 +59,7 @@ using (var scope = app.Services.CreateScope())
     var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
-    await context.Database.EnsureCreatedAsync();
+    await context.Database.MigrateAsync();
 
     var conn = context.Database.GetDbConnection();
     await conn.OpenAsync();
