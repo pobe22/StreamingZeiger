@@ -2,31 +2,30 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy solution and project files (for restore caching)
+# Copy solution and project files
 COPY StreamingZeiger.sln ./
-
-# Copy all csproj files
 COPY StreamingZeiger/*.csproj ./StreamingZeiger/
 COPY StreamingZeiger.API/*.csproj ./StreamingZeiger.API/
 COPY StreamingZeiger.AppHost/*.csproj ./StreamingZeiger.AppHost/
 COPY StreamingZeiger.ServiceDefaults/*.csproj ./StreamingZeiger.ServiceDefaults/
 
-# Restore only API project dependencies
-RUN dotnet restore StreamingZeiger.API/StreamingZeiger.API.csproj
+# Restore Main project dependencies
+RUN dotnet restore StreamingZeiger/StreamingZeiger.csproj
 
-# Copy all source files for libraries
+# Copy all source files
 COPY StreamingZeiger/. ./StreamingZeiger/
+COPY StreamingZeiger.API/. ./StreamingZeiger.API/
 COPY StreamingZeiger.AppHost/. ./StreamingZeiger.AppHost/
 COPY StreamingZeiger.ServiceDefaults/. ./StreamingZeiger.ServiceDefaults/
 
-# Copy API source files (including appsettings, Views, wwwroot)
-COPY StreamingZeiger.API/. ./StreamingZeiger.API/
+# Remove library appsettings to avoid conflicts
+RUN rm -f StreamingZeiger/appsettings*.json
 
-# Publish only the API project
-RUN dotnet publish StreamingZeiger.API/StreamingZeiger.API.csproj \
-    -c Release \
-    -o /app/publish \
-    /p:UseAppHost=false
+# Build API project (optional)
+RUN dotnet build StreamingZeiger.API/StreamingZeiger.API.csproj -c Release
+
+# Publish Main project
+RUN dotnet publish StreamingZeiger/StreamingZeiger.csproj -c Release -o /app/publish /p:UseAppHost=false
 
 # ===== RUNTIME STAGE =====
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
@@ -35,5 +34,9 @@ WORKDIR /app
 # Copy published output
 COPY --from=build /app/publish .
 
+# Copy DB file
+COPY streamingzeiger.db /app/streamingzeiger.db
+
 EXPOSE 80
-ENTRYPOINT ["dotnet", "StreamingZeiger.API.dll"]
+
+ENTRYPOINT ["dotnet", "StreamingZeiger.dll"]
