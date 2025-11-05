@@ -67,7 +67,13 @@ using (var scope = app.Services.CreateScope())
     var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
+    if (!File.Exists("/app/streamingzeiger.db"))
+    {
+        await context.Database.MigrateAsync();
+    }
+
     await DbInitializer.InitializeAsync(context, userManager, roleManager);
 }
+
 
 app.Run();

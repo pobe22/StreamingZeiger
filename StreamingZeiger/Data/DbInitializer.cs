@@ -11,7 +11,6 @@ namespace StreamingZeiger.Data
              UserManager<ApplicationUser> userManager,
              RoleManager<IdentityRole> roleManager)
         {
-            await context.Database.EnsureCreatedAsync();
 
             // --- Admin-Rolle und Benutzer ---
             if (!await roleManager.RoleExistsAsync("Admin"))
