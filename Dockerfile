@@ -35,7 +35,7 @@ WORKDIR /app
 COPY --from=build /app/publish .
 
 # Ensure /app is writable (SQLite will create DB here)
-RUN chmod 777 /app
+RUN chown -R app:app /app
 
 EXPOSE 80
 
