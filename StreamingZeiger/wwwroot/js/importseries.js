@@ -3,6 +3,8 @@
 
     const importBtn = document.getElementById("importTmdbSeries");
 
+    let seasonIndex = 0;
+
     if (importBtn) {
         importBtn.addEventListener("click", async () => {
             const tmdbId = document.getElementById("tmdbId")?.value;
@@ -59,7 +61,7 @@
                 // Staffeln & Episoden
                 const seasonsContainer = document.getElementById("seasonsContainer");
                 seasonsContainer.innerHTML = "";
-                seasonIndex = 0; // Reset globaler Index
+                seasonIndex = 0;
 
                 if (series.seasons && Array.isArray(series.seasons)) {
                     series.seasons.forEach((season) => {

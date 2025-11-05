@@ -16,6 +16,12 @@
   </ItemGroup>
 
 	<ItemGroup>
+		<None Update="..\StreamingZeiger\appsettings.json" CopyToOutputDirectory="Never" />
+		<None Update="..\StreamingZeiger\appsettings.Development.json" CopyToOutputDirectory="Never" />
+	</ItemGroup>
+
+
+	<ItemGroup>
     <ProjectReference Include="..\StreamingZeiger.ServiceDefaults\StreamingZeiger.ServiceDefaults.csproj" />
     <ProjectReference Include="..\StreamingZeiger\StreamingZeiger.csproj" />
   </ItemGroup>

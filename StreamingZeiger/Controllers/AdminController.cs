@@ -154,6 +154,10 @@ namespace StreamingZeiger.Controllers
 
         public async Task<IActionResult> EditMovie(int id)
         {
+            if (ModelState.IsValid == false)
+            {
+                return View();
+            }
             var movie = await _context.Movies
                 .Include(m => m.MediaGenres)
                     .ThenInclude(mg => mg.Genre)
@@ -256,6 +260,10 @@ namespace StreamingZeiger.Controllers
 
         public async Task<IActionResult> EditSeries(int id)
         {
+            if (ModelState.IsValid == false)
+            {
+                return View();
+            }
             var series = await _context.Series
                 .Include(s => s.MediaGenres).ThenInclude(mg => mg.Genre)
                 .Include(s => s.Seasons).ThenInclude(se => se.Episodes)
@@ -345,6 +353,10 @@ namespace StreamingZeiger.Controllers
 
         public async Task<IActionResult> DeleteSeries(int id)
         {
+            if (ModelState.IsValid == false)
+            {
+                return View();
+            }
             var series = await _context.Series
                 .Include(s => s.Seasons).ThenInclude(se => se.Episodes)
                 .FirstOrDefaultAsync(s => s.Id == id);
