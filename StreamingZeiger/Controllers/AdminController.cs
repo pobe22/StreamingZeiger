@@ -93,7 +93,6 @@ namespace StreamingZeiger.Controllers
             }
 
             // --- Genres ---
-            // --- Genres ---
             if (!string.IsNullOrWhiteSpace(genreCsv))
             {
                 var genreNames = genreCsv
@@ -171,6 +170,10 @@ namespace StreamingZeiger.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditMovie(int id, Models.Movie movie, string castCsv, List<string> services, string genreCsv, IFormFile? posterUpload)
         {
+            if (ModelState.IsValid == false)
+            {
+                return View(movie);
+            }
             if (id != movie.Id) return NotFound();
             if (!ModelState.IsValid) return View(movie);
 
@@ -192,6 +195,10 @@ namespace StreamingZeiger.Controllers
 
         public async Task<IActionResult> DeleteMovie(int id)
         {
+            if (ModelState.IsValid == false)
+            {
+                return View();
+            }
             var movie = await _context.Movies.FindAsync(id);
             if (movie == null) return NotFound();
 
@@ -266,6 +273,10 @@ namespace StreamingZeiger.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditSeries(int id, Series series, string castCsv, List<string> services, string genreCsv)
         {
+            if (ModelState.IsValid == false)
+            {
+                return View(series);
+            }
             if (id != series.Id) return NotFound();
 
             // Entferne verschachtelte ModelState-Fehler
@@ -349,14 +360,13 @@ namespace StreamingZeiger.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ImportMultiple(
-    string? tmdbIds,
-    string type,
-    IFormFile? csvFile,
-    string? titles,
-    bool importTop25 = false,
-    string region = "DE")
+        public async Task<IActionResult> ImportMultiple(string? tmdbIds, string type, IFormFile? csvFile, string? titles, bool importTop25 = false, string region = "DE")
         {
+            if (ModelState.IsValid == false)
+            {
+                return View();
+            }
+
             List<int> ids = new List<int>();
 
             if (importTop25)
@@ -368,9 +378,12 @@ namespace StreamingZeiger.Controllers
             }
             else
             {
+                if (string.IsNullOrWhiteSpace(tmdbIds))
+                    return NotFound();
+
                 // IDs aus Textfeld oder CSV-Datei auflösen
                 ids = await ResolveIdsAsync(tmdbIds, csvFile, type, region);
-
+                
                 // IDs aus Titel-Textfeld auflösen
                 if (!string.IsNullOrWhiteSpace(titles))
                 {
@@ -407,6 +420,11 @@ namespace StreamingZeiger.Controllers
         [HttpPost]
         public async Task<IActionResult> ImportMultipleAjax([FromForm] string tmdbIds, [FromForm] IFormFile? csvFile, [FromForm] string type, [FromForm] string region = "DE")
         {
+            if (ModelState.IsValid == false)
+            {
+                return View();
+            }
+
             Response.ContentType = "text/plain";
             var ids = await ResolveIdsAsync(tmdbIds, csvFile, type, region);
 
@@ -450,6 +468,8 @@ namespace StreamingZeiger.Controllers
                 while (!reader.EndOfStream)
                 {
                     var line = await reader.ReadLineAsync();
+                    if (line == null) continue;
+
                     if (firstLine) { firstLine = false; continue; } // Header überspringen
 
                     var columns = ParseCsvLine(line);

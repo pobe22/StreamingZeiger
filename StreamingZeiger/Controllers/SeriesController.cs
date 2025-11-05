@@ -31,6 +31,10 @@ namespace StreamingZeiger.Controllers
         [Authorize]
         public async Task<IActionResult> Index([FromQuery] MediaFilterViewModel filter)
         {
+            if (ModelState.IsValid == false)
+            {
+                return BadRequest(ModelState);
+            }
             var user = await _userManager.GetUserAsync(User);
             var userId = user?.Id;
 
@@ -153,6 +157,10 @@ namespace StreamingZeiger.Controllers
         // Details: Serie mit Seasons und Episodes
         public async Task<IActionResult> Details(int id)
         {
+            if (ModelState.IsValid == false)
+            {
+                return BadRequest(ModelState);
+            }
             var series = await _context.Series
                 .Include(s => s.MediaGenres).ThenInclude(mg => mg.Genre)
                 .Include(s => s.Seasons)
@@ -174,7 +182,11 @@ namespace StreamingZeiger.Controllers
 
             // Watchlist prüfen
             bool inWatchlist = false;
-            if (User.Identity.IsAuthenticated)
+            if (User.Identity == null || !User.Identity.IsAuthenticated)
+            {
+                inWatchlist = false;
+            }
+            else
             {
                 var user = await _userManager.GetUserAsync(User);
                 if (user != null)
@@ -194,6 +206,10 @@ namespace StreamingZeiger.Controllers
 
         public async Task<IActionResult> EpisodeDetails(int id)
         {
+            if (ModelState.IsValid == false)
+            {
+                return BadRequest(ModelState);
+            }
             var episode = await _context.Episodes
                 .Include(e => e.Season)
                     .ThenInclude(s => s.Series)

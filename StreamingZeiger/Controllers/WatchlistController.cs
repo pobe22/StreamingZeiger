@@ -27,6 +27,9 @@ namespace StreamingZeiger.Controllers
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
+            if (user == null) {
+                return Challenge();
+            }
 
             var items = await _context.WatchlistItems
                 .Include(w => w.MediaItem)
@@ -44,8 +47,13 @@ namespace StreamingZeiger.Controllers
             return View(viewModel);
         }
 
-        public async Task<IActionResult> Add(int mediaItemId, string returnUrl = null)
+        public async Task<IActionResult> Add(int mediaItemId, string? returnUrl = null)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Ungültige Anfrage.");
+            }
+
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
@@ -58,8 +66,10 @@ namespace StreamingZeiger.Controllers
                 return NotFound("MediaItem nicht gefunden.");
             }
 
-            if (!await _context.WatchlistItems
-                .AnyAsync(w => w.UserId == user.Id && w.MediaItemId == mediaItemId))
+            bool alreadyExists = await _context.WatchlistItems
+                .AnyAsync(w => w.UserId == user.Id && w.MediaItemId == mediaItemId);
+
+            if (!alreadyExists)
             {
                 _context.WatchlistItems.Add(new WatchlistItem
                 {
@@ -70,12 +80,26 @@ namespace StreamingZeiger.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            return Redirect(returnUrl ?? "/");
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+
+            return RedirectToAction("Index", "Watchlist");
         }
 
-        public async Task<IActionResult> Remove(int mediaItemId, string returnUrl = null)
+
+        public async Task<IActionResult> Remove(int mediaItemId, string? returnUrl = null)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Ungültige Anfrage.");
+            }
             var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Challenge();
+            }
             var item = await _context.WatchlistItems
                 .FirstOrDefaultAsync(w => w.UserId == user.Id && w.MediaItemId == mediaItemId);
 
@@ -85,16 +109,21 @@ namespace StreamingZeiger.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            if (!string.IsNullOrEmpty(returnUrl))
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
                 return Redirect(returnUrl);
+            }
 
-            return Redirect(returnUrl ?? "/");
+            return RedirectToAction("Index", "Watchlist");
         }
 
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> Toggle([FromBody] WatchlistToggleRequest request)
         {
+            if (!ModelState.IsValid) {
+                return Json(new { success = false, message = "Ungültige Anfrage" });
+            }
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
                 return Json(new { success = false, message = "Nicht eingeloggt" });

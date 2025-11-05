@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using StreamingZeiger.Controllers;
 using StreamingZeiger.Data;
@@ -36,7 +38,15 @@ namespace StreamingZeiger.Tests
         private Mock<UserManager<ApplicationUser>> GetUserManagerMock()
         {
             var store = new Mock<IUserStore<ApplicationUser>>();
-            return new Mock<UserManager<ApplicationUser>>(store.Object, null, null, null, null, null, null, null, null);
+            return new Mock<UserManager<ApplicationUser>>(store.Object,
+               new Mock<IOptions<IdentityOptions>>().Object,
+               new Mock<IPasswordHasher<ApplicationUser>>().Object,
+               new IUserValidator<ApplicationUser>[0],
+               new IPasswordValidator<ApplicationUser>[0],
+               new Mock<ILookupNormalizer>().Object,
+               new Mock<IdentityErrorDescriber>().Object,
+               new Mock<IServiceProvider>().Object,
+               new Mock<ILogger<UserManager<ApplicationUser>>>().Object);
         }
 
         [Fact]
@@ -54,18 +64,19 @@ namespace StreamingZeiger.Tests
                 {
                     HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
                     {
-                        User = new ClaimsPrincipal(new ClaimsIdentity(new[]
-                        {
-                            new Claim(ClaimTypes.NameIdentifier, "user1")
-                        }, "mock"))
+                        User = new ClaimsPrincipal(new ClaimsIdentity(
+                            new[] { new Claim(ClaimTypes.NameIdentifier, user.Id) },
+                            authenticationType: "TestAuthType"
+                        ))
                     }
                 }
             };
 
-            var result = await controller.Add(1) as RedirectResult;
+            var result = await controller.Add(1);
 
-            Assert.NotNull(result);
-            Assert.Equal("/", result.Url); 
+            var redirect = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Index", redirect.ActionName);
+            Assert.Equal("Watchlist", redirect.ControllerName);
             Assert.Contains(context.WatchlistItems, w => w.MediaItemId == 1 && w.UserId == "user1");
         }
 
@@ -84,10 +95,10 @@ namespace StreamingZeiger.Tests
                 {
                     HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
                     {
-                        User = new ClaimsPrincipal(new ClaimsIdentity(new[]
-                        {
-                            new Claim(ClaimTypes.NameIdentifier, "user1")
-                        }, "mock"))
+                        User = new ClaimsPrincipal(new ClaimsIdentity(
+                        new Claim[] { new Claim(ClaimTypes.NameIdentifier, user.Id) },
+                        authenticationType: "TestAuthType"
+                        ))
                     }
                 }
             };
@@ -108,27 +119,28 @@ namespace StreamingZeiger.Tests
             userManager.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
 
             var cache = new MemoryCache(new MemoryCacheOptions());
-
             var controller = new WatchlistController(context, userManager.Object, cache)
             {
                 ControllerContext = new ControllerContext
                 {
                     HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
                     {
-                        User = new ClaimsPrincipal(new ClaimsIdentity(new[]
-                        {
-                            new Claim(ClaimTypes.NameIdentifier, "user1")
-                        }, "mock"))
+                        User = new ClaimsPrincipal(new ClaimsIdentity(
+                            new[] { new Claim(ClaimTypes.NameIdentifier, user.Id) },
+                            authenticationType: "TestAuthType"
+                        ))
                     }
                 }
             };
 
-            var result = await controller.Remove(1) as RedirectResult;
+            var result = await controller.Remove(1);
 
-            Assert.NotNull(result);
-            Assert.Equal("/", result.Url);
+            var redirect = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Index", redirect.ActionName);
+            Assert.Equal("Watchlist", redirect.ControllerName);
             Assert.DoesNotContain(context.WatchlistItems, w => w.MediaItemId == 1 && w.UserId == "user1");
         }
+
 
         [Fact]
         public async Task Remove_DoesNothing_WhenItemNotExists()
@@ -138,27 +150,28 @@ namespace StreamingZeiger.Tests
             var userManager = GetUserManagerMock();
             var user = new ApplicationUser { Id = "user1" };
             userManager.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
-            var cache = new MemoryCache(new MemoryCacheOptions());
 
+            var cache = new MemoryCache(new MemoryCacheOptions());
             var controller = new WatchlistController(context, userManager.Object, cache)
             {
                 ControllerContext = new ControllerContext
                 {
                     HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
                     {
-                        User = new ClaimsPrincipal(new ClaimsIdentity(new[]
-                        {
-                            new Claim(ClaimTypes.NameIdentifier, "user1")
-                        }, "mock"))
+                        User = new ClaimsPrincipal(new ClaimsIdentity(
+                            new[] { new Claim(ClaimTypes.NameIdentifier, user.Id) },
+                            authenticationType: "TestAuthType"
+                        ))
                     }
                 }
             };
 
-            var result = await controller.Remove(42) as RedirectResult;
+            var result = await controller.Remove(42);
 
-            Assert.NotNull(result);
-            Assert.Equal("/", result.Url);
-            Assert.Empty(context.WatchlistItems); 
+            var redirect = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Index", redirect.ActionName);
+            Assert.Equal("Watchlist", redirect.ControllerName);
+            Assert.Empty(context.WatchlistItems);
         }
     }
 }

@@ -19,8 +19,17 @@ public class RatingController : Controller
 
     [HttpPost]
     public async Task<IActionResult> Add(int mediaItemId, int score, string? returnUrl = null)
-    {
+    { 
+        if (ModelState.IsValid == false || score < 1 || score > 10)
+        {
+            return BadRequest("Invalid rating score.");
+        }
         var user = await _userManager.GetUserAsync(User);
+
+        if (user == null || !User.Identity!.IsAuthenticated)
+        {
+            return RedirectToAction("Login", "Account");
+        }
 
         var rating = await _context.Ratings
             .FirstOrDefaultAsync(r => r.MediaItemId == mediaItemId && r.UserId == user.Id);
@@ -45,16 +54,25 @@ public class RatingController : Controller
 
         await _context.UpdateAverageRatingAsync(mediaItemId);
 
-        if (!string.IsNullOrEmpty(returnUrl))
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             return Redirect(returnUrl);
 
         return RedirectToAction("Details", "Movies", new { id = mediaItemId });
     }
-    [Authorize]
+
     [HttpPost]
     public async Task<IActionResult> AddAjax([FromBody] RatingDto dto)
     {
+        if (ModelState.IsValid == false || dto.Score < 1 || dto.Score > 10)
+        {
+            return BadRequest("Invalid rating score.");
+        }
         var user = await _userManager.GetUserAsync(User);
+
+        if (user == null || !User.Identity!.IsAuthenticated)
+        {
+            return RedirectToAction("Login", "Account");
+        }
 
         var rating = await _context.Ratings
             .FirstOrDefaultAsync(r => r.MediaItemId == dto.MediaItemId && r.UserId == user.Id);

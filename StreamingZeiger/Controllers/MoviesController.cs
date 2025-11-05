@@ -29,6 +29,10 @@ namespace StreamingZeiger.Controllers
         //[OutputCache(Duration = 60, VaryByQueryKeys = new[] { "Query", "Genre", "Service", "MinRating", "YearFrom", "YearTo", "Page", "PageSize" })]
         public async Task<IActionResult> Index([FromQuery] MediaFilterViewModel filter)
         {
+            if (ModelState.IsValid == false)
+            {
+                filter = new MediaFilterViewModel();
+            }
             var user = await _userManager.GetUserAsync(User);
             var userId = user?.Id;
 
@@ -163,6 +167,10 @@ namespace StreamingZeiger.Controllers
 
         public async Task<IActionResult> Details(int id)
         {
+            if (ModelState.IsValid == false)
+            {
+                return BadRequest();
+            }
             var movie = await _context.Movies
                 .Include(m => (m as MediaItem).MediaGenres)
                 .ThenInclude(mg => mg.Genre)
@@ -187,7 +195,11 @@ namespace StreamingZeiger.Controllers
 
             bool inWatchlist = false;
 
-            if (User.Identity.IsAuthenticated)
+            if (User.Identity == null || !User.Identity.IsAuthenticated)
+            {
+                inWatchlist = false;
+            }
+            else
             {
                 var user = await _userManager.GetUserAsync(User);
                 if (user != null)
@@ -196,13 +208,17 @@ namespace StreamingZeiger.Controllers
                         .AnyAsync(w => w.UserId == user.Id && w.MediaItemId == id);
                 }
             }
-            ViewBag.InWatchlist = inWatchlist;
+                ViewBag.InWatchlist = inWatchlist;
 
             return View(movie);
         }
 
         public async Task<IActionResult> DetailsPartial(int id)
         {
+            if (ModelState.IsValid == false)
+            {
+                return BadRequest();
+            }
             var movie = await _context.Movies
                 .Include(m => m.MediaGenres).ThenInclude(mg => mg.Genre)
                 .Include(m => m.Ratings)
@@ -211,7 +227,11 @@ namespace StreamingZeiger.Controllers
             if (movie == null) return NotFound();
 
             bool inWatchlist = false;
-            if (User.Identity.IsAuthenticated)
+            if (User.Identity == null || !User.Identity.IsAuthenticated)
+            {               
+                inWatchlist = false;
+            }
+            else
             {
                 var user = await _userManager.GetUserAsync(User);
                 if (user != null)
@@ -229,6 +249,10 @@ namespace StreamingZeiger.Controllers
         [HttpPost]
         public IActionResult Search(MediaFilterViewModel filter)
         {
+            if (ModelState.IsValid == false)
+            {
+                return BadRequest();
+            }
             HttpContext.Session.SetObjectAsJson("MovieFilter", filter);
 
             return RedirectToAction("Index", filter);
@@ -252,6 +276,10 @@ namespace StreamingZeiger.Controllers
 
         public IActionResult TrackShare(int id, string platform)
         {
+            if (ModelState.IsValid == false)
+            {
+                return BadRequest();
+            }
             var movie = _context.Movies.Find(id);
             if (movie != null)
             {
