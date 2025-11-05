@@ -15,11 +15,14 @@ COPY StreamingZeiger.Tests/*.csproj ./StreamingZeiger.Tests/
 # Restore dependencies
 RUN dotnet restore
 
-# Copy everything else
-COPY . .
+# Copy only the API project files (including appsettings)
+COPY StreamingZeiger.API/*.csproj ./StreamingZeiger.API/
+COPY StreamingZeiger.API/appsettings*.json ./StreamingZeiger.API/
+COPY StreamingZeiger.API/ ./StreamingZeiger.API/
 
-# Publish the main API project
+# Publish the API project
 RUN dotnet publish StreamingZeiger.API/StreamingZeiger.API.csproj -c Release -o /app/publish
+
 
 # ===== RUNTIME STAGE =====
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
