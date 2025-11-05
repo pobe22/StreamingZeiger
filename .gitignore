@@ -55,6 +55,7 @@ nunit-*.xml
 
 # .vs\
 .vs/
+*.user
 
 #Database
 /streamingzeiger.db
