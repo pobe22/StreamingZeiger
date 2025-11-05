@@ -34,8 +34,8 @@ WORKDIR /app
 # Copy published output
 COPY --from=build /app/publish .
 
-# Copy DB file
-COPY streamingzeiger.db /app/streamingzeiger.db
+# Ensure /app is writable (SQLite will create DB here)
+RUN chmod 777 /app
 
 EXPOSE 80
 
