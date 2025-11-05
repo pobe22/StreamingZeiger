@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using StreamingZeiger;
 using StreamingZeiger.Data;
 using StreamingZeiger.Models;
@@ -12,7 +11,6 @@ DotNetEnv.Env.Load();
 builder.Services.AddScoped<ITmdbService, TmdbService>();
 builder.Services.AddScoped<LoggingService>();
 builder.Services.AddScoped<DatabaseBackupService>();
-
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))
@@ -31,16 +29,13 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<IStaticMovieRepository, StaticMovieRepository>();
-
 builder.Services.AddSession();
-
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<DynamicDbContextFactory>();
 
-
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Middleware
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -49,11 +44,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
-app.UseSession(); // Session kommt hier rein
-
+app.UseSession();
 app.UseAuthorization();
 
 app.MapControllerRoute(
@@ -67,10 +59,17 @@ using (var scope = app.Services.CreateScope())
     var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
-    await context.Database.MigrateAsync();
+    await context.Database.EnsureCreatedAsync();
+
+    var conn = context.Database.GetDbConnection();
+    await conn.OpenAsync();
+    using (var cmd = conn.CreateCommand())
+    {
+        cmd.CommandText = "PRAGMA foreign_keys = ON;";
+        await cmd.ExecuteNonQueryAsync();
+    }
 
     await DbInitializer.InitializeAsync(context, userManager, roleManager);
 }
-
 
 app.Run();
