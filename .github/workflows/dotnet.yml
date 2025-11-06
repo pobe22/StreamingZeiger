@@ -36,11 +36,25 @@ jobs:
       - name: Verify no formatting changes
         run: dotnet format StreamingZeiger/StreamingZeiger.csproj --verify-no-changes
 
+      - name: Begin SonarCloud analysis
+        uses: sonarsource/sonarcloud-github-action@v2
+        with:
+          organization: "deine-org"
+          projectKey: "streamingzeiger"
+          extraProperties: |
+            sonar.exclusions=**/Migrations/**,**/*.Designer.cs
+
       - name: Build
         run: dotnet build StreamingZeiger/StreamingZeiger.csproj --no-restore --configuration Release
 
       - name: Test with coverage
         run: dotnet test StreamingZeiger.Tests/StreamingZeiger.Tests.csproj --configuration Release --collect:"XPlat Code Coverage"
+
+      - name: End SonarCloud analysis
+        uses: sonarsource/sonarcloud-github-action@v2
+        with:
+          organization: "deine-org"
+          projectKey: "streamingzeiger"
 
       - name: Build Docker image
         run: docker build -t streamingzeiger:latest .
