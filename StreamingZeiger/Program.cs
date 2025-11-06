@@ -19,7 +19,6 @@ builder.Services.AddScoped<DatabaseBackupService>();
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     var env = builder.Environment;
-    var configuration = builder.Configuration;
 
     // Prüfen, ob wir auf Render oder in Production laufen
     var usePostgres = Environment.GetEnvironmentVariable("RENDER") == "true" ||
@@ -27,14 +26,19 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
     if (usePostgres)
     {
-        // PostgreSQL-Verbindung (Render)
-        var connectionString = configuration.GetConnectionString("PostgresConnection");
+        // PostgreSQL-Verbindung aus ENV-Variablen zusammensetzen
+        var host = Environment.GetEnvironmentVariable("POSTGRES_HOST");
+        var db = Environment.GetEnvironmentVariable("POSTGRES_DB");
+        var user = Environment.GetEnvironmentVariable("POSTGRES_USER");
+        var password = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
+
+        var connectionString = $"Host={host};Port=5432;Database={db};Username={user};Password={password}";
         options.UseNpgsql(connectionString);
     }
     else
     {
         // Lokale SQLite-Verbindung
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
         options.UseSqlite(connectionString);
     }
 
@@ -89,10 +93,8 @@ using (var scope = app.Services.CreateScope())
 
     await context.Database.MigrateAsync();
 
-    // Nur für SQLite aktivieren
-    var env = app.Environment;
     var usePostgres = Environment.GetEnvironmentVariable("RENDER") == "true" ||
-                      env.IsProduction();
+                      app.Environment.IsProduction();
 
     if (!usePostgres)
     {
