@@ -28,29 +28,33 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore dependencies
-        run: dotnet restore StreamingZeiger/StreamingZeiger.csproj
+        run: dotnet restore StreamingZeiger/StreamingZeiger.sln
 
       - name: Run code format
-        run: dotnet format StreamingZeiger/StreamingZeiger.csproj
+        run: dotnet format StreamingZeiger/StreamingZeiger.sln
 
       - name: Verify no formatting changes
-        run: dotnet format StreamingZeiger/StreamingZeiger.csproj --verify-no-changes
+        run: dotnet format StreamingZeiger/StreamingZeiger.sln --verify-no-changes
 
       - name: Begin SonarCloud analysis
         uses: sonarsource/sonarcloud-github-action@v2
         with:
-          organization: "pobe22"
-          projectKey: "pobe22_StreamingZeiger"
+          organization: "pobe22"                
+          projectKey: "pobe22_StreamingZeiger"  
           extraProperties: |
             sonar.exclusions=**/Migrations/**,**/*.Designer.cs
+            sonar.cs.opencover.reportsPaths=**/TestResults/*.xml
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-      - name: Build
-        run: dotnet build StreamingZeiger/StreamingZeiger.csproj --no-restore --configuration Release
+      - name: Build solution
+        run: dotnet build StreamingZeiger/StreamingZeiger.sln --configuration Release
 
       - name: Test with coverage
-        run: dotnet test StreamingZeiger.Tests/StreamingZeiger.Tests.csproj --configuration Release --collect:"XPlat Code Coverage"
+        run: dotnet test StreamingZeiger.Tests/StreamingZeiger.Tests.csproj \
+          --configuration Release \
+          --collect:"XPlat Code Coverage" \
+          --results-directory TestResults
 
       - name: End SonarCloud analysis
         uses: sonarsource/sonarcloud-github-action@v2
