@@ -39,8 +39,8 @@ jobs:
       - name: Begin SonarCloud analysis
         uses: sonarsource/sonarcloud-github-action@v2
         with:
-          organization: "deine-org"
-          projectKey: "streamingzeiger"
+          organization: "pobe22"
+          projectKey: "StreamingZeiger"
           extraProperties: |
             sonar.exclusions=**/Migrations/**,**/*.Designer.cs
 
