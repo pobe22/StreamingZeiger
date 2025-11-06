@@ -43,6 +43,8 @@ jobs:
           projectKey: "StreamingZeiger"
           extraProperties: |
             sonar.exclusions=**/Migrations/**,**/*.Designer.cs
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Build
         run: dotnet build StreamingZeiger/StreamingZeiger.csproj --no-restore --configuration Release
@@ -53,8 +55,10 @@ jobs:
       - name: End SonarCloud analysis
         uses: sonarsource/sonarcloud-github-action@v2
         with:
-          organization: "deine-org"
-          projectKey: "streamingzeiger"
+          organization: "pobe22"
+          projectKey: "StreamingZeiger"
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Build Docker image
         run: docker build -t streamingzeiger:latest .
