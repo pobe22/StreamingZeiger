@@ -28,19 +28,19 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore dependencies
-        run: dotnet restore 
+        run: dotnet restore StreamingZeiger/StreamingZeiger.csproj
 
       - name: Run code format
-        run: dotnet format 
+        run: dotnet format StreamingZeiger/StreamingZeiger.csproj
 
       - name: Verify no formatting changes
-        run: dotnet format --verify-no-changes
+        run: dotnet format StreamingZeiger/StreamingZeiger.csproj --verify-no-changes
 
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build StreamingZeiger/StreamingZeiger.csproj --no-restore --configuration Release
 
       - name: Test with coverage
-        run: dotnet test ./StreamingZeiger.Tests/StreamingZeiger.Tests.csproj --configuration Release --collect:"XPlat Code Coverage"
+        run: dotnet test StreamingZeiger.Tests/StreamingZeiger.Tests.csproj --configuration Release --collect:"XPlat Code Coverage"
 
       - name: Build Docker image
         run: docker build -t streamingzeiger:latest .

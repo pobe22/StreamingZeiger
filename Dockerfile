@@ -8,6 +8,7 @@ COPY StreamingZeiger/*.csproj ./StreamingZeiger/
 COPY StreamingZeiger.API/*.csproj ./StreamingZeiger.API/
 COPY StreamingZeiger.AppHost/*.csproj ./StreamingZeiger.AppHost/
 COPY StreamingZeiger.ServiceDefaults/*.csproj ./StreamingZeiger.ServiceDefaults/
+COPY StreamingZeiger.Tests/*.csproj ./StreamingZeiger.Tests/
 
 # Restore dependencies
 RUN dotnet restore StreamingZeiger/StreamingZeiger.csproj
@@ -17,6 +18,7 @@ COPY StreamingZeiger/. ./StreamingZeiger/
 COPY StreamingZeiger.API/. ./StreamingZeiger.API/
 COPY StreamingZeiger.AppHost/. ./StreamingZeiger.AppHost/
 COPY StreamingZeiger.ServiceDefaults/. ./StreamingZeiger.ServiceDefaults/
+COPY StreamingZeiger.Tests/. ./StreamingZeiger.Tests/
 
 # Remove library appsettings to avoid conflicts
 RUN rm -f StreamingZeiger/appsettings*.json
