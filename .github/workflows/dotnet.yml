@@ -28,13 +28,13 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore dependencies
-        run: dotnet restore StreamingZeiger/StreamingZeiger.sln
+        run: dotnet restore StreamingZeiger.sln
 
       - name: Run code format
-        run: dotnet format StreamingZeiger/StreamingZeiger.sln
+        run: dotnet format StreamingZeiger.sln
 
       - name: Verify no formatting changes
-        run: dotnet format StreamingZeiger/StreamingZeiger.sln --verify-no-changes
+        run: dotnet format StreamingZeiger.sln --verify-no-changes
 
       - name: Begin SonarCloud analysis
         uses: sonarsource/sonarcloud-github-action@v2
@@ -48,7 +48,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Build solution
-        run: dotnet build StreamingZeiger/StreamingZeiger.sln --configuration Release
+        run: dotnet build StreamingZeiger.sln --configuration Release
 
       - name: Test with coverage
         run: dotnet test StreamingZeiger.Tests/StreamingZeiger.Tests.csproj \
