@@ -47,7 +47,7 @@ jobs:
 
       # Optional: automatisch Migrationen anwenden beim Deployment
       - name: Apply EF Core Migrations (optional)
-        run: dotnet ef database update --project StreamingZeiger/StreamingZeiger.csproj --startup-project StreamingZeiger/StreamingZeiger.Api
+        run: dotnet ef database update --project StreamingZeiger/StreamingZeiger.csproj 
 
       # Deployment zu Render auskommentiert, später wieder aktivierbar
       # - name: Trigger Render Deployment
