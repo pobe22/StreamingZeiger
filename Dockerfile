@@ -24,7 +24,7 @@ COPY StreamingZeiger.Tests/. ./StreamingZeiger.Tests/
 RUN rm -f StreamingZeiger/appsettings*.json
 
 # Build API project (optional)
-RUN dotnet build StreamingZeiger/StreamingZeiger.API.csproj -c Release
+RUN dotnet build StreamingZeiger.API/StreamingZeiger.API.csproj -c Release
 
 # Publish main project
 RUN dotnet publish StreamingZeiger/StreamingZeiger.csproj -c Release -o /app/publish /p:UseAppHost=false
